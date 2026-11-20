@@ -177,3 +177,16 @@
 | 90 项页面功能模块划分 | ✅ | 注册表=数据非文档（A58）；运维 UI 与背后系统合一注册；对账主键待定 |
 | 双 dsh profile 分工（core-system / kube-inner） | ⚠️ | 自举依赖 core plugin v0；验收探针="第二个 profile 能跑通一次最小 core-loop" |
 | 跳板通道（跳板→入口宿主→集群 API） | ⚠️ | 多一跳；凭据全走 Provider.auth.secret；断链=Event(warn) 非静默 |
+
+## 18. R14.8 四项接入（user-system / developer-system / deploy-system / event 扩展）
+
+> 详见 impl/user-system.md、impl/developer-system.md §7、impl/deploy-system.md §5-6、runtime/event-bus.md。A59：零新概念，全部为既有概念的实例化。
+
+| 项 | 评级 | 关键约束 |
+|---|---|---|
+| user-system 接 LDAP（认证走管理面 API + 同步走 LDAPS 双通道） | ⚠️ | 目录真相在 LDAP，本地表=投影；组→role 映射表声明式；凭据全 secret |
+| user-system 接飞书（账号映射） | ⚠️ | LDAP↔飞书 userid 映射覆盖率<100%（花名差异）→ 未映射走群兜底+warn |
+| developer-system 接公司 OneDev | ✅ | API/git 通道已实测；端点差异以实测快照为契约，conformance 兜底 |
+| deploy-system 三渠道（kube / ssh-host / onedev-ci），每业务 DeployDesign 声明 | ⚠️ | kube 渠道受 SA 上界；ssh 渠道每业务自带容器名+健康命令声明；验收统一走 Verifying 相位 |
+| event 扩展 Kafka 分发 | ⚠️ | Kafka=通知总线非真相源（内置 dsh 队列不变）；安装走公司发布管道（SA 无 create） |
+| event→飞书→账号 | ⚠️ | 依赖账号映射（user-system U3）；限流+聚合+熔断防事件风暴 |

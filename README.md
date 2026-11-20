@@ -12,6 +12,8 @@
 | systems/builtin/storage-system | [impl/storage-system.md](impl/storage-system.md)（NAS+OSS） | workservice: connectors/gitfs, nas, oss |
 | （无独立 Desc：core-loop 系 Workflow 实例，A56） | [impl/feedback-workflow.md](impl/feedback-workflow.md)（反馈修复闭环：报错→agent→提议→批准→pull→发布→验收） | —（设计，未开工） |
 | （挂 deploy-system，A58） | [impl/kube-inner-integration.md](impl/kube-inner-integration.md)（内网集群纳管 + 页面功能模块划分） | —（设计，未开工） |
+| systems/builtin/user-system | [impl/user-system.md](impl/user-system.md)（接入 LDAP 认证+目录同步 / 飞书账号映射，A59） | —（设计，未开工） |
+| （挂 deploy-system：部署渠道矩阵） | [impl/deploy-system.md](impl/deploy-system.md) §5-6（kube / ssh-host / onedev-ci 三渠道，每业务 DeployDesign 声明） | —（设计，未开工） |
 
 ## 运行时设计（R1.2 / R1.4 / R1.5）
 
@@ -24,6 +26,7 @@
 | [runtime/ops-log.md](runtime/ops-log.md) | git 管文档 + DB 管 ops 历史操作日志（双轨与对账） |
 | [runtime/install-service.md](runtime/install-service.md) | install 流程：GitHub org 找 template→WorkServiceTemplate→询问→安装 |
 | [runtime/agent-pool-machine.md](runtime/agent-pool-machine.md) | agent_pool 机器与双 dsh profile 分工（core-system 自举 / kube-inner 接入） |
+| [runtime/event-bus.md](runtime/event-bus.md) | 内置 Event 分发扩展：Kafka 总线（通知用，非真相源）+ 飞书通知到账号（A59） |
 
 ## 其他
 

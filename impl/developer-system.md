@@ -93,3 +93,14 @@ push ──► onedev(scm) ──webhook──► Event(ExternalChanged)
 | webhook 可靠性 | ⚠️ 低 | 丢失由 2m 巡检兜底（P3） |
 | 单机 build 吞吐 | ✅ | 本地无队列远端；并发=1 起步（Desc 声明） |
 | buildspec 单一真相策略 | ⚠️ 中 | 双源风险（TaskScheme vs onedev CI）——对账探针把 onedev 侧漂移当 drift 管 |
+
+## 7. 公司实例接入（R14.8.2，已验证事实的泛化）
+
+| 已验证（公司 OneDev 实例） | 对设计的影响 |
+|---|---|
+| REST API 可用：鉴权（Bearer token）、项目列表分页、项目创建（POST，含子项目需先建父项目再带 parentId）、项目删除 | onedev-driver 的 op 集可以直接落在已验证端点上；"项目建仓"op 幂等=先 get 后 create |
+| git https push 通道可用（token 作密码） | checkout/build-status 之外的 git 直操作通道就绪 |
+| 部分旧版 REST 端点 404（以实测可用的端点为准） | driver 契约测试以公司实例为 conformance 对象，不照官方文档假设 |
+| 新仓默认前缀 `agent_pool`（A55） | WorkServiceTemplate 的项目命名模板固化该前缀 |
+
+可行性补充：⚠️ 公司实例与官方文档存在端点差异 → driver 的每个 op 以"实测端点+响应快照"为契约（快照存公司 git 报告仓），升级 OneDev 时 conformance 测试兜底。

@@ -16,6 +16,10 @@ docs:
     developer-system: impl/developer-system.md
     deploy-system: impl/deploy-system.md
     storage-system: impl/storage-system.md
+  mvp:
+    design: mvp/design.md           # 支持生成 Goal 的最小自循环（dsh-core-agent）
+    architecture: mvp/architecture.md
+    scheme: mvp/scheme.yaml
   verify: 各 impl 文档的 guarantees 段
 metricsInfo:
   store: tsdb/prometheus-main     # 落地后由 builtin storage/deploy 提供

@@ -1,0 +1,133 @@
+# MVP scheme 子集 —— dsh-core-agent 启动时装载并自检的类型注册
+# 是 core/scheme.yaml（v0.13 完整注册表）的可运行裁剪：只保留自循环必需的 kinds/docTypes/events。
+# 未列出的类型一律拒收（启动自检野对象）。
+apiVersion: core/v1
+kind: Scheme
+metadata:
+  name: mvp
+  scope: builtin
+spec:
+  version: core/v1
+
+  # ============================================================
+  # 一、对象类型（kinds）
+  # ============================================================
+  kinds:
+
+    - kind: Scheme                    # 自注册
+      builtin: true
+      storage: mvp/scheme.yaml
+      spec: {version: "!string", kinds: "[]KindReg", docTypes: "[]DocTypeReg",
+             eventTypes: "[]EventTypeReg", dispatch: "[]DispatchRule", runtime: "?RuntimeReg",
+             conventions: "?{status, cascade, probes}"}
+
+    - kind: ServiceInstance           # dsh-core-agent 自身（core_system/default 的物化）
+      builtin: true
+      storage: instance.yaml
+      spec: {}                        # v1 跟随 owner Desc
+      fields:
+        agentRefs: "[]ref"
+        docs: "{impl: ref, verify: ref}"
+      status:                         # 引擎写区（conventions.status 子集）
+        observedGeneration: "int"
+        phase: "Idle|Seeding|Analyzing|Planning|Executing|Verifying|Reporting|InSync|Escalated"
+        conditions: "[]{type, status: True|False|Unknown, reason, message, lastTransitionTime}"
+        drift: "{summary, reportRef}"
+
+    - kind: Agent                     # 自身一个：runtime=dsh，auto
+      builtin: true
+      storage: global/agents/dsh-core.yaml
+      spec:
+        runtime: "dsh"
+        autoLevel: "auto"             # MVP 无审批点；all 需显式授权（A30）
+        connectorOps: []              # tools 内置，无外部 Ops
+        subAgents: []                 # MVP 单进程单循环（A31 不适用）
+        retry: "{maxAttempts: 3, backoff: 60s, escalateTo: console}"
+      status:
+        phase: "Idle|Analyzing|Planning|Executing|Verifying|Reporting|Failed"
+        currentSession: "{id, startedAt}"
+
+    - kind: Workflow                  # MVP 唯一 workflow = core-loop-mvp
+      builtin: true
+      storage: workflows/core-loop-mvp.yaml
+      spec:
+        triggers: "{events: [TickDue, DocApplied], timer: {resync: 5m}}"
+        ingest: "{dedup: {window: 60s}, groupMax: 10}"
+        phases: "[Seed, Analyze, Generate, Plan, Execute, Verify, Report, CoolDown]"
+        onFailed: "{backoff: 60s, maxAttempts: 3, escalate: {to: console}}"
+        brakes: "{cooldown: 60s, maxMutationsPerTick: 5, avoidRepeatFix: true}"
+        cost: "{budget: {minutes: 10}, record: session-log}"   # MVP 单闸：每 tick 10 分钟硬顶
+        regression: "{statusWriteback: true, reports: [DriftReport, SessionLog]}"
+      builtinSet: [core-loop-mvp]
+
+    - kind: TaskScheme                # MVP 两个内置任务
+      builtin: true
+      storage: schemes/<name>.yaml
+      spec:
+        trigger: "{events: []string, match: map}"
+        steps: "[]{id, tool: op, args}"
+        params: "[]string"
+        onFailure: "{retry, backoff, then: escalate}"
+        budget: "!{minutes}"
+
+    # ============================================================
+    # 二、文档类型（docTypes）
+    # ============================================================
+  docTypes:
+    - {name: Goal,        mandatory: required, sections: [intent, acceptance],  writers: [human, generator], appliesTo: scope, admission: normal,
+       rules: ["acceptance 每条必须带 probe: <probe-id>，未注册 probe 拒收", "生效区一次一个 current（pointers.json）", "proposals/ 内不入指针即未生效"]}
+    - {name: PlanDoc,     mandatory: required, sections: [intent, steps, budget], writers: [agent],  appliesTo: scope, admission: normal,
+       rules: ["steps[].tool 必须 ∈ tools 白名单", "Execute 前必须落档（A29）"]}
+    - {name: SessionLog,  mandatory: required, sections: [phases, docsLoaded, outcome], writers: [agent], appliesTo: scope, admission: normal,
+       rules: ["每 tick 一份；含 probe 原始结果与 LLM 调用计数"]}
+    - {name: DriftReport, mandatory: auto,    sections: [drifts, actions],     writers: [engine], appliesTo: scope, admission: normal,
+       rules: ["Verify 不过与 Escalated 必产；作为下轮 Analyze 输入"]}
+
+    # ============================================================
+    # 三、事件类型（A42 Level 子集）
+    # ============================================================
+  eventTypes:
+    - {type: TickDue,        source: timer,    defaultLevel: debug, dedup: "tick:<n>",            route: core-loop-mvp}
+    - {type: DocApplied,     source: core,     defaultLevel: info,  dedup: "no-op 不发",          route: core-loop-mvp}
+    - {type: DriftDetected,  source: engine,   defaultLevel: warn,  dedup: "<goal>:<probe>",      route: core-loop-mvp}
+    - {type: GoalProposed,   source: engine,   defaultLevel: info,  dedup: "<proposal>",          route: core-loop-mvp}
+    - {type: DriftFixed,     source: engine,   defaultLevel: info,  dedup: "<goal>:<tick>",       route: console}
+    - {type: Escalated,      source: engine,   defaultLevel: error, dedup: "<goal>:<reason>",     route: console}
+    - {type: SessionClosed,  source: agent,    defaultLevel: info,  dedup: "<session>",           route: instance-docs}
+
+    # ============================================================
+    # 四、事件路由（缺省全收口，死信必须可见）
+    # ============================================================
+  dispatch:
+    - {on: "*", for: "any", dispatch: core-loop-mvp}
+    - {on: "*", for: "unroutable", dispatch: state/deadletter.json}
+
+    # ============================================================
+    # 五、运行时
+    # ============================================================
+  runtime:
+    baseAgent: dsh                          # A39/A43
+    executionLayers: [intent, agent, scheme, code]   # 四层执行（R1.2.3）
+    workflows: {default: core-loop-mvp, builtin: [core-loop-mvp]}
+    autoLevels: {rootAgent: auto, serviceAgent: auto, all: 不开放}
+    events: {levels: [debug, info, warn, error, fatal], debug: 只进内存, fatal: 必上 console}
+    storage:
+      docs: 本地文件夹（无 git；git 后端与每日对账后补）
+      status: state/ JSON（引擎独占写）
+    llm:
+      consumer: [generator, plan]
+      outputContract: JSON/受控格式；非法重试≤2→Escalated
+
+    # ============================================================
+    # 六、字段约定（conventions）
+    # ============================================================
+  conventions:
+    status:
+      writers: {docs: human+generator-by-apply, state: engine-only, lib: package-release}
+      observedGeneration: int
+    cascade:
+      rule: 目录即对象——删目录=级联删除其下一切
+    probes:                             # MVP 内置三类，acceptance 引用的必须是注册项
+      http: "{url, expect: {status, bodyContains?}}"
+      exec: "{cmd(白名单), expect: {exitCode, stdoutContains?}}"
+      file: "{path, expect: {exists, contains?}}"
