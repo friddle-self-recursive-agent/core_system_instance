@@ -164,3 +164,16 @@
 4. console TUI 两层视角
 5. TaskScheme 模板库补全 + install 流程（prometheus-template 首装）
 6. Agent 层放开（Bind 分档放行，P8）
+
+## 17. R14 增补：反馈闭环 / 内网集群 / agent_pool 机器
+
+> 详见 impl/feedback-workflow.md、impl/kube-inner-integration.md、runtime/agent-pool-machine.md（公司实物信息只在公司 git 的 agent_pool 报告仓，A55）。
+
+| 项 | 评级 | 关键约束 |
+|---|---|---|
+| 反馈闭环 workflow（feedback-remediation-loop） | ⚠️ | 零新概念（A56）；高风险面集中在"发布正式环境"，机制上强制审批+分批+回滚；事件源 API 覆盖不齐以巡检兜底 |
+| 事件源 watch（反馈/工单/监控三源） | ⚠️ | 能 API 的 watch、不能的页面探针；P3 巡检兜底丢事件 |
+| 内网集群 Connector（受限部署 SA） | ⚠️ | ops 上界=SA RBAC（workload 读写，无 create/delete）；patch 幂等=比较后写+dry-run |
+| 90 项页面功能模块划分 | ✅ | 注册表=数据非文档（A58）；运维 UI 与背后系统合一注册；对账主键待定 |
+| 双 dsh profile 分工（core-system / kube-inner） | ⚠️ | 自举依赖 core plugin v0；验收探针="第二个 profile 能跑通一次最小 core-loop" |
+| 跳板通道（跳板→入口宿主→集群 API） | ⚠️ | 多一跳；凭据全走 Provider.auth.secret；断链=Event(warn) 非静默 |

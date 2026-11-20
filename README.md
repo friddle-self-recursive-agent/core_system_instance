@@ -10,6 +10,8 @@
 | systems/builtin/developer-system | [impl/developer-system.md](impl/developer-system.md)（**首个设计对象**：如何利用 onedev/如何开发/如何满足循环） | workservice: connectors/onedev-driver |
 | systems/builtin/deploy-system | [impl/deploy-system.md](impl/deploy-system.md) | workservice: plugins/exec-local |
 | systems/builtin/storage-system | [impl/storage-system.md](impl/storage-system.md)（NAS+OSS） | workservice: connectors/gitfs, nas, oss |
+| （无独立 Desc：core-loop 系 Workflow 实例，A56） | [impl/feedback-workflow.md](impl/feedback-workflow.md)（反馈修复闭环：报错→agent→提议→批准→pull→发布→验收） | —（设计，未开工） |
+| （挂 deploy-system，A58） | [impl/kube-inner-integration.md](impl/kube-inner-integration.md)（内网集群纳管 + 页面功能模块划分） | —（设计，未开工） |
 
 ## 运行时设计（R1.2 / R1.4 / R1.5）
 
@@ -21,6 +23,7 @@
 | [runtime/agent-session.md](runtime/agent-session.md) | Agent Plan/Session 记录制（PlanDoc/SessionLog）+ AUTOLEVEL 默认（R2） |
 | [runtime/ops-log.md](runtime/ops-log.md) | git 管文档 + DB 管 ops 历史操作日志（双轨与对账） |
 | [runtime/install-service.md](runtime/install-service.md) | install 流程：GitHub org 找 template→WorkServiceTemplate→询问→安装 |
+| [runtime/agent-pool-machine.md](runtime/agent-pool-machine.md) | agent_pool 机器与双 dsh profile 分工（core-system 自举 / kube-inner 接入） |
 
 ## 其他
 
@@ -28,6 +31,16 @@
 - [layout.md](layout.md)：目录即对象规范（文档库物理布局）
 - [feasibility.md](feasibility.md)：可行性报告（含 onedev / NAS+OSS / dsh / sqlite 专项，R1.6 指定放本仓）
 - [examples/](examples/)：developer-system 走查示例
+
+## MVP：dsh-core-agent（第一版可运行形态）
+
+第一版最小自循环，跑在 inner-service（10.10.32.12，`dsh-core-agent.service.code27.cn`）：
+
+| 文档 | 内容 |
+|---|---|
+| [mvp/design.md](mvp/design.md) | 支持生成 Goal 的最小自循环设计（Goal 生成三来源+四规则、core-loop-mvp 态机、M1–M5 验收） |
+| [mvp/architecture.md](mvp/architecture.md) | 架构：dsh 宿主+core plugin 拓扑、部署、目录、tick 数据流、LLM、Console API |
+| [mvp/scheme.yaml](mvp/scheme.yaml) | 实现侧 scheme 子集：dsh-core-agent 装载并自检的类型注册（core/scheme.yaml 的可运行裁剪） |
 
 ## 本仓自身的规矩
 
