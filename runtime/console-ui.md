@@ -27,7 +27,7 @@
 监控、状态、数据事件的流式聚合视图：
 
 ```
-[对象/Selector 过滤条]
+[对象/Kind/scope 过滤条]      # v0.11 A47：无 selector，按对象与作用域过滤
 时间线（三泳道可混排）:
   Event 流      ExternalChanged / MetricThreshold / ApprovalNeeded / Install...
   状态变迁      phase/conditions 跳变（含 reason）
