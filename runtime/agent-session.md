@@ -33,7 +33,11 @@ systems/<s>/instances/<i>/docs/
 - 上下文：子 agent 不继承父会话内存；靠 PlanDoc/SessionLog/引用的 ConnectorOps 描述环境与工具。
 - 权限：父权限裁剪（只减不增）；直控三原语（dispatch/interrupt/query）全程 ops DB 留痕。
 
-## 4. 可行性
+## 4. Skill 缓存（v0.6，A38）
+
+Agent 会话的工具上下文 = Provider.llmPrompt（出厂说明书）+ **Skill**（工具使用处的缓存：注入提示+成功调用示例）。Session 成功调用后自动沉淀 Skill（阈值见 open-questions）；下次同类任务按需注入，不必重学。规则：**Skill 是缓存不是真相**——与 Provider 契约冲突即失效；provider 版本变更默认作废；示例脱敏。console 资源树把 Skill 列为一类节点。
+
+## 5. 可行性
 
 | 风险 | 等级 | 缓解 |
 |---|---|---|
