@@ -13,7 +13,7 @@ spec:
   connectors:
     - {type: gitlab-driver, version: v1.2}
   endpoint: {ref: ref/gitlab-prod-endpoint}
-  credentials: [credential/gitlab-robot]
+  auth: {provider: provider/gitlab-robot}   # v0.8 A40
 
 status:        # Connector watch + 探测回写
   observedGeneration: 4

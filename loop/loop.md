@@ -1,6 +1,6 @@
-# Loop 管线设计
+# Loop 管线设计（= 内置 core-loop Workflow，v0.8）
 
-> 概念定义见 [concepts/loop.md](../concepts/loop.md)；本文件是完整管线：原稿管线逐句映射 + 状态机 + 异常路径 + 上下文装配。
+> **v0.8 起 Loop 已并入 Workflow（A41）**：本文件描述的就是内置 `core-loop` workflow 的管线细节（概念全文见 core_system/concepts/workflow.md）。Loop=带触发规则的 Workflow 实例；下文"Loop 引擎"即 core plugin 内的 Workflow 引擎。
 
 ## 1. 原稿管线 → 本设计映射
 

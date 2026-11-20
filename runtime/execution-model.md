@@ -62,7 +62,7 @@ schedules:
 
 ## 4. 与 Loop 的关系
 
-Loop 管"何时对账"，TaskScheme 管"任务怎么跑"。Loop 的 Plan/Execute 阶段优先派发 TaskScheme；Agent 层只在无匹配时兜底。见 loop/loop.md §2 状态机中 Plan/Execute 的实现注记。
+Workflow（v0.8 吸收 Loop，A41）管"何时对账+整个循环"，TaskScheme 管"任务怎么跑"。Workflow 的 Plan/Execute 相位优先派发 TaskScheme；Agent 层只在无匹配时兜底。见 loop/loop.md（=core-loop 管线）。
 
 ## 5. 可行性
 

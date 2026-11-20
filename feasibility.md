@@ -136,6 +136,18 @@
 
 **结论：初判可行。接入前 builtin 先行，不阻塞任何主线；评估项已列 open-questions（含 authentic/authentik 名称确认）。**
 
+## 14. Workflow 跨权限复杂度（v0.8，A41；R7 指定完整分析）
+
+完整分析在 core_system/concepts/workflow.md §7。结论摘要：复杂度在权限校验完备性而非相位机；五穿越点（事件读/文档读/计划/执行/回写）中执行是核心风险；三出路（权限齐备/跨系统提案/审批提升）+ 委派只减不增不变量。分阶段：v1 出路 1+2（低风险，不阻塞首圈循环）、v2 审批提升全量、v3 委派矩阵。**评级：⚠️ 高复杂度可行。**
+
+## 15. v0.8 其余增补
+
+| 项 | 评级 | 说明 |
+|---|---|---|
+| Provider 吸收 secret（A40） | ✅ | 簿记简化；明文扫描/轮换规则并入不变 |
+| Event Level 化（A42） | ✅ | 标准日志语义；fatal→Notification 必达 |
+| Loop 并入 Workflow（A41） | ✅ | 概念数 -1；core-loop 即原 Loop 管线（loop/loop.md） |
+
 ## 12. 更新后的落地顺序（覆盖 §4，含 v0.2）
 
 1. workservice 骨架 → igniter+cored 最小可跑（git 后端+ops DB）

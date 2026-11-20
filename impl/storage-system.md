@@ -28,6 +28,8 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-storage-system}]
 | `nas-driver` | snapshot/verify/quota | ops DB 快照（sqlite 文件级）、LFS 对象同步；NFS 不可达→condition Backup=False→Event(warning) |
 | `oss-driver` | put/get/head/lifecycle | 产物与镜像；digest 强校验；分段上传大镜像 |
 
+（v0.8：驱动鉴权一律走 Provider.auth.secret，Credential 概念已删 A40）
+
 ## 3. guarantees（怎么保障 Desc 的 acceptance）
 
 - A1（10min 备份）：TaskScheme `sync`（cron */10）→ push NAS + 校验 fsck；延迟指标进 MetricsInfo。
