@@ -1,0 +1,35 @@
+# core_system_instance — ServiceInstance 侧（实现形式）
+
+> 本仓是 [core_system](https://github.com/friddle-self-recursive-agent/core_system)（根 ServiceDesc）的 **ServiceInstance**：回答"Desc 说的每一条，我具体怎么实现、怎么保障"，以及大部分设计文档与可行性报告（R1.1、R1.6）。代码在 [core_system_workservice](https://github.com/friddle-self-recursive-agent/core_system_workservice)。
+
+## 对应关系（ImplDoc 视角）
+
+| Desc（core_system 仓） | 本仓 ImplDoc | 代码 |
+|---|---|---|
+| systems/builtin/self-recursive-core | [impl/self-recursive-core.md](impl/self-recursive-core.md) | workservice: cmd/cored, cmd/igniter |
+| systems/builtin/developer-system | [impl/developer-system.md](impl/developer-system.md)（**首个设计对象**：如何利用 onedev/如何开发/如何满足循环） | workservice: connectors/onedev-driver |
+| systems/builtin/deploy-system | [impl/deploy-system.md](impl/deploy-system.md) | workservice: plugins/exec-local |
+| systems/builtin/storage-system | [impl/storage-system.md](impl/storage-system.md)（NAS+OSS） | workservice: connectors/gitfs, nas, oss |
+
+## 运行时设计（R1.2 / R1.4 / R1.5）
+
+| 文档 | 内容 |
+|---|---|
+| [runtime/execution-model.md](runtime/execution-model.md) | 四层执行：用户意图→Agent→Scheme→代码；基础调度可配置 |
+| [runtime/dsh-plugin.md](runtime/dsh-plugin.md) | dsh 基础 agent、root 直控通道、Plugin 首批四件 |
+| [runtime/console-ui.md](runtime/console-ui.md) | 总控 Plugin 界面：资源视角第一层 / 信息流视角第二层 |
+| [runtime/ops-log.md](runtime/ops-log.md) | git 管文档 + DB 管 ops 历史操作日志（双轨与对账） |
+| [runtime/install-service.md](runtime/install-service.md) | install 流程：GitHub org 找 template→WorkServiceTemplate→询问→安装 |
+
+## 其他
+
+- [loop/](loop/)：Loop 管线状态机 + 自举（bootstrap）设计
+- [layout.md](layout.md)：目录即对象规范（文档库物理布局）
+- [feasibility.md](feasibility.md)：可行性报告（含 onedev / NAS+OSS / dsh / sqlite 专项，R1.6 指定放本仓）
+- [examples/](examples/)：developer-system 走查示例
+
+## 本仓自身的规矩
+
+- 本仓只放"实现形式"（How + 证据 + 可行性）；**意图变更回 core_system 仓改 Desc**（P6：不允许在 Instance 侧私改意图）。
+- 每份 ImplDoc 有 mapping 段（Desc 条款→实现），Desc 变更后由 Loop 对账此处是否过期（文档过期=drift）。
+- instance.yaml 汇聚 Status（机器写区，见下）。

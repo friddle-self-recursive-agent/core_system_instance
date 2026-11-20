@@ -1,0 +1,34 @@
+---
+name: core_system/default
+docType: ServiceInstance
+scope: core_system/default
+ownerRefs: [{kind: ServiceDesc, name: core_system}]
+labels: {tier: instance}
+---
+# ServiceInstance: core_system/default
+
+spec: {}          # v1 实例无独立 Spec，跟随 owner Desc
+
+agentRefs: [agent/builtinRoot, agent/dsh]
+docs:
+  impl:
+    self-recursive-core: impl/self-recursive-core.md
+    developer-system: impl/developer-system.md
+    deploy-system: impl/deploy-system.md
+    storage-system: impl/storage-system.md
+  verify: 各 impl 文档的 guarantees 段
+metricsInfo:
+  store: tsdb/prometheus-main     # 落地后由 builtin storage/deploy 提供
+  queries:
+    loopRps: sum(loop_reconciles_total[5m])
+    driftOpen: sum(drift_open)
+
+status:        # Loop 引擎回写区（人写无效）
+  observedGeneration: 1
+  phase: Drifting
+  conditions:
+    - {type: Ready, status: "False", reason: bootstrap-not-run}
+    - {type: DocsPresent, status: "True"}
+    - {type: CodeSkeleton, status: "False", reason: workservice-skeleton-only}
+  drift:
+    summary: "设计已齐，代码骨架未实现；Igniter 未冷启动"

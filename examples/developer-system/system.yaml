@@ -1,0 +1,18 @@
+---
+name: developer-system
+docType: ServiceDesc
+scope: global
+labels: {domain: devtools}
+finalizers: [core/wipe-workservice-side-effects]
+---
+# developer-system 系统声明（示例）
+
+spec:
+  goalRef: goal.md
+  descRef: desc.md
+  workserviceRefs:      # 按能力引用，不点名实现（servicedesc.md 规则2）
+    - {capabilities: scm}
+    - {capabilities: ci-execute}
+  instances:
+    - name: ci
+      agentRefs: [agent/ci-repair-agent]

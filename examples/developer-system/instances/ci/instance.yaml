@@ -1,0 +1,27 @@
+---
+name: developer-system/ci
+docType: ServiceInstance
+scope: developer-system/ci
+ownerRefs: [{kind: ServiceDesc, name: developer-system}]
+---
+# ServiceInstance: ci（示例）
+
+agentRefs: [agent/ci-repair-agent]
+docs:
+  impl: docs/impl.md
+  verify: docs/verify.md
+metricsInfo:
+  store: tsdb/prometheus-main
+  queries:
+    pickupP95: histogram_quantile(0.95, sum(rate(ci_pickup_seconds_bucket[1h])) by (le))
+    runners: sum(ci_runners_active)
+
+status:            # 以下全部由 Loop 回写（人写 Policy 拒绝）
+  observedGeneration: 12
+  phase: InSync
+  conditions:
+    - {type: Ready, status: "True", reason: all-acceptance-met}
+    - {type: RulesHeld, status: "True", reason: R-01/R-07-ok}
+    - {type: MetricsFlow, status: "True"}
+  drift:
+    summary: ""

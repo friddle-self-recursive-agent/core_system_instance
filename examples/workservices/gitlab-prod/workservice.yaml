@@ -1,0 +1,22 @@
+---
+name: gitlab-prod
+docType: WorkService
+scope: global
+labels: {category: scm, "core/capabilities": scm,ci-trigger,mr-review}
+finalizers: [core/revoke-credentials, core/wipe-workservice-side-effects]
+---
+# WorkService: gitlab-prod（示例）
+
+spec:
+  descRef: desc.md
+  capabilities: [scm, ci-trigger, mr-review]
+  connectors:
+    - {type: gitlab-driver, version: v1.2}
+  endpoint: {ref: ref/gitlab-prod-endpoint}
+  credentials: [credential/gitlab-robot]
+
+status:        # Connector watch + 探测回写
+  observedGeneration: 4
+  conditions:
+    - {type: Reachable, status: "True"}
+    - {type: VersionSupported, status: "True", reason: "17.5 in [16,18)"}
