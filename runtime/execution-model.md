@@ -54,6 +54,12 @@ schedules:
   - {task: report, cron: "0 9 * * 1", params: {window: 7d}}
 ```
 
+## 3.1 Workflow 与 TaskScheme 的分工（v0.3，A26）
+
+- **Workflow 管相位**：Analyzing→Planning→…→Reporting 的态机（builtin default-task/simple-shot）；ConnectorOps 必绑一个。
+- **TaskScheme 管步骤**：Executing 相位内跑的确定性步骤图。
+- Agent 任务态机=default-task（不再单独定义）；每次运转落 SessionLog（见 runtime/agent-session.md）。
+
 ## 4. 与 Loop 的关系
 
 Loop 管"何时对账"，TaskScheme 管"任务怎么跑"。Loop 的 Plan/Execute 阶段优先派发 TaskScheme；Agent 层只在无匹配时兜底。见 loop/loop.md §2 状态机中 Plan/Execute 的实现注记。

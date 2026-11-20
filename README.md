@@ -18,6 +18,7 @@
 | [runtime/execution-model.md](runtime/execution-model.md) | 四层执行：用户意图→Agent→Scheme→代码；基础调度可配置 |
 | [runtime/dsh-plugin.md](runtime/dsh-plugin.md) | dsh 基础 agent、root 直控通道、Plugin 首批四件 |
 | [runtime/console-ui.md](runtime/console-ui.md) | 总控 Plugin 界面：资源视角第一层 / 信息流视角第二层 |
+| [runtime/agent-session.md](runtime/agent-session.md) | Agent Plan/Session 记录制（PlanDoc/SessionLog）+ AUTOLEVEL 默认（R2） |
 | [runtime/ops-log.md](runtime/ops-log.md) | git 管文档 + DB 管 ops 历史操作日志（双轨与对账） |
 | [runtime/install-service.md](runtime/install-service.md) | install 流程：GitHub org 找 template→WorkServiceTemplate→询问→安装 |
 
