@@ -1,6 +1,6 @@
-# 运行时设计 2：dsh 基座与 Plugin（R1.2.1 / R1.5.1）
+# 运行时设计 2：dsh 运行时（实现说明，非系统概念）
 
-> 概念依据：core_system/concepts/plugin.md。
+> **v0.9（A43）：系统本身没有 Plugin 概念**——本文件是"我们如何用 dsh（deepseek 插件机制的外部运行时）实现系统"的说明。core 以 dsh plugin 实现（A39）。
 
 ## 1. 拓扑
 
@@ -29,7 +29,7 @@ dsh agent（每系统/实例一个基座）◀┘
 | `exec-local` | 各子 | 本机命令执行（build/install 的执行手） | 命令白名单模板 |
 | `reporter` | 全部 | Status/Event/DriftReport 上报 | 写：status 区 |
 
-插件契约五方法（init/onEvent/dispatch/report/shutdown）见 concepts/plugin.md §1。
+dsh 侧的模块（core/console/exec-local/reporter 等）按 dsh 自身的插件机制组织，契约以 dsh 生态为准——不是我们系统的概念。
 
 ## 3. 交互序列（一次派发）
 

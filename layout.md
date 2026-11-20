@@ -20,7 +20,8 @@
 │   │   └── src/                         # 驱动代码（A16）
 │   ├── refs/<ref-name>.yaml
 │   ├── binds/<bind-name>.yaml
-│   ├── policies/<policy-name>.yaml
+│   ├── roles/<role-name>.yaml           # v0.9 权限系统（A45）
+│   ├── groups/<group-name>.yaml
 │   └── credentials/<credential-name>.yaml
 ├── systems/<system-name>/               # ServiceDesc（一系统一目录）
 │   ├── system.yaml                      # 元数据对象（servicedesc.md §3）

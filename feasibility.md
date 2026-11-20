@@ -148,6 +148,14 @@
 | Event Level 化（A42） | ✅ | 标准日志语义；fatal→Notification 必达 |
 | Loop 并入 Workflow（A41） | ✅ | 概念数 -1；core-loop 即原 Loop 管线（loop/loop.md） |
 
+## 16. v0.9 增补（R8）
+
+| 项 | 评级 | 说明 |
+|---|---|---|
+| 权限系统（A45） | ✅ | 标准 RBAC 骨架（role/group/user + scope 域）+ 灵活判定层；复杂度与原 Policy 相当、边界更清 |
+| Plugin 概念删除（A43） | ✅ | 减一个概念；dsh=外部依赖（deepseek 运行时），升级节奏进 open-questions |
+| 跨系统 B 侧裁判（A45） | ⚠️ 中 | 判定留痕是硬要求；v1 建议默认判定方=role 权限表（最可预测），agent/上级 agent 判定按系统逐个放开 |
+
 ## 12. 更新后的落地顺序（覆盖 §4，含 v0.2）
 
 1. workservice 骨架 → igniter+cored 最小可跑（git 后端+ops DB）
