@@ -13,7 +13,7 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-deploy-system}]
 | 当前机器执行器 | dsh `exec-local` 插件：命令白名单模板 + 工作目录隔离（每安装一个独立 workdir） |
 | install 流程 | runtime/install-service.md 全文；TaskScheme `install` 模板渲染 WorkServiceTemplate.install 段 |
 | 三段 undo | 镜像（删）/配置（还原 workdir 快照）/服务（stop+disable）；actionLog 落盘可续跑 |
-| 纳管登记 | postInstall → 经 Apply 建 WorkService 对象 + finalizer 自动注入（finalizer.md 规则1） |
+| 纳管登记 | postInstall → 经 Apply 建 WorkService 六面体骨架（A53）；外部清理职责写入 tools 成对 cleanup op（A51） |
 
 ## guarantees
 

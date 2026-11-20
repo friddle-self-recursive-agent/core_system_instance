@@ -3,7 +3,6 @@ name: developer-system
 docType: ServiceDesc
 scope: global
 labels: {domain: devtools}
-finalizers: [core/wipe-workservice-side-effects]
 ---
 # developer-system 系统声明（示例）
 

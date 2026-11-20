@@ -3,7 +3,6 @@ name: gitlab-prod
 docType: WorkService
 scope: global
 labels: {category: scm, "core/capabilities": scm,ci-trigger,mr-review}
-finalizers: [core/revoke-credentials, core/wipe-workservice-side-effects]
 ---
 # WorkService: gitlab-prod（示例）
 
