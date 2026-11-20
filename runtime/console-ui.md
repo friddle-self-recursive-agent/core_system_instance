@@ -1,6 +1,6 @@
 # 运行时设计 3：总控 Plugin 界面（R1.5.1 / R1.5.2）
 
-> 宿主：dsh 的 console 插件（R1.5.1"dsh 后有总控 Plugin 界面"）。形态 v1=TUI，v2=Web（同一插件双渲染）。
+> 宿主：dsh 的 console 插件（R1.5.1"dsh 后有总控 Plugin 界面"）。**v0.7 起 console 即 Core 的默认界面**（A39）；单独的 Core 界面暂缓，做通畅后再做。形态 v1=TUI，v2=Web（同一插件双渲染）。
 
 ## 第一层：资源视角（R1.5.1）
 

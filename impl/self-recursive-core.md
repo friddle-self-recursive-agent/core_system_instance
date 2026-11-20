@@ -17,7 +17,7 @@ ownerRefs: [{kind: ServiceDesc, name: self-recursive-core}]
 | Policy | 规则引擎（声明序求值）+3 条硬规则 |
 | ops DB | SQLite WAL（runtime/ops-log.md §2 六表） |
 
-进程结构：`cored`（常驻）+ `igniter`（冷启动三步：装载 core/ → 起 cored → 消失；loop/bootstrap.md）。
+进程结构（v0.7，A39）：**默认 dsh plugin 承接**——core plugin（Apply/Event 分发/Loop 引擎/Scheme/Policy/ops DB）跑在 dsh 宿主内；`igniter` 冷启动三步改为：装载 core/ → 起 dsh 宿主（载入 core plugin）→ 消失；`cored` 保留为冷启动入口与调试用途。
 
 ## guarantees（怎么保障）
 

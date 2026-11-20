@@ -23,6 +23,7 @@ dsh agent（每系统/实例一个基座）◀┘
 
 | 插件 | 住哪 | 职责 | 权限 |
 |---|---|---|---|
+| `core` | dsh 宿主 | **承接 Core 控制面**（A39）：Apply/Event 分发/Loop 引擎/Scheme/Policy/ops DB；界面=console | 文档面读写（唯一写路径） |
 | `control` | root | 直控通道三原语、子 agent 生死（HeartbeatLost→重启） | 写：agent 任务区 |
 | `console` | root | 总控界面（见 console-ui.md）：资源树/信息流/对象详情 | 只读全库 + 写审批动作 |
 | `exec-local` | 各子 | 本机命令执行（build/install 的执行手） | 命令白名单模板 |
