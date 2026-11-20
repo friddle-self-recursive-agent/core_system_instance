@@ -21,7 +21,7 @@ systems/<s>/instances/<i>/docs/
 
 | 级别 | 运行时行为 |
 |---|---|
-| `ask` | Planning 完成后挂起 → control plugin 发 ApprovalNeeded → 上级 agent 或 Bind 人批/驳回（驳回也产 SessionLog） |
+| `ask` | Planning 完成后挂起 → control plugin 发 ApprovalNeeded → 上级 agent（默认上溯 root）批/驳回；对象有 Bind 时 role 持有者同达（双通道，A35；驳回也产 SessionLog） |
 | `auto` | 白名单/Scheme/预算内直跑；Policy 高危仍拦（Policy 与 AUTOLEVEL 正交：级别管"问不问"，Policy 管"许不许"） |
 | `all` | 不询问；仅显式授权 + Policy 放行 |
 

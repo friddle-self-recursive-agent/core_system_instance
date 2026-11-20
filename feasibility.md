@@ -125,6 +125,17 @@
 | 跨仓一致性（Desc↔Instance↔代码） | ⚠️ 中 | Loop 对账天然覆盖（文档过期=drift）；仓间引用全用 `system://` URI |
 | 私有仓可见性 | ✅ | 三仓同 org 同权限；模板仓将来单独公开（不影响三仓私有） |
 
+## 13. 用户系统与 IdP 接入（v0.4，A34；R3 指定"未来做可行性的时候看"）
+
+| 项 | 评级 | 说明 |
+|---|---|---|
+| builtin 本地用户表 | ✅ | 一张表零依赖；对账探针管 Bind 漂移 |
+| authentik 接入：OIDC/LDAP 协议面 | ✅ 初判 | 标准协议；WorkService(authentik) + ConnectorProvider(oidc/ldap) + Provider(账号包) 形态天然适配，零新机制 |
+| authentik 接入：本地表转投影 | ⚠️ 中 | 权威转移后回退路径要演练（Goal.A4）；syncedFrom 标记+对账 |
+| Notification contact 联动 | ✅ | role 持有者→contact 解析，IM 不可达降级 email/webhook |
+
+**结论：初判可行。接入前 builtin 先行，不阻塞任何主线；评估项已列 open-questions（含 authentic/authentik 名称确认）。**
+
 ## 12. 更新后的落地顺序（覆盖 §4，含 v0.2）
 
 1. workservice 骨架 → igniter+cored 最小可跑（git 后端+ops DB）
