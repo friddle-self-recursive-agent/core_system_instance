@@ -25,7 +25,7 @@ systems/<s>/instances/<i>/docs/
 | `auto` | 白名单/Scheme/预算内直跑；Policy 高危仍拦（Policy 与 AUTOLEVEL 正交：级别管"问不问"，Policy 管"许不许"） |
 | `all` | 不询问；仅显式授权 + Policy 放行 |
 
-默认（scheme.yaml runtime.autoLevels）：**RootAgent=ask，ServiceAgent=auto**。升级路径：模型变强 → Desc 调 autoLevel（Apply+Policy）→ 自治空间变大，机制不变（P8）。
+默认（scheme.yaml runtime.autoLevels）：**RootAgent=ask，ServiceAgent=auto**——均为默认值；**RootAgent 与普通 Agent 同一 AUTOLEVEL 机制，autoLevel 均可配置，Root 也可 auto/all**（A64，all 需显式授权）。升级路径：模型变强 → Desc 调 autoLevel（Apply+Policy）→ 自治空间变大，机制不变（P8）。
 
 ## 3. 子 agent（机器级进程）
 

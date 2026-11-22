@@ -15,7 +15,7 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-self-recursive-core}]
 |---|---|
 | 事件机制（log 式五级 Level，dsh 队列） | concepts/event.md |
 | core-loop Workflow（触发→整理→相位态机→回归） | concepts/workflow.md |
-| Agent 自治分级（RootAgent=ask / ServiceAgent=auto） | concepts/agent.md §AUTOLEVEL |
+| Agent 自治分级（默认 RootAgent=ask / ServiceAgent=auto；RootAgent 同机制可配置 auto/all，A64） | concepts/agent.md §AUTOLEVEL |
 | 提案制（不允许私改 Spec，生成 Proposal 走 Apply） | principles P6 / concepts/apply.md |
 | 审批相位（AwaitingApproval，挂起-恢复） | concepts/workflow.md §7 |
 | 通知（ApprovalNeeded 默认接通知实例） | concepts/notification.md |
@@ -46,7 +46,7 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-self-recursive-core}]
               └────────────────────────────────┼────┘
                                                ▼ Escalate（上溯 root，双通道通知）
               ┌──────────────────────────────────────────┐
-              │ RootAgent（ask）                           │ ←第二响应
+              │ RootAgent（默认 ask，可配置）                │ ←第二响应
               │  生成 Proposal（Spec 变更以 Apply 进待审区） │
               │  附 DriftReport 证据 + 修复计划引用          │
               └──────────────┬───────────────────────────┘
@@ -82,7 +82,7 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-self-recursive-core}]
 |---|---|---|---|---|
 | 1 | 错误报错产生 | Event + WorkService 观测面 watch op | 无新概念；3 个 watch 源 ConnectorOps | 反馈中心/工单/监控栈的 API 轮询 |
 | 2 | 事件到 service agent | Scheme dispatch 表 + Agent AUTOLEVEL | ServiceAgent 若干（按业务域） | dsh profile 会话（auto） |
-| 3 | 上溯 root agent | Escalate 出口（默认上溯 root；Bind role 双通道） | RootAgent（ask） | dsh profile 会话（ask） |
+| 3 | 上溯 root agent | Escalate 出口（默认上溯 root；Bind role 双通道） | RootAgent（默认 ask） | dsh profile 会话 |
 | 4 | 生成提议 | Proposal = Spec 变更的 Apply 进待审区（P6，非新概念） | Proposal 文档（含证据引用） | console 页面呈现 diff |
 | 5 | 批准 | AwaitingApproval 相位 + Notification(ApprovalNeeded) + 权限系统裁决 | Role（审批角色） | dsh plugin 审批页面 |
 | 6 | onedev pull | developer-system：onedev-driver.checkout（同 ref 幂等） | ConnectorOps 授权 | OneDev 修复分支 |

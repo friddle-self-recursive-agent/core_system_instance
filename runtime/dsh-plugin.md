@@ -17,7 +17,7 @@ dsh agent（每系统/实例一个基座）◀┘
 - **子 agent 是机器 instance 级独立进程**（A31，R2 明确"不要管浪费内存"）：spawn 独立进程，**不是运行时内部的 subagent**——崩溃隔离、可直控、无共享状态。**子 agent 运行时不限于 dsh**（A60）：自写 agent、opencode 等任何 agent 运行时都可以；用什么运行时（工具/环境/通道账号）在其引用的 **ConnectorOps 中描述或调用**——spawn 子 agent 与调用外部工具同一语义。简单任务派发走 simple-shot Workflow。
 - **root 直控**：root 的 control plugin 对子 agent 有 dispatch（派发）/interrupt（中断）/query（查询）三原语；子 agent 之间不互控。直控全程写 ops 日志（审计），高危直控过 Policy。
 - **root 的权限也是统一的（A63）**：builtinRoot **有权限标志**——挂内置 role `global/admin`（最高权限，默认内置，绑定不可更改：不可删/不可换绑/不可降权），一切动作走统一权限管理，无任何旁路。下表"权限"列是该 role 在各插件上的授权投影，不是独立权限面。
-- **AUTOLEVEL 默认（A30）**：RootAgent=ask（无上级→问 Bind 的人）、ServiceAgent=auto（Scheme+预算内自动）；all 需显式授权。级别写在 Agent.spec.autoLevel，变更走 Apply+Policy。
+- **AUTOLEVEL 默认（A30/A64）**：默认 RootAgent=ask（ask 时无上级→问 Bind 的人）、ServiceAgent=auto；**RootAgent 与普通 Agent 同一机制，autoLevel 均可配置——Root 也可 auto/all**（all 需显式授权）。级别写在 Agent.spec.autoLevel，变更走 Apply+Policy。
 - **文档按需加载**：Agent 自己按需加载文档，由 dsh 本次会话自实现（docsPolicy.onDemand）；Loop 只注入 L0 最低必载（Goal.acceptance+Rule 摘要）。SessionLog 记录 docsLoaded，可审计"读了什么"。
 
 ## 2. 首批四插件
