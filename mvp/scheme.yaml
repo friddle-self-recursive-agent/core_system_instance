@@ -53,7 +53,7 @@ spec:
       spec:
         enabled: "?bool (=true)"       # A61：规则开关（MVP 恒 true，Apply 可切换）
         services: "{involved: [core_system/default], mode: act}"
-        llm: "{provider: glm-coding, model: glm-5.3-flash}"
+        llm: "{provider: llm-main, model: flash-tier}"   # 任一 provider 的 flash 档（P8；个人选型不入公开仓）
         triggers: "{events: [DocApplied], timer: {resync: 5m}}"   # TickDue 未发射：timer 直接触发不经事件队列（审计修正）
         ingest: "{dedup: {window: 60s}, groupMax: 10}"
         phases: "[Seed, Analyze, Generate, Plan, Execute, Verify, Report, CoolDown]"

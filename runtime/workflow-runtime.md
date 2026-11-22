@@ -165,7 +165,18 @@ Workflow spec（新入库/变更）
 10. CoolDown → Idle。观测面：devtools 域 drift-1，趋势可查。
 ```
 
-## 10. 可行性
+## 10. loop 版本记录（验收锚点）
+
+每次 workflow loop 执行到 Report 相位产出一条**带版本**的执行记录：
+
+- 版本号：`loop-<seq>`，seq 单调递增、持久于 ops DB（Report 相位分配，重启不重置）；
+- 内容：触发源 / 相位轨迹 / 关键产物 digest / 验收探针结果（Goal.acceptance 复测）/ 偏差清单；
+- 去向：ops DB 相位流水 + `acceptance/loop-<seq>.md`（**运行时临时文档，gitignore，永不提交**——core_design rule.md R-PUB-3）；
+- 语义：版本记录是对账锚点——按版本可复查"这轮改了什么、验了什么、过没过"；收敛判定（连续 N 轮无新偏差）读版本序列。
+
+验收与验证流程全文（机械/语义/回归三层、报告模板、设计偏离回写）见 [acceptance.md](acceptance.md)。
+
+## 11. 可行性
 
 | 风险 | 等级 | 说明 | 缓解 |
 |---|---|---|---|

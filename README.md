@@ -42,7 +42,7 @@
 
 ## MVP：dsh-core-agent（第一版可运行形态）
 
-第一版最小自循环，跑在 inner-service（10.10.32.12，`dsh-core-agent.service.code27.cn`）：
+第一版最小自循环，跑在一台内网机器（内网 DNS `<内网域名>`）：
 
 | 文档 | 内容 |
 |---|---|

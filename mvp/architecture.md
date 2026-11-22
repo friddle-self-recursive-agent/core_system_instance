@@ -22,21 +22,21 @@ node ≥24.9 ── dsh CLI（宿主 @deepseek-ai/dsh，profile: core）
 
 对照 runtime/dsh-plugin.md 完整拓扑的裁剪：root/子 agent 双头指挥、control/console/exec-local/reporter 四插件分工、直控通道全部不做——MVP 只有 core 一个装载单元，Agent=core plugin 内的循环引擎本身。插件契约遵循 dsh 生态（`apply(ctx, config)` + `inject: ['tools']`），非本系统概念。
 
-## 2. 部署（机器 inner-service / 10.10.32.12）
+## 2. 部署（一台内网 Ubuntu 机器）
 
 | 项 | 值 |
 |---|---|
 | 系统 | Ubuntu（PVE 环境），x86_64，root 运行 |
 | Node | ≥24.9（dsh engines 硬要求）；装于 /usr/local/node24，不覆盖系统 node18 |
 | npm 包 | `dsh-core-agent`，`bin: dsh-core-agent`（`dsh-core-agent start`） |
-| 服务名 | `dsh-core-agent.service.code27.cn` → 本机（DNS 已注册）；console HTTP 监听 0.0.0.0:8090，nginx 把域名 80 转发到 8090；dsh web（宿主自带 SPA）在 127.0.0.1:18443 |
+| 服务名 | `<内网域名>` → 本机（内网 DNS 已注册）；console HTTP 监听 0.0.0.0:8090，nginx 把域名 80 转发到 8090；dsh web（宿主自带 SPA）在 127.0.0.1:18443 |
 | 常驻 | systemd unit `dsh-core-agent.service`，Restart=always |
-| 工作目录 | /root/dsh-core-agent/ |
+| 工作目录 | `<部署根目录>/dsh-core-agent/` |
 
 ## 3. 目录布局（目录即对象，layout.md 子集）
 
 ```
-/root/dsh-core-agent/
+<部署根目录>/dsh-core-agent/
 ├── package.json                # dsh-core-agent
 ├── lib/                        # 插件代码
 │   ├── index.js                # apply(ctx)：装载 store/apply/workflow/generator/probes/console
@@ -86,7 +86,7 @@ timer(resync) 或 Apply 触发
 
 ## 5. LLM
 
-MVP 决策：generator/plan **直连 provider 的 openai-completions HTTP**（GLM coding plan，`baseURL=https://open.bigmodel.cn/api/coding/paas/v4`，模型 glm-5.3-flash），不耦合 dsh-llm 的 session 消息 API——那是 rc 期接口，MVP 不押注；宿主 profile 里 dsh-base 的 llm/agent/session 栈照常装载，供 dsh 自身 Web 控制台使用。key 由 systemd `EnvironmentFile=/root/dsh-core-agent/.env` 注入（`GLM_CODING_API_KEY`，0600，永不入库）。LLM 消费点只有两个：generator（Goal 提案）与 Plan（PlanDoc 步骤）。两者都要求 JSON/受控格式输出：不合法 → 丢弃重试 ≤2 → Escalated。模型选型：任一可用 provider 的 flash 档即可，机制不假设模型能力（P8）。
+MVP 决策：generator/plan **直连 provider 的 openai-completions HTTP**（任一可用 LLM provider 的 flash 档；具体 baseURL/模型/env 变量名等个人选型记入部署侧决策文件，不入公开仓——rule.md R-PUB），不耦合 dsh-llm 的 session 消息 API——那是 rc 期接口，MVP 不押注；宿主 profile 里 dsh-base 的 llm/agent/session 栈照常装载，供 dsh 自身 Web 控制台使用。key 由 systemd `EnvironmentFile=<部署根目录>/dsh-core-agent/.env` 注入（`<PROVIDER>_API_KEY`，0600，永不入库）。LLM 消费点只有两个：generator（Goal 提案）与 Plan（PlanDoc 步骤）。两者都要求 JSON/受控格式输出：不合法 → 丢弃重试 ≤2 → Escalated。模型选型：任一可用 provider 的 flash 档即可，机制不假设模型能力（P8）。
 
 ## 6. Console API
 

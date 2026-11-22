@@ -9,6 +9,7 @@ Event(push/需求) → Analyze → Gate（红线：test/lint 全绿才产物）
  → onedev-driver.checkout（pull，同 ref 幂等）
  → exec-local build+test → 产物 digest 入库（oss）
  → build-status 回写 → Verify 探针 → Status 追平 + Event(DriftFixed)
+ → Report：loop 版本记录 `loop-<seq>`（runtime/acceptance.md）→ acceptance/（gitignore，不入公开仓）
 失败：retry→backoff→escalate（root）
 ```
 

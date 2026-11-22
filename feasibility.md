@@ -210,8 +210,8 @@
 | 风险 | 实测 | 对策（已落地/计划） |
 |---|---|---|
 | 归档命名冲突 | done/ 曾按 current.md 覆盖→已完成清单残缺→生成器重复派生 | 按 `<name>.md` 归档（已修）；正式版 apply 查重含全部分区 |
-| 外部 LLM 网络瞬断频率 | 内网机器到 open.bigmodel.cn 偶发 fetch failed | 重试带 4s/10s 退避（已修）；Escalated 人 resolve 是正确出路不是缺陷 |
-| 推理模型 token 预算 | glm-5.3-flash 是推理模型，reasoning 先吃 max_tokens | maxTokens 预算按 reasoning 模型给足；flash 档够用（P8） |
+| 外部 LLM 网络瞬断频率 | 内网机器到外部 LLM provider 偶发 fetch failed | 重试带 4s/10s 退避（已修）；Escalated 人 resolve 是正确出路不是缺陷 |
+| 推理模型 token 预算 | 所选 flash 档是推理模型，reasoning 先吃 max_tokens | maxTokens 预算按 reasoning 模型给足；flash 档够用（P8） |
 | 危险意图白耗重试 | `rm -rf` 类 Goal 通过 Apply，3 轮后才 Escalated | exec 白名单校验前移进 Apply（已修，422 实测） |
 | 机器级子 agent 需求 | MVP 单进程够用；console 对话/多系统时才需要 | 按 runtime/cross-agent.md（ctx.agents 原生父子）走，无需 fork dsh |
 

@@ -9,7 +9,7 @@ labels: {tier: mvp}
 
 ## 1. 定位与 mapping
 
-core 的第一版可运行形态 = **dsh-core-agent**：跑在机器 inner-service（10.10.32.12，DNS `dsh-core-agent.service.code27.cn` 已指向本机）上的 dsh 宿主 + core plugin，npm 分发。目标只有一个——**跑通最小自循环**：
+core 的第一版可运行形态 = **dsh-core-agent**：跑在一台内网机器（内网 DNS `<内网域名>` 已指向本机）上的 dsh 宿主 + core plugin，npm 分发。目标只有一个——**跑通最小自循环**：
 
 ```
 Goal(种子) → 对账(acceptance probes 全量复测)
@@ -75,7 +75,7 @@ Goal(种子) → 对账(acceptance probes 全量复测)
 
 ## 4. 验收（本 MVP 自己的 acceptance，自指示范）
 
-- M1. `dsh-core-agent.service.code27.cn` 可达：`GET /api/status` 返回 200。
+- M1. `<内网域名>` 可达：`GET /api/status` 返回 200。
 - M2. 种子 Goal 一轮走通：Analyze→Execute→Verify→Status.conditions Ready=True，全程 SessionLog 留痕。
 - M3. 自生成：当前 Goal InSync 后，产出一个新 Goal 提案并通过 Apply 入库（frontmatter + probe 引用校验全过）。
 - M4. 非法 Goal 被拒：acceptance 无 probe 引用的 Apply 返回 422 且不入库。
