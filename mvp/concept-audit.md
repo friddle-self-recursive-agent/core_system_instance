@@ -45,7 +45,7 @@ labels: {tier: mvp}
 | docType | 必填段校验 | 写者纪律 | 实证 |
 |---|---|---|---|
 | Goal | ✅ intent+acceptance+probe 引用全查（422 实测×3：无 probe/危险 cmd/同名重复） | 人+generator 经 Apply | 5 个 Goal 全生命周期 current→done 归档 |
-| PlanDoc | ✅ intent/steps/budget | agent（每次 Plan 必落档） | plans/ 6 份，步骤带白名单前缀 |
+| PlanDoc | ✅ intent/steps | agent（每次 Plan 必落档） | plans/ 6 份，步骤带白名单前缀（budget 段为 MVP 本地保留；scheme R17 已删预算） |
 | SessionLog | ✅ phases/docsLoaded/outcome | agent（每 tick 一份） | sessions/ 32+ 份，含 probe 原始结果与 llmCalls |
 | DriftReport | ✅ drifts/actions | engine（Escalated 必产） | drift-*.md 2 份（LLM fetch failed 与 plan 无步骤各一） |
 
@@ -56,8 +56,8 @@ labels: {tier: mvp}
 | Level 五级 | ✅ | debug 只进内存；error/fatal 落死信可见（3 条 Escalated 实测在 deadletter.json） |
 | dedupKey | ✅ | 类型:键 60s 窗口；TickAnalyzed/InSyncReached 键含 tick 序号不被误吞 |
 | dispatch 死信兜底 | ✅ | unroutable → state/deadletter.json |
-| **TickDue 偏差（已修声明）** | ⚠️ | scheme 曾声明 TickDue 事件，实现里 timer 直接触发 tick 不经事件队列——**声明改为"未发射，timer 直触发"**，与实现一致 |
-| DocApplied no-op 不发（A32） | ❌ 后补 | MVP 无内容比对，每次 Apply 都发事件；内容级 no-op 检测后补 |
+| **定时巡检（TickDue）不进事件队列** | ⚠️ 裁剪 | **含义**：概念里"定时巡检到点"是事件来源之一（event.md 五来源，type=TickDue）；MVP 的 timer **没往事件队列发 TickDue，而是直接调 workflow tick**——少一跳但事件流里看不到定时轮。处置：mvp/scheme.yaml 如实改注"TickDue 未发射，timer 直触发"，保留注册；正式版要 tick 审计时再事件化 |
+| **DocApplied 事件口径（R17 修正）** | ⚠️ 裁剪 | **设计口径**：文档修改默认=Agent 代改代审，改动先进**草稿缓存**（不经 Apply、不发事件）；人确定后调 **apply 命令**落库——**apply 必发 DocApplied**（apply=确认动作，事件是回执）。MVP 无草稿层、直接 apply，每次发事件与"apply 必发"一致，不算偏差；后补的是**草稿缓存层**（空草稿拒绝也随草稿层做，不再做 apply 侧内容级 no-op 检测） |
 
 ## 5. 审计发现并已修复的缺陷（这正是审计的价值）
 

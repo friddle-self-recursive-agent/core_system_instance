@@ -93,8 +93,8 @@ spec:
     # 三、事件类型（A42 Level 子集）
     # ============================================================
   eventTypes:
-    - {type: TickDue,        source: timer,    defaultLevel: debug, dedup: "tick:<n>",            route: core-workflow-mvp, note: "未发射——timer 直接触发 tick，保留注册供正式版"}
-    - {type: DocApplied,     source: core,     defaultLevel: info,  dedup: "no-op 不发",          route: core-workflow-mvp, note: "MVP 每次都发；内容级 no-op 检测后补（A32）"}
+    - {type: TickDue,        source: timer,    defaultLevel: debug, dedup: "tick:<n>",            route: core-workflow-mvp, note: "未发射——timer 直接触发 tick（概念里定时巡检是事件来源之一，MVP 简化直调），保留注册供正式版事件化"}
+    - {type: DocApplied,     source: core,     defaultLevel: info,  dedup: "apply 落库必发",      route: core-workflow-mvp, note: "apply=人确认后的落库命令，必发事件；草稿缓存层（Agent 代改代审→草稿→人 apply）后补"}
     - {type: DriftDetected,  source: engine,   defaultLevel: warn,  dedup: "<goal>:<probe>",      route: core-workflow-mvp}
     - {type: GoalProposed,   source: engine,   defaultLevel: info,  dedup: "<proposal>",          route: core-workflow-mvp}
     - {type: DriftFixed,     source: engine,   defaultLevel: info,  dedup: "<goal>:<tick>",       route: console}
