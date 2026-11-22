@@ -7,10 +7,12 @@
 | 项 | 契约 |
 |---|---|
 | scheme 源 | `--scheme <path>`，缺省读环境变量 `CORE_SYSTEM_SCHEME`；二者皆空则拒绝启动 |
-| 文档库根 | `--docs <root>`，缺省读环境变量 `CORE_SYSTEM_DOCS`；为空则对象读面不挂载（`/v1/objects/*` → 503），scheme 面不受影响；给定即打开 repository git 后端（串行写队列+resourceVersion 乐观锁，本进程仅读暴露） |
+| 文档库根 | `--docs <root>`，缺省读环境变量 `CORE_SYSTEM_DOCS`；为空则对象读面不挂载（`/v1/objects/*` → 503），scheme 面不受影响；给定即打开 repository git 后端（串行写队列+resourceVersion 乐观锁，缺省仅读暴露） |
+| 写面开关 | `--allow-apply`（缺省 false=只读）：显式开启 `POST /v1/apply` 写端点；开启时必须同时给 `--docs`（写面依附文档库 git 后端，否则拒绝启动）。开启后写主体=本进程本地信任（持内置 admin），权限系统 v0.9 接请求级主体前由部署方以开关显式授权 |
+| ops DB | `--ops-db <path>`（SQLite WAL 单文件）：apply_log/event_log 双轨审计的 DB 侧；为空=进程内存库（DB 非权威、可重建——持久化部署显式传路径） |
 | 监听地址 | `--addr <host:port>`，缺省读 `CORE_SYSTEM_ADDR`，再缺省 `127.0.0.1:0`（回环随机端口，避免多宿主进程端口冲突） |
 | 启动自检 | scheme 载入校验（必填项/唯一性/storage 模板）失败 → 退出码非 0，桥接方据此判定 |
-| 就绪行 | 就绪后向 **stdout** 输出一行 `CORED_READY addr=<host:port> scheme_version=<v> kinds=<n>`（机器可读；解析失败不影响人读日志走 stderr） |
+| 就绪行 | 就绪后向 **stdout** 输出一行 `CORED_READY addr=<host:port> scheme_version=<v> kinds=<n> apply=<on\|off>`（机器可读；`apply=` 尾随令牌标注写面状态，解析宽松——旧桥只取 addr，不受尾随字段影响） |
 | 退场 | SIGINT/SIGTERM → 优雅关闭（5s 超时强断） |
 
 ## 2. 只读查询面（HTTP，全部 GET）
@@ -26,8 +28,32 @@
 
 - 对象键 = `(kind, scope, name)`：scope 四层（builtin/global/系统/系统+实例）物化为目录前缀（layout.md），storage 路径由 scheme.yaml 各 kind 的 storage 模板解析。
 - 错误→状态码：kind 未注册或对象不存在 → 404；scope 与模板不相容/命名违规 → 400；docs 未配置 → 503。
-- **只读**：非 GET 一律 405。写路径唯一入口是 Apply 管线（concepts/apply.md），本面永不提供写端点。
+- **查询面只读**：查询端点非 GET 一律 405。写路径唯一入口是 Apply 管线（concepts/apply.md），只经 `POST /v1/apply`（见 §2.1）且缺省关闭。
 - 载荷为 JSON；kind 详情保留声明原文（spec/fields/status/relations/未识别字段收敛进 extra），声明演进不破坏查询面。
+
+### 2.1 写面（缺省关闭，`--allow-apply` 显式开启）：`POST /v1/apply`
+
+写面是文档面唯一写端点，内部收敛 apply.Engine 三步闸门（scheme 准入→权限准入→乐观锁落库），不旁路存储；每次成功落库必发 `DocApplied` 事件（eventbus → event_log 归档），幂等重入（同内容）no-op 零提交零事件（concepts/apply.md rule 1）。
+
+请求体（JSON）：
+
+```json
+{"kind":"Agent","scope":"global","name":"core-headless","resourceVersion":1,
+ "content":"<文档原文 yaml 或 md+frontmatter>","fieldManager":"agent/…","reasonRef":"…","dryRun":false,"force":false}
+```
+
+| 字段 | 语义 |
+|---|---|
+| `kind/scope/name` | 对象键，三者必填（缺 → 400） |
+| `resourceVersion` | 乐观锁：创建=0（缺省）；更新=读到的版本，不符 → 409 |
+| `content` | 文档原文（存储层解析 metadata 身份，与对象键不符 → 400） |
+| `fieldManager` | 必填，无主写入拒绝 → 400（apply.md rule 2） |
+| `dryRun` | true=零副作用（无提交/无审计行/无事件），返回准入结论+现版本 |
+
+响应（200）：`{"resource":"kind/scope/name","rv":<n>,"action":"create|update|noop","dryRun":false,"event":{"id","type","dedupKey"}}`（`event` 仅真实落库时存在，noop/dry-run 不发事件）。
+
+错误→状态码：乐观锁冲突 → **409**（载荷含 `expected`/`current`）；kind 未注册（野对象）或对象不存在 → 404；权限准入拒绝 → 403；无主写入/对象键不全/身份不符/内容不可解析/盲写已存在/scope 不相容 → 400；写队列关停 → 503；写面未开启 → **405**（`POST /v1/apply` 恒可探测，`GET /v1/apply` 亦 405）。
+`apply_log` 审计行 result 枚举：`ok`（落库）/`noop`（幂等重入）/`denied`（准入拒绝）/`conflict`（乐观锁冲突，含现库版本）——git 提交数 ≙ ok 行数（对账不变量，ops-log.md §3；noop/denied/conflict 不对应提交）。
 
 ## 3. plugin↔cored 桥契约（dsh plugin 侧）
 
@@ -51,6 +77,7 @@ dsh 宿主（cordis entry id=core-system）
 | `readyTimeoutMs`（缺省 10000） | 就绪行超时；超时/子进程先退 → 桥接失败日志，宿主继续运行 |
 
 - **部署锚点注入方式**：各 profile 用户 patch 层按行 id（`core-system`）覆写 config（patch 覆写=整行 config 替换，不合并），或经 `CORE_SYSTEM_*` 环境变量；公开仓只保留机制与缺省值。
+- **写面缺省不注入**：桥桥接的 coredArgs 缺省只含 `--docs`（读面锚点）；`--allow-apply`/`--ops-db` 不由桥缺省注入——现网宿主保持只读暴露，写面按部署决策逐 profile 显式开启（开启后的部署锚点记部署侧台账，不入公开仓）。
 - **查询失败不阻断宿主**：桥接是探针性质（probe），`kinds=null` 即"本轮未通"，由验收报告如实记录——宿主健康优先于桥接成功。
 
 ## 4. 可行性
