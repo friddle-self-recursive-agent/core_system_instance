@@ -16,7 +16,7 @@
   5. 安装：deploy-system 执行 install 段（TaskScheme `install` 模板渲染）
      pull-image(digest 校验) → render-config → start-service(健康检查)
      失败：三段 undo（镜像/配置/服务），机器不留半成品
-  6. 纳管：postInstall → register-workservice（自动建 WorkService 对象+finalizer 注入）
+  6. 纳管：postInstall → register-workservice（自动建 WorkService 对象；tools 面成对 cleanup op 随注册声明）
   7. 留痕：全程 ops DB（install 每步一行）+ DriftReport 归档
 ```
 

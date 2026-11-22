@@ -32,6 +32,9 @@
 
 - [runtime/workflow-runtime.md](runtime/workflow-runtime.md)：Workflow 引擎运行时（管线/编辑/展示/数据流/落地 agent）
 - [runtime/agent-service-protocol.md](runtime/agent-service-protocol.md)：Agent↔Service 沟通协议（意图 envelope / catalog 预插入 / 一意图一 session / 记忆即文档）
+- [runtime/import-service.md](runtime/import-service.md)：import 流程（存量系统纳管 adopt / 编排模板导入）
+- [runtime/delete-service.md](runtime/delete-service.md)：delete 流程（级联预览→人批→停依赖→断引用→目录删除→tools cleanup）
+- [runtime/builtin-flows.md](runtime/builtin-flows.md)：内置能力流程总表（研发/发布/备份/认证/事件/指标/workflow 生命周期）
 - [runtime/bootstrap.md](runtime/bootstrap.md)：自举（bootstrap）设计
 - [layout.md](layout.md)：目录即对象规范（文档库物理布局）
 - [feasibility.md](feasibility.md)：可行性报告（含 onedev / NAS+OSS / dsh / sqlite 专项，R1.6 指定放本仓）
