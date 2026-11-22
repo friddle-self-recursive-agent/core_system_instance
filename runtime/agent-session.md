@@ -37,10 +37,52 @@ systems/<s>/instances/<i>/docs/
 
 Agent 会话的工具上下文 = Provider.llmPrompt（出厂说明书）+ **Skill**（工具使用处的缓存：注入提示+成功调用示例）。Session 成功调用后自动沉淀 Skill（阈值见 open-questions）；下次同类任务按需注入，不必重学。规则：**Skill 是缓存不是真相**——与 Provider 契约冲突即失效；provider 版本变更默认作废；示例脱敏。console 资源树把 Skill 列为一类节点。
 
-## 5. 可行性
+## 5. 检索与简单 RAG（tag + 分页 + 迭代查找）
+
+Session/Doc/TaskScheme 的**历史检索**设计：tag 元数据 + 简单排序检索，不上向量库。
+
+### 5.1 自动打标（更新时，LLM 一次性完成）
+
+- **时机**：Session 关闭（SessionLog 落档时）与 Doc/TaskScheme Apply 后（回归相位），由 LLM 对该对象**自动生成**：`tags[]`（关键 tag）、`importance`（1-5 重要程度）、`digest`（一句话标题+简单描述）——写进对象 metadata（scheme.yaml conventions.tags）；
+- 至少做**简单的价值评判 + tag + tag 相关性**（tags 不孤立：相关 tag 组成检索时的派生扩展，如 `build~ci~runner`）；
+- 打标失败/超时：对象仍入库，元数据留空 + Event(warn)——检索不到但不阻塞写入；
+- 打标提示词与评判标准**可编辑**（随 builtin skill/提示词管理，改提示词=改配置不是改代码）。
+
+### 5.2 检索工具（Agent 可调用，全部分页）
+
+| 工具 | 参数 | 返回 |
+|---|---|---|
+| `search-sessions` | {tags?, service?, timeRange?, page, pageSize?} | 列表 `[{title, digest, importance, ts, ref}]` + hasMore + relatedTags |
+| `search-docs` | 同上（含 DocType 过滤） | 同上 |
+| `search-schemes` | 同上 | 同上（TaskScheme/Workflow 模板） |
+| `get-object` | {ref} | 按句柄拉全文（第二步，检索列表不给全文） |
+
+- **排序=重要程度 × 时间衰减**（近期+高重要度优先）；
+- **默认每页 10 条**（pageSize 可调，上限 50——防一次导入过多）；
+- 列表**只有标题+简单描述+元数据**，Agent 选中后 `get-object` 拉全文——分页两层（列表页→全文按需）。
+
+### 5.3 迭代查找（发现不对，继续找）
+
+- **工具层**：返回带 `hasMore` 与 `relatedTags`（当前 tag 的相关 tag），Agent 天然知道"还有下一页、还有相邻 tag"；
+- **提示词（builtin skill"查本系统"内置）**：
+  1. 先按意图选 1-2 个最贴近的 tag，取第 1 页（10 条）；
+  2. **扫 digest 判断是否命中**——命中才拉全文；
+  3. 不命中 → **继续翻页或换 relatedTags**（禁止一次拉大量；最多迭代 N 轮，默认 3，超限升级问人/换路径）；
+  4. 找到的相关对象随手写 Memory（引用句柄），下次意图直接命中。
+
+### 5.4 索引实现
+
+- tag/重要度元数据存对象 metadata（真相=文档）；**倒排索引物化在 ops DB**（tag→对象表，与 console 树同源，无独立前端状态）；
+- 排序/衰减/相关 tag 扩展=引擎内查询逻辑（代码，非 LLM 即兴）；
+- 语义检索（向量）**不在本期**：tag+重要度+时间已覆盖"找历史 session/doc"主路径；真要语义再后补索引组件（不改契约）。
+
+## 6. 可行性
 
 | 风险 | 等级 | 缓解 |
 |---|---|---|
 | 记录被 Agent "忘了写" | ⚠️ 中 | dsh 宿主在会话收尾强制生成（框架层，不靠自觉）；缺档=drift |
 | 会话级粒度太粗 | ⚠️ 低 | 相位级为可选配置；先粗后细 |
 | 进程数增长 | ⚠️ 低（已接受） | R2 明确接受；看门狗回收僵尸 |
+| 打标质量不稳定 | ⚠️ 中 | LLM 评判重要度/摘要可能失真 | 提示词可编辑+评判从简（1-5 档）；错标靠迭代查找兜底（§5.3） |
+| 检索导入过多 | ⚠️ 低 | 一次拉爆上下文 | 强制分页（默认 10/页，上限 50）+列表不给全文+迭代轮次上限 |
+| tag 词表漂移 | ⚠️ 低 | 各 agent 自造 tag 失控 | tag 词表随 service 域管理（global 内置+前缀自治，同 capabilities 思路） |
