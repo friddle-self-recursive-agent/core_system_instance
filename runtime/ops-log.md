@@ -14,7 +14,10 @@
 ## 2. ops DB 表（v1）
 
 ```sql
-apply_log    (ts, field_manager, obj, resource_version, result, policy_decisions, reason_ref)
+apply_log    (ts, field_manager, subject, obj, resource_version, result, policy_decisions, reason_ref)
+             -- subject：判定主体标识（v0.9 请求级主体，permission.md §3）——denied 行必带
+             -- （user 优先，无 user 记断言 roles/groups，全空=anonymous）；ok/noop/conflict 行由
+             -- repository 双写落（Write 契约冻结不携主体），归属看 field_manager
 event_log    (ts, event_id, type, source, involved, dedup_key, severity, routed_to)
 control_log  (ts, root_agent, primitive, target_agent, task_id, result)   -- 直控审计
 approval_log (ts, approval_id, permission_rule, judged_by, decision)   -- v0.9：权限系统判定（A44）

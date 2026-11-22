@@ -8,7 +8,7 @@
 |---|---|
 | scheme 源 | `--scheme <path>`，缺省读环境变量 `CORE_SYSTEM_SCHEME`；二者皆空则拒绝启动 |
 | 文档库根 | `--docs <root>`，缺省读环境变量 `CORE_SYSTEM_DOCS`；为空则对象读面不挂载（`/v1/objects/*` → 503），scheme 面不受影响；给定即打开 repository git 后端（串行写队列+resourceVersion 乐观锁，缺省仅读暴露） |
-| 写面开关 | `--allow-apply`（缺省 false=只读）：显式开启 `POST /v1/apply` 写端点与草稿写操作（§2.2 落稿/弃稿/fromDraft 同开关）；开启时必须同时给 `--docs`（写面依附文档库 git 后端，否则拒绝启动）。开启后写主体=本进程本地信任（持内置 admin），权限系统 v0.9 接请求级主体前由部署方以开关显式授权 |
+| 写面开关 | `--allow-apply`（缺省 false=只读）：显式开启 `POST /v1/apply` 写端点与草稿写操作（§2.2 落稿/弃稿/fromDraft 同开关）；开启时必须同时给 `--docs`（写面依附文档库 git 后端，否则拒绝启动）。开启后写主体=**请求级主体**（v0.9：每次请求携 `subject` 字段或 `X-Core-Subject` 头，§2.1；无主体=匿名照判拒绝 403，本地信任不兜底 HTTP 匿名请求）。授权面=文档面 Role/Group 对象：启动时装载 `global/roles/`、`global/groups/`（坏对象/重名=整体拒绝启动，授权面宁拒不降级；事件驱动刷新随 dispatch 接线 declared-deferred）；进程级本地信任（cored:local 持内置 admin）退化为引擎缺省 fallback，只服务程序化调用（bootstrap/工作流自写） |
 | ops DB | `--ops-db <path>`（SQLite WAL 单文件）：apply_log/event_log 双轨审计的 DB 侧；为空=进程内存库（DB 非权威、可重建——持久化部署显式传路径） |
 | 监听地址 | `--addr <host:port>`，缺省读 `CORE_SYSTEM_ADDR`，再缺省 `127.0.0.1:0`（回环随机端口，避免多宿主进程端口冲突） |
 | 启动自检 | scheme 载入校验（必填项/唯一性/storage 模板）失败 → 退出码非 0，桥接方据此判定 |
@@ -33,7 +33,7 @@
 
 ### 2.1 写面（缺省关闭，`--allow-apply` 显式开启）：`POST /v1/apply`
 
-写面是文档面唯一写端点，内部收敛 apply.Engine 三步闸门（scheme 准入→权限准入→乐观锁落库），不旁路存储；每次成功落库必发 `DocApplied` 事件（eventbus → event_log 归档），幂等重入（同内容）no-op 零提交零事件（concepts/apply.md rule 1）。
+写面是文档面唯一写端点，内部收敛 apply.Engine 三步闸门（scheme 准入→权限准入（**请求级主体**，§2.1 `subject`）→乐观锁落库），不旁路存储；每次成功落库必发 `DocApplied` 事件（eventbus → event_log 归档），幂等重入（同内容）no-op 零提交零事件（concepts/apply.md rule 1）。
 
 请求体（JSON）：
 
@@ -48,13 +48,14 @@
 | `resourceVersion` | 乐观锁：创建=0（缺省）；更新=读到的版本，不符 → 409；`fromDraft=true` 时须缺省（期望值以草稿 `baseResourceVersion` 为准） |
 | `content` | 文档原文（存储层解析 metadata 身份，与对象键不符 → 400）；`fromDraft=true` 时须缺省（差异以草稿缓存为准） |
 | `fieldManager` | 必填，无主写入拒绝 → 400（apply.md rule 2） |
+| `subject` | **请求级主体（v0.9）**：`{user, roles:[…], groups:[…]}`——user=主体标识（审计留痕；user-system 目录侧未接前由调用方断言），roles/groups=断言持有关系（**须对上文档面 Role/Group 对象才产生权限**，断言本身不授权）；缺席回退 `X-Core-Subject` 头（同形 JSON，字段优先于头）；两者皆缺=匿名主体 → 权限准入拒绝 403；`dryRun` 同主体判定（准入结论与真执行一致） |
 | `dryRun` | true=零副作用（无提交/无审计行/无事件），返回准入结论+现版本 |
 | `fromDraft` | true=稿→面落库（§2.2）：引擎取草稿走同一三步闸门，成功（create\|update\|noop）后清稿；无稿 → 404 |
 
 响应（200）：`{"resource":"kind/scope/name","rv":<n>,"action":"create|update|noop","dryRun":false,"event":{"id","type","dedupKey"}}`（`event` 仅真实落库时存在，noop/dry-run 不发事件）。
 
-错误→状态码：乐观锁冲突 → **409**（载荷含 `expected`/`current`）；kind 未注册（野对象）或对象不存在 → 404；权限准入拒绝 → 403；无主写入/对象键不全/身份不符/内容不可解析/盲写已存在/scope 不相容 → 400；写队列关停 → 503；写面未开启 → **405**（`POST /v1/apply` 恒可探测，`GET /v1/apply` 亦 405）。
-`apply_log` 审计行 result 枚举：`ok`（落库）/`noop`（幂等重入）/`denied`（准入拒绝）/`conflict`（乐观锁冲突，含现库版本）——git 提交数 ≙ ok 行数（对账不变量，ops-log.md §3；noop/denied/conflict 不对应提交）。
+错误→状态码：乐观锁冲突 → **409**（载荷含 `expected`/`current`）；kind 未注册（野对象）或对象不存在 → 404；权限准入拒绝（含匿名主体/断言 role 未对上授权面/硬规则）→ **403**；无主写入/对象键不全/身份不符/内容不可解析/盲写已存在/scope 不相容 → 400；写队列关停 → 503；写面未开启 → **405**（`POST /v1/apply` 恒可探测，`GET /v1/apply` 亦 405）。
+`apply_log` 审计行 result 枚举：`ok`（落库）/`noop`（幂等重入）/`denied`（准入拒绝，**携带主体标识** subject 列——anonymous=匿名，permission.md 规则 3 判定留痕）/`conflict`（乐观锁冲突，含现库版本）——git 提交数 ≙ ok 行数（对账不变量，ops-log.md §3；noop/denied/conflict 不对应提交）。
 
 ### 2.2 草稿缓存面（编辑与发布分离，apply.md §1/§6 rule 6）
 
@@ -66,7 +67,7 @@
 | `GET /v1/drafts/{kind}/{name}?scope=<scope>` | 单条草稿（恒开，含 `content` 原文 + `reasonRef` + `createdAt/updatedAt`）；无稿 → 404 |
 | `POST /v1/drafts` | 落稿（upsert，同对象键覆盖=最新代改稿，`createdAt` 定格 `updatedAt` 更新）：`{kind,scope,name,content,fieldManager,reasonRef,baseResourceVersion}`；键不全/无主/空稿 → 400 |
 | `DELETE /v1/drafts/{kind}/{name}?scope=<scope>` | 弃稿；无稿 → 404 |
-| `POST /v1/apply` + `"fromDraft":true` | 稿→面落库：以草稿 content 为写者输入、草稿 `baseResourceVersion` 为乐观锁期望值，走与直写同一三步闸门（scheme/权限/存储）；成功后**清稿**；无稿 → 404 |
+| `POST /v1/apply` + `"fromDraft":true` | 稿→面落库：以草稿 content 为写者输入、草稿 `baseResourceVersion` 为乐观锁期望值，走与直写同一三步闸门（scheme/权限/存储——权限按**请求级主体**判定，同 §2.1 `subject` 语义；成功后**清稿**）；无稿 → 404 |
 
 - **门控**：POST/DELETE 草稿与 `fromDraft` apply 随写面开关 `--allow-apply`（缺省 405，与 §2.1 同一开关）；草稿 GET 属查询面恒开。开启写面须同时 `--docs`（fromDraft 恒有文档库可落）。
 - **乐观锁语义**：`baseResourceVersion` = 落稿时读到的文档面版本（0=预期创建）。文档面前移 → apply-draft **409 且草稿保留**（后写者重读后重整草稿再落——LLM 语义 diff 的人裁落点）；BaseRV=1 而对象不存在同样冲突（expected≠current）。
