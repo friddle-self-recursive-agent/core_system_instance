@@ -30,7 +30,7 @@ Event(level=error, involved=某业务系统)
   │      └─ 下游：其它 agent_pool 机器的 core plugin 订阅 → 本地 Event 入队（跨机协同）
   └─► feishu channel：involved → 账号映射 → 飞书卡片（含 console 链接）
          ├─ 映射命中 → 私聊该账号（"上 account"）
-         ├─ 无映射 / owner 是 root → 飞书群（bind-role 持有者）
+         ├─ 无映射 / owner 是 root → 飞书群（挂载 role 的持有者）
          └─ ApprovalNeeded → 卡片带 批准/驳回 深链（回到 console plugin 页面完成动作）
 ```
 

@@ -13,7 +13,7 @@
 一个刻意极小的可执行程序，职责只有三步：
 
 ```
-1. 校验并装载首版 core/（Scheme + core.desc + default Policy + builtinRoot Agent 定义）
+1. 校验并装载首版 core/（Scheme + core.desc + 默认权限规则 + builtinRoot Agent 定义）
 2. 启动 Core 进程（Workflow 引擎随之启动）
 3. 消失（不常驻；健康由常驻的 builtinRoot 接管）
 ```
@@ -70,7 +70,7 @@ builtinRoot 的常驻看护：进程级看门狗（Igniter 留下的最小监督
 |---|---|---|
 | Igniter | 无常驻；单文件 ≤800 行的质量约束 | git 版本；首版定义同其他 system 流程（AI 改） |
 | 看门狗 | 重启策略级 | 部署层（systemd/k8s） |
-| Policy 硬规则 | 3 条，随二进制 | 发版流程 |
+| 权限系统硬规则 | 3 条，随二进制 | 发版流程 |
 | 其余一切 | — | 文档面 + Workflow |
 
 除上表外，任何"文档之外的状态"出现即违宪（架构反模式）。

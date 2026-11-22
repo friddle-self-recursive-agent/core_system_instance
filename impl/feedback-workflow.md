@@ -82,7 +82,7 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-self-recursive-core}]
 |---|---|---|---|---|
 | 1 | 错误报错产生 | Event + WorkService 观测面 watch op | 无新概念；3 个 watch 源 ConnectorOps | 反馈中心/工单/监控栈的 API 轮询 |
 | 2 | 事件到 service agent | Scheme dispatch 表 + Agent AUTOLEVEL | ServiceAgent 若干（按业务域） | dsh profile 会话（auto） |
-| 3 | 上溯 root agent | Escalate 出口（默认上溯 root；Bind role 双通道） | RootAgent（默认 ask） | dsh profile 会话 |
+| 3 | 上溯 root agent | Escalate 出口（默认上溯 root；role 挂载双通道） | RootAgent（默认 ask） | dsh profile 会话 |
 | 4 | 生成提议 | Proposal = Spec 变更的 Apply 进待审区（P6，非新概念） | Proposal 文档（含证据引用） | console 页面呈现 diff |
 | 5 | 批准 | AwaitingApproval 相位 + Notification(ApprovalNeeded) + 权限系统裁决 | Role（审批角色） | dsh plugin 审批页面 |
 | 6 | onedev pull | developer-system：onedev-driver.checkout（同 ref 幂等） | ConnectorOps 授权 | OneDev 修复分支 |
@@ -105,13 +105,11 @@ spec:
     dedup: {window: 10m}
     group: {by: dedupKey, max: 50}
   phases: [Idle, Analyzing, AwaitingApproval, Executing, Verifying, Reporting, Failed]
-  onFailed: {backoff: 60s*2^n, maxAttempts: 3, escalate: {to: root, notify: bind-role}}
+  onFailed: {backoff: 60s*2^n, maxAttempts: 3, escalate: {to: root, notify: role-holders}}
   brakes:
     cooldown: 5m                     # 同一系统修复后冷却，防震荡
     maxMutationsPerTick: 5           # 发布类动作从严
     avoidRepeatFix: true             # DriftReport 防重复同类修复
-  cost:
-    budget: {minutes: 40, tokens: 400k, mutations: 5}
   regression:
     statusWriteback: true
     reports: [DriftReport, SessionLog]

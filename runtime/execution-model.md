@@ -26,9 +26,9 @@
 Event/命令 ──► Agent（分析，读 L0/L1 上下文）
                 │ 有匹配 TaskScheme（trigger.match 命中）──► 执行 Scheme ──► 代码层
                 │ 无匹配：
-                │   ├─ 一次性小事（Policy 白名单内）──► 兜底执行 + DriftReport 留痕
+                │   ├─ 一次性小事（权限白名单内）──► 兜底执行 + DriftReport 留痕
                 │   └─ 会重复发生/高危 ──► 提案新 TaskScheme（Apply 入库，过审后用）
-                └─ 失败/超预算 ──► onFailure（retry/escalate/rollback）
+                └─ 失败 ──► onFailure（retry/escalate/rollback）
 ```
 
 规则（来自 task-scheme.md §5）：连续同类兜底 N 次（默认 3）→ 必须提案 Scheme，否则 Workflow 拒绝继续兜底（防"永远即兴"）。
@@ -70,5 +70,5 @@ Workflow（v0.8 吸收 Workflow，A41）管"何时对账+整个循环"，TaskSch
 | 风险 | 等级 | 缓解 |
 |---|---|---|
 | 模板参数化不够表达 | ⚠️ 中 | overlay 覆盖段 + 新 Scheme 提案通道（设计意图：显式沉淀而非即兴） |
-| Agent 兜底边界漂移 | ⚠️ 中 | N 次强制沉淀规则 + 兜底留痕 + Policy 白名单 |
+| Agent 兜底边界漂移 | ⚠️ 中 | N 次强制沉淀规则 + 兜底留痕 + 权限白名单 |
 | 调度配置与 Workflow 触发重复触发 | ⚠️ 低 | 调度也是触发源之一，dedupKey 含 task+params 哈希 |

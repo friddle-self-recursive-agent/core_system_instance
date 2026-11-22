@@ -12,7 +12,7 @@
   2. 读模板描述：template.yaml（WorkServiceTemplate 对象）
      └─ 校验：digest 必填、connector 已注册、install 步骤动作在白名单
   3. TemplateFound Event → console 呈现（provides/resources/asks）
-  4. 询问：asks 逐项填（endpoint、凭证引用等）+ 显式确认（ApprovalNeeded→Bind 用户）
+  4. 询问：asks 逐项填（endpoint、凭证引用等）+ 显式确认（ApprovalNeeded→挂载 role 的人）
   5. 安装：deploy-system 执行 install 段（TaskScheme `install` 模板渲染）
      pull-image(digest 校验) → render-config → start-service(健康检查)
      失败：三段 undo（镜像/配置/服务），机器不留半成品
@@ -36,7 +36,7 @@
 
 ## 4. 与 GitHub 的关系
 
-org 里的 `*-template` 仓 = 模板分发渠道（可被 fork/PR——模板生态的将来）。模板内容（template.yaml+config.tmpl）本身也是文档对象：拉取后经 Policy 扫描入库（global/templates/）。org 的 Ref 指针：`ref/github-org-templates`。
+org 里的 `*-template` 仓 = 模板分发渠道（可被 fork/PR——模板生态的将来）。模板内容（template.yaml+config.tmpl）本身也是文档对象：拉取后经权限系统扫描入库（global/templates/）。org 的 Ref 指针：`ref/github-org-templates`。
 
 ## 5. 可行性
 

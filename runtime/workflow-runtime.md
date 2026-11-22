@@ -84,7 +84,7 @@ Workflow 引擎 = core 内的一段**确定性代码**（状态机 + 触发器 +
 
 ## 5. 可编辑与展示（console 的 workflow 面）
 
-**编辑**：Workflow 就是文档——编辑=改 spec 后 Apply（过权限系统）；console 提供表单化编辑器（enabled/triggers/services/llm/brases/cost 分组字段），保存即 Apply。第三方（别的系统、别人）编辑走同一入口：有对应 scope 写权限即可编辑；**导入**：把外部系统的既有编排（如既有 CI 流水线描述）渲染成 Workflow spec 后 Apply 入库（导入预览=dry-run 展示渲染结果）。
+**编辑**：Workflow 就是文档——编辑=改 spec 后 Apply（过权限系统）；console 提供表单化编辑器（enabled/triggers/services/llm/brakes 分组字段），保存即 Apply。第三方（别的系统、别人）编辑走同一入口：有对应 scope 写权限即可编辑；**导入**：把外部系统的既有编排（如既有 CI 流水线描述）渲染成 Workflow spec 后 Apply 入库（导入预览=dry-run 展示渲染结果）。
 
 **展示**（数据全部来自 Scheme+ops DB，无独立前端状态）：
 
@@ -96,7 +96,6 @@ Workflow 引擎 = core 内的一段**确定性代码**（状态机 + 触发器 +
 │               动作/actionLog/失败原因），轮次可回放     │
 │ Tab4 数据流    输入事件源 → 处理 → 产物去向（引用关系图， │
 │               节点=对象全部可点）                       │
-│ Tab5 成本      每轮 budget_log（tokens/变更数/墙钟）    │
 │ [启用/停用] [编辑] [克隆] [导入] ── 全部=Apply 动作     │
 └─────────────────────────────────────────────────────┘
 ```

@@ -18,7 +18,7 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-deploy-system}]
 ## guarantees
 
 - 安装幂等：同模板重装=no-op（先 get 后 apply）。
-- 失败回滚：undo 序列执行，超时 Escalate 到 Bind 人；墓碑对象观测面常亮。
+- 失败回滚：undo 序列执行，超时 Escalate 到挂载 role 的人；墓碑对象观测面常亮。
 - 全程审计：install 每步一行 ops DB。
 
 ## mapping 备注

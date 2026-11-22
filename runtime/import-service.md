@@ -31,7 +31,7 @@
 ```
 用户提供既有编排（CI 流水线描述 / 运维脚本 / 任务定义）
   → 渲染器（LLM+结构化解析，按目标 DocType）：
-     ├─ 任务编排 → TaskScheme spec（steps/onFailure/budget）
+     ├─ 任务编排 → TaskScheme spec（steps/onFailure）
      └─ 循环流程 → Workflow spec（triggers/phases/brakes/dataflow）
   → 渲染预览 = dry-run 展示（渲染结果+差异点）→ 人批（ApprovalNeeded）
   → Apply 入库（origin=imported）→ 首期强制 mode: observe 跑一段 → 再放开 act

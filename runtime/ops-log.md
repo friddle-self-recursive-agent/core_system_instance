@@ -7,7 +7,7 @@
 | 轨 | 载体 | 管什么 | 不管什么 |
 |---|---|---|---|
 | 文档轨 | 本地文件夹 git（权威） | 对象/文档的**内容版本**（谁改了哪份文档的什么） | 高频操作流水 |
-| ops 轨 | DB（v1 SQLite，单文件，随 Core 部署） | **操作流水**：Apply 判定、Event 收发、直控三原语、审批、Escalate、预算消耗 | 文档内容 |
+| ops 轨 | DB（v1 SQLite，单文件，随 Core 部署） | **操作流水**：Apply 判定、Event 收发、直控三原语、审批、Escalate | 文档内容 |
 
 一句话：**git 回答"系统长什么样（第 N 版）"，DB 回答"谁在何时对它做了什么操作"**。
 
@@ -19,8 +19,9 @@ event_log    (ts, event_id, type, source, involved, dedup_key, severity, routed_
 control_log  (ts, root_agent, primitive, target_agent, task_id, result)   -- 直控审计
 approval_log (ts, approval_id, permission_rule, judged_by, decision)   -- v0.9：权限系统判定（A44）
 escalate_log (ts, from_workflow, reason, chain_depth)
-budget_log   (ts, workflow, task, tokens, mutations, wall_ms)
 ```
+
+> 预算/成本流水（budget_log 类）**不在 ops DB v1 内**：budget 是 metrics 关注的东西，不是核心循环内容——暂不做，日后随 metrics 默认 workflow 落。
 
 ## 3. 双写与对账
 

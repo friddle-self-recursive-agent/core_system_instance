@@ -8,7 +8,7 @@ Agent 的运转不留白：**每一次 PLAN、每完成一次 Session，必须�
 
 ```
 systems/<s>/instances/<i>/docs/
-  plan-<ts>-<task>.md      # PlanDoc：意图、引用的 TaskScheme/Workflow、预算、dry-run 结果
+  plan-<ts>-<task>.md      # PlanDoc：意图、引用的 TaskScheme/Workflow、dry-run 结果
   session-<ts>-<id>.md     # SessionLog：相位迁移、docsLoaded、动作摘要、outcome、token/耗时
 ```
 
@@ -21,17 +21,17 @@ systems/<s>/instances/<i>/docs/
 
 | 级别 | 运行时行为 |
 |---|---|
-| `ask` | Planning 完成后挂起 → control plugin 发 ApprovalNeeded → 上级 agent（默认上溯 root）批/驳回；对象有 Bind 时 role 持有者同达（双通道，A35；驳回也产 SessionLog） |
-| `auto` | 白名单/Scheme/预算内直跑；Policy 高危仍拦（Policy 与 AUTOLEVEL 正交：级别管"问不问"，Policy 管"许不许"） |
-| `all` | 不询问；仅显式授权 + Policy 放行 |
+| `ask` | Planning 完成后挂起 → control plugin 发 ApprovalNeeded → 上级 agent（默认上溯 root）批/驳回；对象有 role 挂载时 role 持有者同达（双通道；驳回也产 SessionLog） |
+| `auto` | 白名单/Scheme 内直跑；权限系统高危档仍拦（准入与 AUTOLEVEL 正交：级别管"问不问"，权限系统管"许不许"） |
+| `all` | 不询问；仅显式授权 + 权限系统放行 |
 
-默认（scheme.yaml runtime.autoLevels）：**RootAgent=ask，ServiceAgent=auto**——均为默认值；**RootAgent 与普通 Agent 同一 AUTOLEVEL 机制，autoLevel 均可配置，Root 也可 auto/all**（A64，all 需显式授权）。升级路径：模型变强 → Desc 调 autoLevel（Apply+Policy）→ 自治空间变大，机制不变（P8）。
+默认（scheme.yaml runtime.autoLevels）：**RootAgent=ask，ServiceAgent=auto**——均为默认值；**RootAgent 与普通 Agent 同一 AUTOLEVEL 机制，autoLevel 均可配置，Root 也可 auto/all**（A64，all 需显式授权）。升级路径：模型变强 → Desc 调 autoLevel（Apply+权限系统）→ 自治空间变大，机制不变（P8）。
 
 ## 3. 子 agent（机器级进程）
 
 - spawn：父进程经 control plugin `spawn machine-instance` 起独立子 agent 进程（一 agent 一进程；明确不省内存，R2）。**子 agent 运行时不限于 dsh**（A60）：dsh / opencode / 自写 agent 均可，选型与其工具环境在该子 agent 引用的 ConnectorOps 中描述或调用。
 - 上下文：子 agent 不继承父会话内存；靠 PlanDoc/SessionLog/引用的 ConnectorOps 描述环境与工具。
-- 权限：父权限裁剪（只减不增）；直控三原语（dispatch/interrupt/query）全程 ops DB 留痕。
+- 权限：父一次性全量下发（⊆父，只减不增；不做按步骤细粒度裁剪）——上级派任务时把权限 token 与 ref 整包给全；运行时发现缺权限直接 ask 上级，上级重新全量申请并整包重发；直控三原语（dispatch/interrupt/query）全程 ops DB 留痕。
 
 ## 4. Skill 缓存（v0.6，A38）
 

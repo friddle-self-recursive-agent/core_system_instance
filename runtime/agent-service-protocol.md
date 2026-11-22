@@ -31,7 +31,7 @@ intent:
   context:            # ② 预插入（见 §2）
     catalog: <service-catalog-digest>
     hints: [...]          # 派发方建议先读的对象（可空，Agent 不必听从）
-  budget: {minutes, tokens, mutations}
+  grants: {tokens: [...], refs: [...]}   # 上级一次性全量下发的权限（token+ref 整包；运行时缺权限 ask 上级重发，见 workflow.md §7）
   autoLevel: ask|auto|all
   replyTo: {ops-channel}    # 结果回报通道（workflow 相位/根 agent/人）
 ```
@@ -70,7 +70,7 @@ session := intent(id) 开启 → 处理（可多轮工具调用/文档读写）�
 ## 5. 协议⑤：信息与权限（不隔离，复用判定）
 
 - **Service 内 Agent 信息不隔离**：不做 SubAgent 级信息墙——ServiceAgent 自己判断读什么、派什么、给子 agent 看什么；
-- 权限复用既有机制：Agent 权限面=ConnectorOps+Ref+Provider+Role 并集，权限系统裁剪；子 agent=父裁剪只减不增（不变量不放松）；
+- 权限复用既有机制：Agent 权限面=ConnectorOps+Ref+Provider+Role 并集，权限系统裁剪；**子 agent=父一次性全量下发**（⊆父，只减不增不变量不放松；不做按步骤细粒度裁剪；运行时缺权限直接 ask 上级，上级重新全量申请整包重发）；
 - catalog 注入同样过权限判定（无权限的对象不出现在 catalog）。
 
 ## 6. 可行性

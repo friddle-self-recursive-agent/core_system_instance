@@ -33,7 +33,7 @@ Global
 
 ### workflow 详情页（树内 workflows 节点点入）
 
-五 tab：**流程图**（相位态机自动渲染，当前相位高亮）/ **事件**（该 workflow 触发与消费的事件流）/ **流转**（每轮相位流水：相位进出时间/动作/actionLog/失败原因，轮次可回放）/ **数据流**（spec.dataflow 拼图：输入事件源→处理→产物去向，节点全可点）/ **成本**（budget_log）。操作条：启用/停用、编辑（表单+YAML）、克隆、导入——全部=Apply。
+四 tab：**流程图**（相位态机自动渲染，当前相位高亮）/ **事件**（该 workflow 触发与消费的事件流）/ **流转**（每轮相位流水：相位进出时间/动作/actionLog/失败原因，轮次可回放）/ **数据流**（spec.dataflow 拼图：输入事件源→处理→产物去向，节点全可点）。操作条：启用/停用、编辑（表单+YAML）、克隆、导入——全部=Apply。
 
 ## 第二层：信息流视角（R1.5.2）
 
@@ -52,7 +52,7 @@ Global
 
 ## 审批与 install 入口
 
-- ApprovalNeeded 列表（Bind 命中的待审项，SLA 倒计时）→ console 内批准/驳回（=Apply）。
+- ApprovalNeeded 列表（role 挂载命中的待审项）→ console 内批准/驳回（=Apply）。
 - install service 命令入口（触发 InstallRequested → install-service.md 流程，模板发现结果在 UI 呈现 asks）。
 
 ## 可行性
