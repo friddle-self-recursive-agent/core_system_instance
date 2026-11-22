@@ -55,6 +55,13 @@ Workflow 引擎 = core 内的一段**确定性代码**（状态机 + 触发器 +
 
  Backoff：指数退避重试 maxAttempts 次 → 仍失败 → Escalated（一等终态）
  Escalated：人处理后（Apply 决定/手修现实/改 Spec）→ 重新触发
+
+ AUTO 处理不了的 Escalate 到达 → 按 spec.onEscalate 策略（可配置）：
+   pause       → 任意相位 → Paused（相位冻结，现场+断点=SessionLog 保留）
+   finish-tick → 跑完本轮（防半成品）→ Paused
+   continue    → 只通知（root 上报+Bind 发送），不停
+ Paused：人处理后在 console 批准 Resume（=Apply）→ 回到挂起前的相位续跑；
+   恢复不自动——autoResume 仅 continue 级可选
 ```
 
 每个相位状态与迁移**都落 ops DB**——这就是展示层"提交流转"的数据源（§5）。
@@ -81,6 +88,7 @@ Workflow 引擎 = core 内的一段**确定性代码**（状态机 + 触发器 +
 | 上下文超预算 | 降级只报告 |
 | Agent 崩溃 | 任务幂等重入，Workflow 重新派发 |
 | ConnectorOps 不可达 | drift 记为 Unknown（condition Unknown 态），N 次后 Escalated |
+| Escalate 到达（AUTO 处理不了） | 按 onEscalate 策略：pause（立即挂起）/ finish-tick（跑完本轮停）/ continue（只通知）；恢复=人批 Resume |
 
 ## 5. 可编辑与展示（console 的 workflow 面）
 
