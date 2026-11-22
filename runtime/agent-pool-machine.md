@@ -10,6 +10,7 @@
 | 形态 | 内网 KVM 宿主上的一台 LXC 容器（ubuntu 24.04，8C/16G/150G，非特权+nesting，开机自启） |
 | 基础环境 | dsh 0.2.2-rc.5（全局 npm）、node 24、go 1.27、git、build-essential、sudo 用户 friddle |
 | dsh profiles | `core-system`（web :3081）与 `kube-inner`（web :3082），模型统一走内网 LLM 网关（Provider 语义；key 在 .env，不入库） |
+| 网络出口 Provider | `net-egress`（kind: network，concepts/provider.md 规则 6）：github 访问=ssh.github.com:443 经代理 CONNECT；运行时实例值（代理地址）只存部署侧，不入公开仓（R-PUB-2） |
 | 公司 git | OneDev 上 `agent_pool/` 前缀仓（A55）承载本机相关报告与后续代码 |
 
 ## 1. 双 profile 分工（A57）
