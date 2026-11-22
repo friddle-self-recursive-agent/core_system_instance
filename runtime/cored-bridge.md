@@ -65,8 +65,23 @@ dsh 宿主（cordis entry id=core-system）
        ├─ 解析 stdout 就绪行 → http://<addr>
        ├─ 转发一次查询：GET /v1/scheme + /v1/scheme/kinds
        ├─ 结果挂 ctx.coreSystem = {url, scheme, kinds}，日志留痕
+       ├─ 挂持续查询句柄：ctx.coreSystem.get / ctx.coreSystem.list（见 §3.1）
        └─ ctx.effect 注册退场回收（插件卸载 ⇒ cored 子进程 SIGTERM）
 ```
+
+### 3.1 持续只读查询句柄（ctx.coreSystem.get/list）
+
+一次性 probe 之上，桥向同宿主插件暴露**持续句柄**——对象读面的 fetch 封装，宿主存续期恒可调用：
+
+| 句柄 | 端点封装 | 返回 |
+|---|---|---|
+| `get(kind, scope, name)` | `GET /v1/objects/{kind}/{name}?scope=<scope>`（§2） | `data={kind,name,scope,resourceVersion,content}`（content=文档原文） |
+| `list(kind, scope?)` | `GET /v1/objects/{kind}`（scope 缺省=跨 scope 枚举，§2） | `data=瘦身引用数组 [{kind,name,scope,resourceVersion}]` |
+
+- **结果判别联合，机械可分支**：`{ok:true, data}` / `{ok:false, status, error}`——status 保留 HTTP 语义（404=对象/类型不存在、503=文档库未配置……），`status=null` 表传输层失败（url 未就绪/连接拒绝）；句柄**永不抛错**（查询失败不阻断宿主，§3 同款语义）。
+- **只读不变式**：句柄只封装 §2 的 GET 端点，不引入任何新写路径；写路径唯一入口仍是 §2.1 且缺省关闭。
+- **时序安全**：spawn 路径句柄在 provide 时即挂载（早于就绪行），url 填值前调用返回 `ok:false status:null`——消费方无需等待桥接完成即可安全引用。
+- **机械验证**：plugin 仓 `npm test`（node --test）：单元（假读面 canned）+ 端到端（真实 cored 二进制 + 临时 fixture 文档库；cored 不在 PATH 时 skip，同「宿主健康优先」）。
 
 | config 字段 | 缺省语义 |
 |---|---|

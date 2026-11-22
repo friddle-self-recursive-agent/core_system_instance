@@ -8,8 +8,6 @@
 <repo>/
 ├── core/                                # Builtin scope（控制面自描述）
 │   ├── scheme.yaml                      # Scheme（类型注册 + dispatch 表）
-│   ├── builtin.policy.yaml              # Builtin 成员 + 强制文档类型
-│   ├── default.policy.yaml              # 默认准入 Policy
 │   ├── core.desc.yaml                   # Core 自身 ServiceDesc
 │   └── docs/                            # core 的 Goal/Rule/Auth/...
 ├── global/                              # Global scope
@@ -51,6 +49,8 @@
 | 引用=URI | 文档内引用写 `system://<name>/<doc>` 或相对路径，不写绝对路径（换存储留缝） |
 | 数据不入库 | metrics/ 是数据区；TSDB 后可整目录 gitignore，instance.yaml 只留查询声明（A17） |
 | 命名 | 目录/文件名小写中划线；DocType 文件名=类型 kebab 化（WorkflowDesign→workflow-design.md） |
+
+> **core/ 层无 policy 文件**（v0.9 对齐，A44：Policy 并入权限系统）：强制文档类型归 DocType 注册（core/scheme.yaml）；准入/人审档由权限系统对象承载（global/roles/、global/groups/，permission.md），builtin 治理按 `core/origin: builtin` label 匹配规则（builtin.md §5）——不以 core/*.policy.yaml 文件形式存在。
 
 ## 3. 文档 frontmatter 约定
 
