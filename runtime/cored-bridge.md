@@ -7,6 +7,7 @@
 | 项 | 契约 |
 |---|---|
 | scheme 源 | `--scheme <path>`，缺省读环境变量 `CORE_SYSTEM_SCHEME`；二者皆空则拒绝启动 |
+| 文档库根 | `--docs <root>`，缺省读环境变量 `CORE_SYSTEM_DOCS`；为空则对象读面不挂载（`/v1/objects/*` → 503），scheme 面不受影响；给定即打开 repository git 后端（串行写队列+resourceVersion 乐观锁，本进程仅读暴露） |
 | 监听地址 | `--addr <host:port>`，缺省读 `CORE_SYSTEM_ADDR`，再缺省 `127.0.0.1:0`（回环随机端口，避免多宿主进程端口冲突） |
 | 启动自检 | scheme 载入校验（必填项/唯一性/storage 模板）失败 → 退出码非 0，桥接方据此判定 |
 | 就绪行 | 就绪后向 **stdout** 输出一行 `CORED_READY addr=<host:port> scheme_version=<v> kinds=<n>`（机器可读；解析失败不影响人读日志走 stderr） |
@@ -20,8 +21,12 @@
 | `GET /v1/scheme` | 概览：apiVersion/name/scope/version + 四类注册表计数 |
 | `GET /v1/scheme/kinds` | 对象类型清单（list）：`{count, kinds:[…]}` |
 | `GET /v1/scheme/kinds/{kind}` | 单类型详情（get）；未注册 → 404（Scheme 闸门语义） |
+| `GET /v1/objects/{kind}?scope=<scope>` | 文档对象清单（list）：`{count, kind, scope, objects:[{kind,name,scope,resourceVersion}]}`（无正文，瘦身载荷）；`scope` 缺省=跨 scope 枚举（storage 模板可展开的全部分支） |
+| `GET /v1/objects/{kind}/{name}?scope=<scope>` | 单个文档对象（get）：`{kind, name, scope, resourceVersion, content}`——content 为文档原文（yaml 或 md+frontmatter），读库内真实文档对象而非类型注册表 |
 
-- **只读**：非 GET 一律 405。写路径唯一入口是 Apply 管线（concepts/apply.md），本面永不提供写端点——控制面写语义尚未实现（skeleton），先以只读面对账 scheme 声明与代码的同步。
+- 对象键 = `(kind, scope, name)`：scope 四层（builtin/global/系统/系统+实例）物化为目录前缀（layout.md），storage 路径由 scheme.yaml 各 kind 的 storage 模板解析。
+- 错误→状态码：kind 未注册或对象不存在 → 404；scope 与模板不相容/命名违规 → 400；docs 未配置 → 503。
+- **只读**：非 GET 一律 405。写路径唯一入口是 Apply 管线（concepts/apply.md），本面永不提供写端点。
 - 载荷为 JSON；kind 详情保留声明原文（spec/fields/status/relations/未识别字段收敛进 extra），声明演进不破坏查询面。
 
 ## 3. plugin↔cored 桥契约（dsh plugin 侧）
@@ -42,6 +47,7 @@ dsh 宿主（cordis entry id=core-system）
 | `autoSpawn`（缺省 true） | false 时本宿主不拉起 cored（只读面外置，如共享调试实例） |
 | `coredUrl` | 已在运行的 cored 基址；设置则跳过 spawn 直接查询 |
 | `schemePath` | 为空且无 `CORE_SYSTEM_SCHEME` 时桥接不启动（warn，不阻断宿主） |
+| `coredArgs` | 附加参数透传（如 `["--docs","<文档库根>"]` 挂对象读面；文档库锚点同属部署锚点，不入公开仓） |
 | `readyTimeoutMs`（缺省 10000） | 就绪行超时；超时/子进程先退 → 桥接失败日志，宿主继续运行 |
 
 - **部署锚点注入方式**：各 profile 用户 patch 层按行 id（`core-system`）覆写 config（patch 覆写=整行 config 替换，不合并），或经 `CORE_SYSTEM_*` 环境变量；公开仓只保留机制与缺省值。
