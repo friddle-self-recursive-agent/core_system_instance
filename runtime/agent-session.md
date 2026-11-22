@@ -29,7 +29,7 @@ systems/<s>/instances/<i>/docs/
 
 ## 3. 子 agent（机器级进程）
 
-- spawn：dsh 父进程经 control plugin `spawn machine-instance` 起独立子 dsh 进程（一 agent 一进程；明确不省内存，R2）。
+- spawn：父进程经 control plugin `spawn machine-instance` 起独立子 agent 进程（一 agent 一进程；明确不省内存，R2）。**子 agent 运行时不限于 dsh**（A60）：dsh / opencode / 自写 agent 均可，选型与其工具环境在该子 agent 引用的 ConnectorOps 中描述或调用。
 - 上下文：子 agent 不继承父会话内存；靠 PlanDoc/SessionLog/引用的 ConnectorOps 描述环境与工具。
 - 权限：父权限裁剪（只减不增）；直控三原语（dispatch/interrupt/query）全程 ops DB 留痕。
 
