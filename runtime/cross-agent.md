@@ -1,7 +1,7 @@
 # 运行时设计：dsh 跨 agent 调用（R2.2 研究结论）
 
 > 问题：深层 agent 之间跨 agent 调用有没有现成机制？基于 dsh 插件能不能做？
-> 结论：**能，dsh 原生支持，无需 fork**。材料：`@deepseek-ai/dsh-agent`（Agent handle / live registry / initiator scope / agent/* 事件词汇）+ `dsh-agent-loop`（驱动）+ typert 远程协议。
+> 结论：**能，dsh 原生支持，无需 fork**。材料：`@deepseek-ai/dsh-agent`（Agent handle / live registry / initiator scope / agent/* 事件词汇）+ `dsh-agent-workflow`（驱动）+ typert 远程协议。
 
 ## 1. 机制盘点（dsh-agent 0.1.5-rc.2 实测接口面）
 

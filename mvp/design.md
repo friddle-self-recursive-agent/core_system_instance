@@ -20,7 +20,7 @@ Goal(种子) → 对账(acceptance probes 全量复测)
 | 上游条款 | 本 MVP 落点 |
 |---|---|
 | Goal A2 冷启动闭环 | 人装好服务+人给种子 Goal，此后自循环自持（Igniter 自动化的最小演示） |
-| Goal A4 一次真实 Loop 走通 | core-loop-mvp 态机（本文 §3），每轮留 SessionLog |
+| Goal A4 一次真实 Workflow 走通 | core-workflow-mvp 态机（本文 §3），每轮留 SessionLog |
 | Goal A3 acceptance 可数据判定 | acceptance 强制引用已注册 probe（本文 §2 规则 3） |
 | P6 意图不可私改 | generator 只产提案区文档，过 Apply 管线才生效 |
 | A39/A43 core=dsh plugin | dsh-core-agent 即一个 dsh plugin（架构文档 §1） |
@@ -40,7 +40,7 @@ Goal(种子) → 对账(acceptance probes 全量复测)
 3. **acceptance 必须可判定**：每条 acceptance 必须带 `probe: <probe-id>`（http/exec/file 三类内置探针，见架构文档 §4）；无 probe 引用的条目 Apply 直接 422 拒绝。验收数据化，无"凭感觉验收"。
 4. **自生成上限**：每 tick 最多生成 1 个新 Goal。requirements 派生队列空且当前 Goal InSync 时循环进 Idle——诚实停下，不编造工作。
 
-## 3. 最小自循环状态机（core-loop-mvp）
+## 3. 最小自循环状态机（core-workflow-mvp）
 
 ```
  Seed(无 Goal：等种子/派生) ─► Analyze(probes 全量复测)
@@ -61,7 +61,7 @@ Goal(种子) → 对账(acceptance probes 全量复测)
         CoolDown(间隔) ─► 下一 tick
 ```
 
-相对完整 core-loop（loop/loop.md）的显式裁剪，每条都标注后补路径：
+相对完整 core-workflow（runtime/workflow-runtime.md）的显式裁剪，每条都标注后补路径：
 
 | 完整设计 | MVP | 后补 |
 |---|---|---|
@@ -71,6 +71,7 @@ Goal(种子) → 对账(acceptance probes 全量复测)
 | ops DB（SQLite WAL） | state/ JSON + 每轮 SessionLog md | 每日对账探针后补 |
 | 预算（minutes/tokens/mutations） | 每 tick maxMinutes 单闸 | 预算三闸全量 |
 | Escalate 通知链 | Console 标红 + DriftReport 落档 | Notification 接入 |
+| workflow 规则面（enabled/services/llm 配置、上游 global 汇聚、默认 skill 查文档命令） | MVP 固定 core-workflow-mvp 单实例 | 按 concepts/workflow.md R3 批次接入 |
 
 ## 4. 验收（本 MVP 自己的 acceptance，自指示范）
 

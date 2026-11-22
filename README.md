@@ -10,7 +10,7 @@
 | systems/builtin/developer-system | [impl/developer-system.md](impl/developer-system.md)（**首个设计对象**：如何利用 onedev/如何开发/如何满足循环） | workservice: connectors/onedev-driver |
 | systems/builtin/deploy-system | [impl/deploy-system.md](impl/deploy-system.md) | workservice: plugins/exec-local |
 | systems/builtin/storage-system | [impl/storage-system.md](impl/storage-system.md)（NAS+OSS） | workservice: connectors/gitfs, nas, oss |
-| （无独立 Desc：core-loop 系 Workflow 实例，A56） | [impl/feedback-workflow.md](impl/feedback-workflow.md)（反馈修复闭环：报错→agent→提议→批准→pull→发布→验收） | —（设计，未开工） |
+| （无独立 Desc：core-workflow 系 Workflow 实例，A56） | [impl/feedback-workflow.md](impl/feedback-workflow.md)（反馈修复闭环：报错→agent→提议→批准→pull→发布→验收） | —（设计，未开工） |
 | （挂 deploy-system，A58） | [impl/kube-inner-integration.md](impl/kube-inner-integration.md)（内网集群纳管 + 页面功能模块划分） | —（设计，未开工） |
 | systems/builtin/user-system | [impl/user-system.md](impl/user-system.md)（接入 LDAP 认证+目录同步 / 飞书账号映射，A59） | —（设计，未开工） |
 | （挂 deploy-system：部署渠道矩阵） | [impl/deploy-system.md](impl/deploy-system.md) §5-6（kube / ssh-host / onedev-ci 三渠道，每业务 DeployDesign 声明） | —（设计，未开工） |
@@ -30,7 +30,8 @@
 
 ## 其他
 
-- [loop/](loop/)：Loop 管线状态机 + 自举（bootstrap）设计
+- [runtime/workflow-runtime.md](runtime/workflow-runtime.md)：Workflow 引擎运行时（管线/编辑/展示/数据流/落地 agent）
+- [runtime/bootstrap.md](runtime/bootstrap.md)：自举（bootstrap）设计
 - [layout.md](layout.md)：目录即对象规范（文档库物理布局）
 - [feasibility.md](feasibility.md)：可行性报告（含 onedev / NAS+OSS / dsh / sqlite 专项，R1.6 指定放本仓）
 - [examples/](examples/)：developer-system 走查示例
@@ -41,12 +42,13 @@
 
 | 文档 | 内容 |
 |---|---|
-| [mvp/design.md](mvp/design.md) | 支持生成 Goal 的最小自循环设计（Goal 生成三来源+四规则、core-loop-mvp 态机、M1–M5 验收） |
+| [mvp/design.md](mvp/design.md) | 支持生成 Goal 的最小自循环设计（Goal 生成三来源+四规则、core-workflow-mvp 态机、M1–M5 验收） |
 | [mvp/architecture.md](mvp/architecture.md) | 架构：dsh 宿主+core plugin 拓扑、部署、目录、tick 数据流、LLM、Console API |
 | [mvp/scheme.yaml](mvp/scheme.yaml) | 实现侧 scheme 子集：dsh-core-agent 装载并自检的类型注册（core/scheme.yaml 的可运行裁剪） |
+| [mvp/concept-audit.md](mvp/concept-audit.md) | 概念符合性审计：P1–P10 流转判定 + kinds/docTypes/events 对照 + 审计修复清单（基于运行证据，2026-11-20） |
 
 ## 本仓自身的规矩
 
 - 本仓只放"实现形式"（How + 证据 + 可行性）；**意图变更回 core_system 仓改 Desc**（P6：不允许在 Instance 侧私改意图）。
-- 每份 ImplDoc 有 mapping 段（Desc 条款→实现），Desc 变更后由 Loop 对账此处是否过期（文档过期=drift）。
+- 每份 ImplDoc 有 mapping 段（Desc 条款→实现），Desc 变更后由 Workflow 对账此处是否过期（文档过期=drift）。
 - instance.yaml 汇聚 Status（机器写区，见下）。

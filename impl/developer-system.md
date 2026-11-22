@@ -24,7 +24,7 @@ push ──► onedev(scm) ──webhook──► Event(ExternalChanged)
                                         │
               core dispatch（selector domain=devtools）
                                         ▼
-   Loop(developer-system-main) → Agent(dsh基座)
+   Workflow(developer-system-main) → Agent(dsh基座)
                                         │ 选 TaskScheme build-and-verify
         ┌───────────────────────────────┼──────────────────────────┐
         ▼                               ▼                          ▼
@@ -49,24 +49,24 @@ push ──► onedev(scm) ──webhook──► Event(ExternalChanged)
 | `gate-status` | 保护分支/红线状态读写 | 读比写 |
 | `verify` | 服务健康（/api/server-info）+ 版本探测（VersionSupported 条件） | — |
 
-**不做的**：不用 onedev 内置 CI 配置面当"构建定义的唯一真相"——**构建定义的唯一真相是 TaskScheme 文档**（buildspec 文件由 TaskScheme 渲染生成/对账，onedev 里的是投影）。这是"意图在文档、现实在外部、Loop 拉齐"的直接应用。
+**不做的**：不用 onedev 内置 CI 配置面当"构建定义的唯一真相"——**构建定义的唯一真相是 TaskScheme 文档**（buildspec 文件由 TaskScheme 渲染生成/对账，onedev 里的是投影）。这是"意图在文档、现实在外部、Workflow 拉齐"的直接应用。
 
 ## 3. 如何开发（落地顺序）
 
 1. **onedev 纳管**：onedev-template（mode: adopt）→ 安装即登记 WorkService + webhook 注册（finalizer 记副作用）。
 2. **onedev-driver**：实现 §2 五 op（REST+git），契约测试先行（conformance：每 op 三例——首跑/重跑幂等/失败路径）。
 3. **TaskScheme `build-and-verify`**：先手工跑通五步（execution-model.md §3 模板），再入库过审。
-4. **Loop(developer-system-main)**：watch push 事件 + 2m 巡检；预算 20min/轮。
+4. **Workflow(developer-system-main)**：watch push 事件 + 2m 巡检；预算 20min/轮。
 5. **产物链路**：oss-driver.put + digest 回写；红线=gradle test+lint 全绿才 put。
 6. **验收对账**：Goal.A1–A5 每条挂一个探针（A1=pickup p95 指标；A2=gate-status 抽查；A3=产物 digest 抽验；A4=通知演练；A5=本循环自身）。
 
 ## 4. 如何满足"开始的循环"（首圈走查）
 
-冷启动后的第一个完整 Loop（loop/loop.md §5 同构，换成 onedev）：
+冷启动后的第一个完整 Workflow（runtime/workflow-runtime.md §5 同构，换成 onedev）：
 
 ```
 1. 开发者 push → onedev webhook → onedev-driver.watch → Event(ExternalChanged, source=onedev)
-2. core dispatch → Loop(developer-system-main) → Agent(dsh)
+2. core dispatch → Workflow(developer-system-main) → Agent(dsh)
 3. 装配 L0：Goal.A1(p95<3min)/A2(红线100%)/A3(产物入库)
 4. Analyze：新 commit 未构建 → DriftReport{d1: commit-unbuilt}
 5. Gate：动作=clone+build+put（白名单内）→ 放行

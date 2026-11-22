@@ -24,10 +24,10 @@ docs:
 metricsInfo:
   store: tsdb/prometheus-main     # 落地后由 builtin storage/deploy 提供
   queries:
-    loopRps: sum(loop_reconciles_total[5m])
+    workflowRps: sum(workflow_reconciles_total[5m])
     driftOpen: sum(drift_open)
 
-status:        # Loop 引擎回写区（人写无效）
+status:        # Workflow 引擎回写区（人写无效）
   observedGeneration: 1
   phase: Drifting
   conditions:

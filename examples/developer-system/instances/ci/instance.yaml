@@ -16,7 +16,7 @@ metricsInfo:
     pickupP95: histogram_quantile(0.95, sum(rate(ci_pickup_seconds_bucket[1h])) by (le))
     runners: sum(ci_runners_active)
 
-status:            # 以下全部由 Loop 回写（人写 Policy 拒绝）
+status:            # 以下全部由 Workflow 回写（人写 Policy 拒绝）
   observedGeneration: 12
   phase: InSync
   conditions:

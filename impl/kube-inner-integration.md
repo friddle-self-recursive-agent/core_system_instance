@@ -41,7 +41,7 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-deploy-system}]
 
  观测面
  ─────────────────────────────────────────────
-  kube-driver.watch(events) + 监控栈 watch → Event → feedback-remediation-loop
+  kube-driver.watch(events) + 监控栈 watch → Event → feedback-remediation
 ```
 
 **边界判定**（architecture.md 决策树）：集群=外部常驻系统 → WorkService；每环境的工作负载=该 WorkService 被观测到的现实 → Status/MetricsInfo，不是文档；"把某系统部署到 prod"这类意图 → 各业务系统 ServiceDesc 的 DeployDesign，经跨系统提案（互相 Apply）落到 deploy-system。
@@ -55,7 +55,7 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-deploy-system}]
 | 业务管理系统 | 46 | 用户中心（SSO 底座）、AI 通道管理、设备与运营后台、BI 报表、技术支持/社区后台 | 每系统=WorkService；每环境实例=Instance 或 Ref |
 | 运维系统 | 21 | 日志/指标/链路追踪、K8s 管理面板、缓存/DB 管理入口 | 多数并入 kube-inner/监控栈的六面体（它们是同一批外部系统的 UI），**不重复注册** |
 | 账号与存储 | 14 | LDAP/SSO/Keycloak、网盘、NAS | 账号类=权限系统/user-system 的对接 IdP（WorkService）；存储类=storage-system 的既有纳管 |
-| 内部业务系统 | 6 | 订单/激活码/售后、Bug/工单、反馈中心、版本管理 | 每系统=WorkService；反馈中心与工单=feedback-loop 的事件源（第一优先） |
+| 内部业务系统 | 6 | 订单/激活码/售后、Bug/工单、反馈中心、版本管理 | 每系统=WorkService；反馈中心与工单=feedback-workflow 的事件源（第一优先） |
 | 开发工具 | 3 | 跳板机、公司 git（OneDev）、网盘聚合 | 跳板=通道基础设施（Provider 连接面）；OneDev=developer-system 既有设计 |
 
 划分规则：
@@ -81,8 +81,8 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-deploy-system}]
 |---|---|---|
 | K0 | kube-driver 契约测试（对受限 SA：get/patch deployment、rollout 状态、events watch） | conformance 三例全绿（首跑/重跑幂等/失败路径） |
 | K1 | 集群 WorkService 纳管 + 环境清单对账（注册表 vs deployments） | 对账表产出，差异可解释 |
-| K2 | 反馈/工单系统 watch 源接入（feedback-loop P0 前置） | 测试错误 5m 内成 Event |
-| K3 | preview 环境发布链路（feedback-loop P3 对接） | 一次真实预发发布验收 |
+| K2 | 反馈/工单系统 watch 源接入（feedback-workflow P0 前置） | 测试错误 5m 内成 Event |
+| K3 | preview 环境发布链路（feedback-workflow P3 对接） | 一次真实预发发布验收 |
 
 ## 5. 可行性分析（逐组件）
 

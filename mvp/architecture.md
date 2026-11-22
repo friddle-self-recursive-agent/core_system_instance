@@ -14,7 +14,7 @@ labels: {tier: mvp}
 ```
 node ≥24.9 ── dsh CLI（宿主 @deepseek-ai/dsh，profile: core）
                 ├─ dsh-core-agent（npm 包名=服务名去后缀）
-                │    ├─ core     文档仓 + Apply 管线 + loop 引擎 + goal generator
+                │    ├─ core     文档仓 + Apply 管线 + workflow 引擎 + goal generator
                 │    ├─ tools    exec（白名单）/ probe（http|tcp|file）
                 │    └─ console  HTTP 观测面 + 种子 Goal 入口
                 └─ llm（dsh 内置 service，provider 配置见 §5）
@@ -39,10 +39,10 @@ node ≥24.9 ── dsh CLI（宿主 @deepseek-ai/dsh，profile: core）
 /root/dsh-core-agent/
 ├── package.json                # dsh-core-agent
 ├── lib/                        # 插件代码
-│   ├── index.js                # apply(ctx)：装载 store/apply/loop/generator/probes/console
+│   ├── index.js                # apply(ctx)：装载 store/apply/workflow/generator/probes/console
 │   ├── store.js                # 文档仓：frontmatter 解析、枚举、version 乐观锁（读改写自增）
 │   ├── apply.js                # Apply 管线：校验（scheme+probe 引用）→ 写盘 → Event
-│   ├── loop.js                 # core-loop-mvp 态机（设计文档 §3）
+│   ├── workflow.js                 # core-workflow-mvp 态机（设计文档 §3）
 │   ├── generator.js            # Goal 生成器：LLM 提案 → 提案区
 │   ├── probes.js               # http/exec/file 三探针（幂等只读）
 │   └── console.js              # HTTP API + 静态观测页
@@ -59,13 +59,19 @@ node ≥24.9 ── dsh CLI（宿主 @deepseek-ai/dsh，profile: core）
 └── .env                        # API key（EnvironmentFile，0600）
 ```
 
-写权限三分（P2 物化）：`docs/` 只有人与 generator 经 Apply 写；`state/` 只有 loop 引擎写（人改无效，tick 重算覆盖）；`lib/` 只随 npm 包升级变。
+写权限三分（P2 物化）：`docs/` 只有人与 generator 经 Apply 写；`state/` 只有 workflow 引擎写（人改无效，tick 重算覆盖）；`lib/` 只随 npm 包升级变。Goal 生命周期跨区移动（current→done、proposals→queue）是引擎的文档回归动作，归档一律按 `<name>.md`（审计教训：曾按 current.md 覆盖归档，已完成清单残缺导致重复派生）。
+
+Apply 校验前移（P7 文档=权限面）：acceptance 的 probe 引用与 exec 命令白名单/危险令牌在 Apply 入口即拒（422），不带病入库等执行期才发现。
+
+## 3.1 概念符合性
+
+概念是否实现正确、是否真实流转，见 [concept-audit.md](concept-audit.md)（P1–P10 逐条 + kinds/docTypes/events 判定表 + 审计修复清单，基于运行证据）。唯一结构性缺口：TaskScheme 沉淀机制未对象化（Plan 相位 LLM 生成步骤直接执行），正式版必补。
 
 ## 4. 一次 tick 的数据流
 
 ```
 timer(resync) 或 Apply 触发
-  └─► loop: Analyze = 对当前 Goal.acceptance 逐条跑 probe
+  └─► workflow: Analyze = 对当前 Goal.acceptance 逐条跑 probe
          ├─ 全过 → InSync → generator：
          │     输入  = 当前 Goal + probes 结果 + requirements 存档 + 上轮 DriftReport
          │     输出  = JSON Goal 提案 → 校验 → docs/goals/proposals/ → Apply → 排队

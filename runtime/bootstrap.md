@@ -14,7 +14,7 @@
 
 ```
 1. 校验并装载首版 core/（Scheme + core.desc + default Policy + builtinRoot Agent 定义）
-2. 启动 Core 进程（Loop 引擎随之启动）
+2. 启动 Core 进程（Workflow 引擎随之启动）
 3. 消失（不常驻；健康由常驻的 builtinRoot 接管）
 ```
 
@@ -27,7 +27,7 @@
 ## 3. 冷启动后的接管链
 
 ```
-Igniter → Core(+Scheme) → Loop引擎 → builtinRoot（第一个被拉起的 Agent）
+Igniter → Core(+Scheme) → Workflow引擎 → builtinRoot（第一个被拉起的 Agent）
         → builtinRoot 对账：校验文档库自洽（无野对象、owner 链闭合）
         → 按 core.desc 拉起其余 Builtin 成员 → 常态运转
 ```
@@ -50,7 +50,7 @@ builtinRoot 的常驻看护：进程级看门狗（Igniter 留下的最小监督
 | Igniter | < 1000 行，无常驻 | git 版本 + 人审 |
 | 看门狗 | 重启策略级 | 部署层（systemd/k8s） |
 | Policy 硬规则 | 3 条，随二进制 | 发版流程 |
-| 其余一切 | — | 文档面 + Loop |
+| 其余一切 | — | 文档面 + Workflow |
 
 除上表外，任何"文档之外的状态"出现即违宪（架构反模式）。
 

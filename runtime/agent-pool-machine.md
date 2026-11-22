@@ -20,7 +20,7 @@
 │  dsh --profile core-system (:3081)                          │
 │  ┌───────────────────────────────────────────────┐         │
 │  │ 角色：core_system 自举开发者                      │         │
-│  │  跑 developer-system 闭环（A41 core-loop）：      │         │
+│  │  跑 developer-system 闭环（A41 core-workflow）：      │         │
 │  │   desc 仓(声明) ⇄ instance 仓(设计/可行性)        │         │
 │  │   ⇄ workservice 仓(代码)                         │         │
 │  │  唯一交付目标：                                    │         │
@@ -46,7 +46,7 @@
 
 ## 2. 自举顺序（bootstrap 之后的第一对实例）
 
-依赖 loop/bootstrap.md（P9 点火器）完成之后：
+依赖 runtime/bootstrap.md（P9 点火器）完成之后：
 
 ```
 T0 Igniter 点火 → SelfRecursiveCore（临时/最小形态）
@@ -57,7 +57,7 @@ T4 kube-inner profile 挂载 plugin v0 → onedev/集群纳管（impl/kube-inner
 T5 循环：kube-inner 侧发现的缺陷 → Event → core-system profile 修复 → 新版 plugin → T4 重放
 ```
 
-T5 即"唯一目标=更新第二个 profile 插件"的闭环形态；两条 loop 的触发规则与刹车各自独立（cooldown/预算不共享）。
+T5 即"唯一目标=更新第二个 profile 插件"的闭环形态；两条 workflow 的触发规则与刹车各自独立（cooldown/预算不共享）。
 
 ## 3. install 步骤草案（已执行部分打勾，其余不实施）
 
@@ -74,7 +74,7 @@ T5 即"唯一目标=更新第二个 profile 插件"的闭环形态；两条 loop
 |---|---|---|---|
 | 双 profile 同机隔离 | ✅ | 进程/端口分离（3081/3082）；数据目录按 profile 天然隔离 | 权限域不互引（§1.4） |
 | 自举依赖 plugin 首版 | ⚠️ 有条件 | core plugin 未实现前，core-system profile 只是普通 dsh 会话（无 Apply/Event 引擎） | 这正是设计先行（R14.2"不开做"）的原因；v0 最小集见 T2 |
-| "唯一交付"的验收判定 | ⚠️ 有条件 | "plugin 可用"需可数据判定（A3） | 验收探针=kube-inner profile 挂载后能跑通一次 core-loop 最小循环 |
+| "唯一交付"的验收判定 | ⚠️ 有条件 | "plugin 可用"需可数据判定（A3） | 验收探针=kube-inner profile 挂载后能跑通一次 core-workflow 最小循环 |
 | 机器单点 | ⚠️ 有条件 | 一台容器承载自举与接入 | 150G/16G 余量充足（本日已扩容核查）；备份策略进 storage-system 既有设计 |
 | 模型网关依赖 | ⚠️ 低 | LLM 网关不可达则两会话停摆 | 网关健康探针 → Event(warn)；网关路由组先到先得可切换 |
 

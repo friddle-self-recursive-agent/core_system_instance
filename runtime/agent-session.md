@@ -14,7 +14,7 @@ systems/<s>/instances/<i>/docs/
 
 - 触发：dsh 会话结束（或每相位迁移——粒度"看实现"，v1 建议**会话级**，相位级列为可选）+ `SessionClosed` Event。
 - 写入：走 Apply（存储机制），fieldManager=该 agent——**这是事后留痕，不是逐写审批**。
-- 对账：Instance 缺 PlanDoc/SessionLog = drift（Loop 检查，docType required）。
+- 对账：Instance 缺 PlanDoc/SessionLog = drift（Workflow 检查，docType required）。
 - 价值：回放（态机可审计）、上下文压缩（下轮会话先读近期 SessionLog 而非全量）、漏读检测（docsLoaded 与 L0 清单比对）。
 
 ## 2. AUTOLEVEL 落地

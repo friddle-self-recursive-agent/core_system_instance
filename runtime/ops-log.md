@@ -18,8 +18,8 @@ apply_log    (ts, field_manager, obj, resource_version, result, policy_decisions
 event_log    (ts, event_id, type, source, involved, dedup_key, severity, routed_to)
 control_log  (ts, root_agent, primitive, target_agent, task_id, result)   -- 直控审计
 approval_log (ts, approval_id, permission_rule, judged_by, decision)   -- v0.9：权限系统判定（A44）
-escalate_log (ts, from_loop, reason, chain_depth)
-budget_log   (ts, loop, task, tokens, mutations, wall_ms)
+escalate_log (ts, from_workflow, reason, chain_depth)
+budget_log   (ts, workflow, task, tokens, mutations, wall_ms)
 ```
 
 ## 3. 双写与对账

@@ -18,13 +18,13 @@ dsh agent（每系统/实例一个基座）◀┘
 - **root 直控**：root 的 control plugin 对子 agent 有 dispatch（派发）/interrupt（中断）/query（查询）三原语；子 agent 之间不互控。直控全程写 ops 日志（审计），高危直控过 Policy。
 - **root 的权限也是统一的（A63）**：builtinRoot **有权限标志**——挂内置 role `global/admin`（最高权限，默认内置，绑定不可更改：不可删/不可换绑/不可降权），一切动作走统一权限管理，无任何旁路。下表"权限"列是该 role 在各插件上的授权投影，不是独立权限面。
 - **AUTOLEVEL 默认（A30/A64）**：默认 RootAgent=ask（ask 时无上级→问 Bind 的人）、ServiceAgent=auto；**RootAgent 与普通 Agent 同一机制，autoLevel 均可配置——Root 也可 auto/all**（all 需显式授权）。级别写在 Agent.spec.autoLevel，变更走 Apply+Policy。
-- **文档按需加载**：Agent 自己按需加载文档，由 dsh 本次会话自实现（docsPolicy.onDemand）；Loop 只注入 L0 最低必载（Goal.acceptance+Rule 摘要）。SessionLog 记录 docsLoaded，可审计"读了什么"。
+- **文档按需加载**：Agent 自己按需加载文档，由 dsh 本次会话自实现（docsPolicy.onDemand）；Workflow 只注入 L0 最低必载（Goal.acceptance+Rule 摘要）。SessionLog 记录 docsLoaded，可审计"读了什么"。
 
 ## 2. 首批四插件
 
 | 插件 | 住哪 | 职责 | 权限 |
 |---|---|---|---|
-| `core` | dsh 宿主 | **承接 Core 控制面**（A39）：Apply/Event 分发/Loop 引擎/Scheme/Policy/ops DB；界面=console | 文档面读写（唯一写路径） |
+| `core` | dsh 宿主 | **承接 Core 控制面**（A39）：Apply/Event 分发/Workflow 引擎/Scheme/Policy/ops DB；界面=console | 文档面读写（唯一写路径） |
 | `control` | root | 直控通道三原语、子 agent 生死（HeartbeatLost→重启） | 写：agent 任务区 |
 | `console` | root | 总控界面（见 console-ui.md）：资源树/信息流/对象详情 | 只读全库 + 写审批动作 |
 | `exec-local` | 各子 | 本机命令执行（build/install 的执行手） | 命令白名单模板 |
@@ -37,10 +37,10 @@ dsh 侧的模块（core/console/exec-local/reporter 等）按 dsh 自身的插�
 ## 3. 交互序列（一次派发）
 
 ```
-Loop引擎 ─dispatch(task)─► root.control ─dispatch─► sub.exec-local
+Workflow引擎 ─dispatch(task)─► root.control ─dispatch─► sub.exec-local
    ▲                                          │
    └────────────report(result)────────────────┘   (reporter 上报，ops DB 留痕)
-失败：sub.reporter → root.control(interrupt) → Loop 走 onFailure
+失败：sub.reporter → root.control(interrupt) → Workflow 走 onFailure
 ```
 
 ## 4. 可行性
@@ -49,4 +49,4 @@ Loop引擎 ─dispatch(task)─► root.control ─dispatch─► sub.exec-local
 |---|---|---|
 | dsh 单进程插件连坐崩溃 | ⚠️ 低 | root 看门狗重启；任务幂等重入 |
 | exec-local 白名单维护成本 | ⚠️ 中 | 白名单模板按系统注册（developer 的 gradle/maven 常用集），Policy 审新增 |
-| 直控与 Loop 双头指挥 | ⚠️ 中 | 规则：直控只能下发/中断"Loop 已派发或模板库内"的任务；新任务必须走 Loop（审计可见双轨） |
+| 直控与 Workflow 双头指挥 | ⚠️ 中 | 规则：直控只能下发/中断"Workflow 已派发或模板库内"的任务；新任务必须走 Workflow（审计可见双轨） |

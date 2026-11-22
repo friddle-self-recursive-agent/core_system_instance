@@ -47,22 +47,26 @@ spec:
         phase: "Idle|Analyzing|Planning|Executing|Verifying|Reporting|Failed"
         currentSession: "{id, startedAt}"
 
-    - kind: Workflow                  # MVP 唯一 workflow = core-loop-mvp
+    - kind: Workflow                  # MVP 唯一 workflow = core-workflow-mvp
       builtin: true
-      storage: workflows/core-loop-mvp.yaml
+      storage: workflows/core-workflow-mvp.yaml
       spec:
-        triggers: "{events: [TickDue, DocApplied], timer: {resync: 5m}}"
+        enabled: "?bool (=true)"       # A61：规则开关（MVP 恒 true，Apply 可切换）
+        services: "{involved: [core_system/default], mode: act}"
+        llm: "{provider: glm-coding, model: glm-5.3-flash}"
+        triggers: "{events: [DocApplied], timer: {resync: 5m}}"   # TickDue 未发射：timer 直接触发不经事件队列（审计修正）
         ingest: "{dedup: {window: 60s}, groupMax: 10}"
         phases: "[Seed, Analyze, Generate, Plan, Execute, Verify, Report, CoolDown]"
         onFailed: "{backoff: 60s, maxAttempts: 3, escalate: {to: console}}"
         brakes: "{cooldown: 60s, maxMutationsPerTick: 5, avoidRepeatFix: true}"
         cost: "{budget: {minutes: 10}, record: session-log}"   # MVP 单闸：每 tick 10 分钟硬顶
         regression: "{statusWriteback: true, reports: [DriftReport, SessionLog]}"
-      builtinSet: [core-loop-mvp]
+      builtinSet: [core-workflow-mvp]
 
     - kind: TaskScheme                # MVP 两个内置任务
       builtin: true
       storage: schemes/<name>.yaml
+      note: "MVP 未对象化：Plan 相位由 LLM 生成步骤直接执行（PlanDoc 承载）；『同类修复 N 次→沉淀 TaskScheme』（task-scheme.md §5）后补"
       spec:
         trigger: "{events: []string, match: map}"
         steps: "[]{id, tool: op, args}"
@@ -82,15 +86,17 @@ spec:
        rules: ["每 tick 一份；含 probe 原始结果与 LLM 调用计数"]}
     - {name: DriftReport, mandatory: auto,    sections: [drifts, actions],     writers: [engine], appliesTo: scope, admission: normal,
        rules: ["Verify 不过与 Escalated 必产；作为下轮 Analyze 输入"]}
+    - {name: VerifyDoc,   mandatory: required, sections: [guarantees, probes],  writers: [agent, human], appliesTo: scope, admission: normal,
+       rules: ["保障手段必须指向可运行证据（API/文档面/日志），不凭描述"]}
 
     # ============================================================
     # 三、事件类型（A42 Level 子集）
     # ============================================================
   eventTypes:
-    - {type: TickDue,        source: timer,    defaultLevel: debug, dedup: "tick:<n>",            route: core-loop-mvp}
-    - {type: DocApplied,     source: core,     defaultLevel: info,  dedup: "no-op 不发",          route: core-loop-mvp}
-    - {type: DriftDetected,  source: engine,   defaultLevel: warn,  dedup: "<goal>:<probe>",      route: core-loop-mvp}
-    - {type: GoalProposed,   source: engine,   defaultLevel: info,  dedup: "<proposal>",          route: core-loop-mvp}
+    - {type: TickDue,        source: timer,    defaultLevel: debug, dedup: "tick:<n>",            route: core-workflow-mvp, note: "未发射——timer 直接触发 tick，保留注册供正式版"}
+    - {type: DocApplied,     source: core,     defaultLevel: info,  dedup: "no-op 不发",          route: core-workflow-mvp, note: "MVP 每次都发；内容级 no-op 检测后补（A32）"}
+    - {type: DriftDetected,  source: engine,   defaultLevel: warn,  dedup: "<goal>:<probe>",      route: core-workflow-mvp}
+    - {type: GoalProposed,   source: engine,   defaultLevel: info,  dedup: "<proposal>",          route: core-workflow-mvp}
     - {type: DriftFixed,     source: engine,   defaultLevel: info,  dedup: "<goal>:<tick>",       route: console}
     - {type: Escalated,      source: engine,   defaultLevel: error, dedup: "<goal>:<reason>",     route: console}
     - {type: SessionClosed,  source: agent,    defaultLevel: info,  dedup: "<session>",           route: instance-docs}
@@ -99,7 +105,7 @@ spec:
     # 四、事件路由（缺省全收口，死信必须可见）
     # ============================================================
   dispatch:
-    - {on: "*", for: "any", dispatch: core-loop-mvp}
+    - {on: "*", for: "any", dispatch: core-workflow-mvp}
     - {on: "*", for: "unroutable", dispatch: state/deadletter.json}
 
     # ============================================================
@@ -108,7 +114,7 @@ spec:
   runtime:
     baseAgent: dsh                          # A39/A43
     executionLayers: [intent, agent, scheme, code]   # 四层执行（R1.2.3）
-    workflows: {default: core-loop-mvp, builtin: [core-loop-mvp]}
+    workflows: {default: core-workflow-mvp, builtin: [core-workflow-mvp]}
     autoLevels: {rootAgent: auto, serviceAgent: auto, all: 不开放}
     events: {levels: [debug, info, warn, error, fatal], debug: 只进内存, fatal: 必上 console}
     storage:

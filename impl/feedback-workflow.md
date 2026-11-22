@@ -4,7 +4,7 @@ docType: ImplDoc
 scope: builtin-self-recursive-core
 ownerRefs: [{kind: ServiceDesc, name: builtin-self-recursive-core}]
 ---
-# ImplDoc — 反馈修复闭环 workflow（feedback-remediation-loop）
+# ImplDoc — 反馈修复闭环 workflow（feedback-remediation）
 
 > R14.2 指定设计对象：把"有错误报错 → service agent → root agent → 提议 → 批准 → developer_system pull → deploy_system 发布 → 验收"落成一套**零新概念**的设计（A56）。
 > 本文档只做设计，不实现。公司侧实物（事件源系统、集群、OneDev 地址）见公司 git 上的可验证报告（agent_pool 前缀仓，A55）。
@@ -14,7 +14,7 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-self-recursive-core}]
 | 已有 | 在本设计中的位置 |
 |---|---|
 | 事件机制（log 式五级 Level，dsh 队列） | concepts/event.md |
-| core-loop Workflow（触发→整理→相位态机→回归） | concepts/workflow.md |
+| core-workflow（触发→整理→相位态机→回归） | concepts/workflow.md |
 | Agent 自治分级（默认 RootAgent=ask / ServiceAgent=auto；RootAgent 同机制可配置 auto/all，A64） | concepts/agent.md §AUTOLEVEL |
 | 提案制（不允许私改 Spec，生成 Proposal 走 Apply） | principles P6 / concepts/apply.md |
 | 审批相位（AwaitingApproval，挂起-恢复） | concepts/workflow.md §7 |
@@ -60,7 +60,7 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-self-recursive-core}]
                              ▼ 批准合入（一次一批）
         ┌────────────────────┴───────────────────────┐
         ▼                                            ▼
- developer-system（loop 实例）                  deploy-system（执行器）
+ developer-system（workflow 实例）                  deploy-system（执行器）
   ① onedev-driver.checkout                      ④ 环境升序发布：
     pull 修复分支/补丁到本地                        preview → prod（deploy-system
   ② exec-local 本地 build+test                    的 ConnectorOps：集群 deployments
@@ -95,7 +95,7 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-self-recursive-core}]
 apiVersion: core/v1
 kind: Workflow
 metadata:
-  name: feedback-remediation-loop
+  name: feedback-remediation
   scope: builtin-self-recursive-core
 spec:
   triggers:                          # ① 触发
@@ -126,10 +126,10 @@ spec:
 | 1 | 事件读取（观测源 watch） | bus 订阅，minLevel=error | 引擎统一订阅 |
 | 2 | 文档读取（Goal/Rule/VerifyDoc） | docs.read 白名单 | SessionLog 记 docsLoaded |
 | 3 | Proposal 生成 | 无副作用（只写待审区） | 待审区=独立 scope，无 prod 权限 |
-| 4 | 执行（pull/build/发布） | ConnectorOps 并集 | **三条出路**：权限齐备 / 跨系统提案 / 审批提升——本 loop 常态走 3（发布必人批） |
+| 4 | 执行（pull/build/发布） | ConnectorOps 并集 | **三条出路**：权限齐备 / 跨系统提案 / 审批提升——本 workflow 常态走 3（发布必人批） |
 | 5 | Status 回写 | fieldManager 分持 | Status=引擎专写；Spec 默认 Agent 无权（P6） |
 
-发布步骤是本 loop 唯一的**高危穿越**：deploy ConnectorOps 默认不在 ServiceAgent 的权限并集内 → 只能走出路 3（人批），机制上保证了"发布必过审批"不靠自觉。
+发布步骤是本 workflow 唯一的**高危穿越**：deploy ConnectorOps 默认不在 ServiceAgent 的权限并集内 → 只能走出路 3（人批），机制上保证了"发布必过审批"不靠自觉。
 
 ## 5. 分阶段落地（不开做，仅设计排序）
 

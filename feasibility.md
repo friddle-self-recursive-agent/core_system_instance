@@ -18,7 +18,7 @@
 | Event | ✅ | k8s 已验证+去重+巡检兜底 |
 | Apply | ⚠️ | v1 整文档归属（SSA 子集）；字段级留 v2 |
 | Bind | ✅ | 组织纪律风险，SLA+升级链兜底 |
-| Loop | ✅ | 刹车/预算/冷却全是经典解 |
+| Workflow | ✅ | 刹车/预算/冷却全是经典解 |
 | Status | ✅ | 成熟约定 |
 | Scope | ✅ | 目录即 scope，v1 零成本；git 权限绕过 v1 承认 |
 | Selector | ✅ | 无风险 |
@@ -44,14 +44,14 @@
 | "一切皆文档"字面义 | ❌ 自举死锁 | H3：显式例外清单 |
 | Prometheus 作为文档类型 | ✅ 不可（与 Metrics 冲突） | A1 并入 |
 | Agent 内嵌于 ServiceInstance | ⚠️ 双源风险 | A3 全局化+引用 |
-| Loop 无限自动修复直至通过 | ❌ 无法承诺 | A6 有界重试+升级 |
+| Workflow 无限自动修复直至通过 | ❌ 无法承诺 | A6 有界重试+升级 |
 | 系统间自由互相 Apply | ⚠️ 提权面 | apply.md 规则 4：默认待审区 |
 
 ## 4. 建议落地顺序（可行性从高到低）
 
 1. **Connector + WorkService + Ref + Credential**（纯工程，零研究风险，立即有产出：外部系统纳管）。
 2. **Scheme + DocType + Apply + Revision + Policy**（文档面闸门；git 后端即可）。
-3. **Event + Loop + Status**（对账骨架；此时已能"只报告不修复"——DriftReport 流起来就有价值）。
+3. **Event + Workflow + Status**（对账骨架；此时已能"只报告不修复"——DriftReport 流起来就有价值）。
 4. **Agent + Bind**（引入 LLM 自治；Gate 分档放行）。
 5. **Finalizer + Owner 全量级联**（系统开始有生有死）。
 6. **Builtin + bootstrap 完整化**（自举闭环，Core 自管）。
@@ -93,7 +93,7 @@
 | dsh 已有实现 | ✅ | 用户既有资产；契约五方法是薄抽象 |
 | 单进程插件连坐 | ⚠️ 低 | 看门狗重启+任务幂等重入 |
 | exec-local 白名单 | ⚠️ 中 | 按系统注册白名单模板；通用执行默认人审 |
-| 直控与 Loop 双头指挥 | ⚠️ 中 | 直控只限"已派发/模板库内"任务，审计双轨（runtime/dsh-plugin.md §4） |
+| 直控与 Workflow 双头指挥 | ⚠️ 中 | 直控只限"已派发/模板库内"任务，审计双轨（runtime/dsh-plugin.md §4） |
 
 ## 8. ops DB（SQLite，A23）
 
@@ -122,7 +122,7 @@
 
 | 项 | 评级 | 说明 |
 |---|---|---|
-| 跨仓一致性（Desc↔Instance↔代码） | ⚠️ 中 | Loop 对账天然覆盖（文档过期=drift）；仓间引用全用 `system://` URI |
+| 跨仓一致性（Desc↔Instance↔代码） | ⚠️ 中 | Workflow 对账天然覆盖（文档过期=drift）；仓间引用全用 `system://` URI |
 | 私有仓可见性 | ✅ | 三仓同 org 同权限；模板仓将来单独公开（不影响三仓私有） |
 
 ## 13. 用户系统与 IdP 接入（v0.4，A34；R3 指定"未来做可行性的时候看"）
@@ -146,7 +146,7 @@
 |---|---|---|
 | Provider 吸收 secret（A40） | ✅ | 簿记简化；明文扫描/轮换规则并入不变 |
 | Event Level 化（A42） | ✅ | 标准日志语义；fatal→Notification 必达 |
-| Loop 并入 Workflow（A41） | ✅ | 概念数 -1；core-loop 即原 Loop 管线（loop/loop.md） |
+| Workflow 并入 Workflow（A41） | ✅ | 概念数 -1；core-workflow 即原 Workflow 管线（runtime/workflow-runtime.md） |
 
 ## 16. v0.9 增补（R8）
 
@@ -171,11 +171,11 @@
 
 | 项 | 评级 | 关键约束 |
 |---|---|---|
-| 反馈闭环 workflow（feedback-remediation-loop） | ⚠️ | 零新概念（A56）；高风险面集中在"发布正式环境"，机制上强制审批+分批+回滚；事件源 API 覆盖不齐以巡检兜底 |
+| 反馈闭环 workflow（feedback-remediation） | ⚠️ | 零新概念（A56）；高风险面集中在"发布正式环境"，机制上强制审批+分批+回滚；事件源 API 覆盖不齐以巡检兜底 |
 | 事件源 watch（反馈/工单/监控三源） | ⚠️ | 能 API 的 watch、不能的页面探针；P3 巡检兜底丢事件 |
 | 内网集群 Connector（受限部署 SA） | ⚠️ | ops 上界=SA RBAC（workload 读写，无 create/delete）；patch 幂等=比较后写+dry-run |
 | 90 项页面功能模块划分 | ✅ | 注册表=数据非文档（A58）；运维 UI 与背后系统合一注册；对账主键待定 |
-| 双 dsh profile 分工（core-system / kube-inner） | ⚠️ | 自举依赖 core plugin v0；验收探针="第二个 profile 能跑通一次最小 core-loop" |
+| 双 dsh profile 分工（core-system / kube-inner） | ⚠️ | 自举依赖 core plugin v0；验收探针="第二个 profile 能跑通一次最小 core-workflow" |
 | 跳板通道（跳板→入口宿主→集群 API） | ⚠️ | 多一跳；凭据全走 Provider.auth.secret；断链=Event(warn) 非静默 |
 
 ## 18. R14.8 四项接入（user-system / developer-system / deploy-system / event 扩展）
@@ -190,3 +190,31 @@
 | deploy-system 三渠道（kube / ssh-host / onedev-ci），每业务 DeployDesign 声明 | ⚠️ | kube 渠道受 SA 上界；ssh 渠道每业务自带容器名+健康命令声明；验收统一走 Verifying 相位 |
 | event 扩展 Kafka 分发 | ⚠️ | Kafka=通知总线非真相源（内置 dsh 队列不变）；安装走公司发布管道（SA 无 create） |
 | event→飞书→账号 | ⚠️ | 依赖账号映射（user-system U3）；限流+聚合+熔断防事件风暴 |
+
+---
+
+## 19. MVP 实证（dsh-core-agent 上线，2026-11-20）
+
+§2 的三个硬前提第一次拿到**运行数据**，MVP（goal 生成最小自循环，跑在 inner-service）实测：
+
+### 19.1 三硬前提的实证更新
+
+| 硬前提 | 预测 | 实测 | 结论 |
+|---|---|---|---|
+| LLM 收敛性无法数学保证 | 重试上限+升级+回滚兜底 | GLM 两次网络瞬断、一次编造非法 Goal：全部走 重试≤2→Escalated→人 resolve 恢复，零静默错误 | **兜底链有效**；"诚实停下"（{"done":true} 出口）是必要设计——需求派生尽时 LLM 必然编造 |
+| 文件夹无事务与 watch | 单写者队列+轮询 | 单进程 running-flag 串行 + 5m resync 全量复测，32 轮 tick 无竞态 | MVP 规模下成立；git 后端/对账仍按 §2 计划 |
+| 必须有文档外点火器 | Igniter 三步 | 人装服务+人 POST 种子 Goal→此后自持（5 个 Goal 全自动完成归档） | 成立；自动 Igniter 仍是后补第一项 |
+
+### 19.2 实测新风险（原可行性未覆盖）
+
+| 风险 | 实测 | 对策（已落地/计划） |
+|---|---|---|
+| 归档命名冲突 | done/ 曾按 current.md 覆盖→已完成清单残缺→生成器重复派生 | 按 `<name>.md` 归档（已修）；正式版 apply 查重含全部分区 |
+| 外部 LLM 网络瞬断频率 | 内网机器到 open.bigmodel.cn 偶发 fetch failed | 重试带 4s/10s 退避（已修）；Escalated 人 resolve 是正确出路不是缺陷 |
+| 推理模型 token 预算 | glm-5.3-flash 是推理模型，reasoning 先吃 max_tokens | maxTokens 预算按 reasoning 模型给足；flash 档够用（P8） |
+| 危险意图白耗重试 | `rm -rf` 类 Goal 通过 Apply，3 轮后才 Escalated | exec 白名单校验前移进 Apply（已修，422 实测） |
+| 机器级子 agent 需求 | MVP 单进程够用；console 对话/多系统时才需要 | 按 runtime/cross-agent.md（ctx.agents 原生父子）走，无需 fork dsh |
+
+### 19.3 落地顺序修正（覆盖 §12 的 MVP 段）
+
+MVP 已交付：goal 生成自循环 ✅ → 下一优先序调整：**① TaskScheme 沉淀机制**（concept-audit §2 唯一结构缺口）→ ② console 服务关注区+agent 对话（ctx.agents）→ ③ git 后端+每日对账 → ④ 权限系统+Gate 审批 → ⑤ 自动 Igniter。概念符合性总账见 mvp/concept-audit.md。

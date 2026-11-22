@@ -16,4 +16,4 @@ examples/
     └── workservice.yaml                  # 外部系统在册（能力/驱动/凭证引用）
 ```
 
-配合 [loop/loop.md §5](../loop/loop.md) 的十步走查，可以完整看到：一次 gitlab runner 变更如何变成 Event → 触发 Loop → Agent 按 Goal.acceptance 与 Rule 对账 → 经 Connector 修复 → Status 追平 → 观测面汇总。
+配合 [runtime/workflow-runtime.md §5](../runtime/workflow-runtime.md) 的十步走查，可以完整看到：一次 gitlab runner 变更如何变成 Event → 触发 Workflow → Agent 按 Goal.acceptance 与 Rule 对账 → 经 Connector 修复 → Status 追平 → 观测面汇总。

@@ -30,7 +30,7 @@
 │   │   ├── rules.md / workflow-design.md / metrics.md
 │   │   ├── data-design.md / data-metrics.md / auth.md
 │   │   └── deploy-design.md / code-design.md
-│   ├── loops/<loop-name>.yaml           # Loop 对象
+│   ├── workflows/<workflow-name>.yaml           # Workflow 对象
 │   └── instances/<instance-name>/       # ServiceInstance
 │       ├── instance.yaml                # 对象 + Status
 │       ├── docs/                        # 实现侧：impl.md / verify.md / drift-*.md / runbook.md
@@ -68,7 +68,7 @@ ownerRefs: [{kind: ServiceDesc, name: developer-system}]
 
 ## 4. 本设计仓库自身（元层）
 
-本仓库（core_design/）是这套设计的**声明侧**：concepts/、doctypes/、loop/ 是 Scheme 层的设计文档；它们描述的系统真正落地时，业务内容按本规范住进 systems/ 等目录。两层的边界：**core_design 描述"管理面如何工作"；systems/ 承载"被管理系统是什么"**。当 Core 代码实现后，core_design 中的 core/、global/ 部分可直接作为首版 Builtin 文档被 Igniter 装载（bootstrap.md §2）。
+本仓库（core_design/）是这套设计的**声明侧**：concepts/、doctypes/、workflow/ 是 Scheme 层的设计文档；它们描述的系统真正落地时，业务内容按本规范住进 systems/ 等目录。两层的边界：**core_design 描述"管理面如何工作"；systems/ 承载"被管理系统是什么"**。当 Core 代码实现后，core_design 中的 core/、global/ 部分可直接作为首版 Builtin 文档被 Igniter 装载（bootstrap.md §2）。
 
 ## 5. 迁移预留（v2+）
 

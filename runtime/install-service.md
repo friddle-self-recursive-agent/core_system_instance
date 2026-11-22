@@ -6,7 +6,7 @@
 
 ```
 用户（console 命令 / 口头意图）
-  → InstallRequested Event ──► 路由到 builtin-deploy-system 的 Loop
+  → InstallRequested Event ──► 路由到 builtin-deploy-system 的 Workflow
   1. 发现：GitHub org（https://github.com/friddle-self-recursive-agent）搜 "*-template" 仓
      └─ connector: github-org-driver（只读：列仓/读README/读模板yaml）
   2. 读模板描述：template.yaml（WorkServiceTemplate 对象）
