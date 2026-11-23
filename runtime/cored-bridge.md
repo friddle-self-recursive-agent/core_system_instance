@@ -31,6 +31,7 @@
 | `GET /v1/objects/{kind}/{name}?scope=<scope>` | 单个文档对象（get）：`{kind, name, scope, resourceVersion, content}`——content 为文档原文（yaml 或 md+frontmatter），读库内真实文档对象而非类型注册表 |
 | `GET /v1/metrics` | 数据面指标清单投影（v0.33 MetricsInfo 数据面首段）：`{metrics:[{name, samples}], total}`——样本保留数排序确定性投影；数据面未装配=空投影（关断口径缺省可见，与 405 代际判别器分立） |
 | `GET /v1/metrics/query` | 数据面窗口聚合查询（v0.33）：`?metric=<名>&window=<窗口标签>&agg=count\|sum\|avg\|max\|min\|last` → `{metric, window, agg, value}`；缺参=400；未命中/声明面外聚合=404（不冒充零值）；数据面未装配=404 |
+| `GET /v1/events` | 事件归档查询面（v0.36 console 读面首段）：event_log 归档行最新优先投影（ts 降序，同刻按归档序）→ `{count, events:[{ts, eventId, type, source, involved, dedupKey, level, routedTo}]}`；`?limit=<n>&type=<t>&level=<l>&involved=<i>&since=<RFC3339>`（limit≤0=缺省 50，>500 收敛 500——读面防拖库，归档全量走重建/导出面；since 不可解析=400）；face 随 ops DB 装配恒注入（含内存库）；旧代（路由未注册）经兜底 handler 405=代际判别器。只读投影恒开，非 GET=405；数据来源=归档（event.md：审计素材）——Welcome 最近重要事件与事件流页（E6）共用本面，渲染数据无双源（console-adoption.md §5 规则 2） |
 | `GET /v1/secrets` | 秘密元数据清单（v0.34）：`{count, secrets:[{name, updatedAt}]}`——**只出名称与更新时刻，值永不回显**（脱敏红线）；秘密库未装配=503 |
 | `POST /v1/secrets` | 秘密落值（v0.34）：`{name, value}` → `{name, set:true}`——受理即吞值（请求体 value 不出现在任何响应/留痕）；写面门控同 apply（`--allow-apply`，未开启=405）；秘密库未装配=503；空 name/value=400 |
 | `DELETE /v1/secrets/{name}` | 秘密删除（v0.34）：幂等（键不存在=成功）；写面门控同上 |

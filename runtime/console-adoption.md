@@ -54,6 +54,21 @@
 
 **现象**：固定钥匙门（§1.3）部署后，浏览器经门进入时 dsh 客户端壳可载（静态+登录链 200），但 `/api` XHR 与 `/api/remote.mux` WebSocket 全部 403——面板级数据面（会话/插件/任务）全不可用。**根因**：dsh web 的连接插件对每条 Host API 路由与流做 Host/Origin 检查（web-server.md 语义）；门的反代把 Host 改写为后端地址（在 `--trusted-host` 清单）但 **Origin/Referer 原样透传**——浏览器 Origin=门的 host:port，不在信任清单 → 403。HTTP 表现层此前未暴露=裸 curl 探针不带 Origin 头（查询代替日志的盲区：curl 证据覆盖不了浏览器才有的头）。**处置（部署侧，2026-11-23）**：门对反代与 WS upgrade 两路统一把 Origin/Referer 改写为后端自身 origin（门呈现=后端的信任面）；实测经门 WS 403→101、页面 403 群→零 error。**教训**：代理链上的鉴权面诊断必须用带浏览器头的探针（Origin/Referer/Cookie 三件套），纯 curl 2xx ≠ 浏览器可用；前端代理（openresty 面）对 WS upgrade 的转发配置仍是独立待验面（本机不可操作，挂账）。
 
+### 1.8 E2 实现拓扑与细化验收（2026-11-23，E2 轮）
+
+**数据通路（E2 起的通用读面链路，后续 E 轮复用）**：浏览器 → dsh web（同源）→ 宿主插件代理路由 `GET /core-console/api/v1/*`（dsh-plugin-core-system 经 `ctx.inject(['webServer','connection'])` 软出现注册——headless 宿主无 webServer 零影响）→ connection 鉴权栅栏（`requestRejection`，open-in-app 同款口径：401/403/undefined，**栅栏缺席=fail-closed 拒全部**）→ cored 只读 GET 面（cored-bridge.md §2）。代理只放行 `GET /v1/*`（非 GET=405 allow: GET；路径穿越=404；cored 未就绪=503；上游不可达=502）——**写路径唯一入口 POST /v1/apply 永不经浏览器代理**（§5 规则 1/2 的机械落点）。cored 侧新增 `GET /v1/events`（event_log 归档查询投影，limit/type/level/involved/since 五参最小集，limit≤500 防拖库；旧代经兜底 handler 405=代际判别器）——Welcome 最近重要事件（console-ui.md 屏幕 0 数据来源=event_log）与事件流页（E6）共用本面。
+
+**E2 屏面换装范围（其余屏保持 proto mock 待各自 E 轮）**：Welcome 大屏 / 系统树 / 系统详情（最小面）/ 对象详情 viewer（`#/doc/:kind/:scope/:name` 直链 + `#/doc/:name` 名字解析，歧义=空态引导回树）/ 事件详情（`#/event/:id`）。 Welcome 数据源=cored 对象枚举+run 投影+event_log+草稿缓存；健康度合成口径写进 tooltip（InSync 率=status.phase=InSync 实例占比——instance status 回写在正文，live 层逐个现读；**0 实例=n/a 不冒充 100%**；drift=DriftReport 在册数；审批积压=ApprovalNeeded 归档数；24h 失败率=run 终态 failed/started）。dev-delivery 阶段条=run 投影相位落点映射（run=触发面受理投影，status: triggered|running|suspended|failed；**无 run=全 wait 空态不假画进行中**；suspended=闸锚挂起标注）。系统树=Global（builtin/global kind 分组）→ 系统（ServiceDesc）→ instances/workflows/workservices/docs 四组；文档节点与资源节点完全同构（kind 徽章/rev/草稿圆点）；树上标识符全可点 → 对象 viewer（只读，E4 起升编辑器）。退化纪律（§1.4）：读面不可达=骨架行+轻提示不报错块；事件归档空=诚实空态（「归档窗内暂无事件」）。
+
+**E2 细化验收线（§4 E2 行展开；探针编号 L37-\*）**：
+- L37-01 读面端点代际：`GET /v1/events` 200（新代）∧ 旧代 405（兜底 handler）——双状态码判别。
+- L37-02 代理链路活体：经 dsh web（门链带浏览器头）`/core-console/api/v1/scheme` 200 且载荷与 cored 直查双读一致（同键同值）。
+- L37-03 Welcome 真数据：headless 活体——系统行出现真实 ServiceDesc 名 ∧ 事件区零 mock 事件名（空态=「归档窗内暂无事件」或归档行业务化标题）∧ 健康度 tooltip 含构成口径。
+- L37-04 系统树真数据：树上出现真实系统名/kind 分组 ∧ 全部对象行可点（`data-go=doc/<kind>/<scope>/<name>`）∧ kind 徽章/rev/草稿圆点在册。
+- L37-05 对象 viewer：点击树行 → `#/doc/:kind/:scope/:name` 渲染 cored 现读正文（apiVersion 原文非 mock）∧ 引用标识符区在册（chips 或诚实空注）。
+- L37-06 事件详情：`#/event/:id` 命中归档行=字段投影；未命中=空态（不报错块）。
+- L37-07 回归：781 基线+E0 11 项+E1 16 项全绿（零迁移）+ npm test（plugin 仓）全绿。
+
 ## 2. dsh 客户端可复用模块清单（实测自 bundle roster）
 
 console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互模式与信息结构，不锁组件 API）：
@@ -125,7 +140,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 |---|---|---|
 | E0 | §1.2 代理超时修复 + §1.3 连接三态（rotated 指引）【已完成 2026-11-23：机器侧 SSE 心跳（§1.2）+ 三色设计定稿（§1.5），实现落 E1；探针=acceptance/loop-35.md】 | 断连面板可用≥1 个自替换周期 |
 | E1 | plugin 注册 slot 壳：八入口导航 + hash 路由骨架 + 连接态灯【实现拓扑与细化验收=§1.6；主案验证通过=顶层导航扩展位（panellist+main 成对注册），回退案未动用】 | 八入口可点、刷新可恢复路由（细化=L36-01…07） |
-| E2 | Welcome 大屏 + 系统树（cored 读面：scheme/objects） | 健康度/树真实数据；标识符全可点 |
+| E2 | Welcome 大屏 + 系统树（cored 读面：scheme/objects）【已完成 2026-11-23：读面通路=`/core-console/api` 宿主只读代理+cored `GET /v1/events`（§1.8）；五屏真数据=Welcome/系统树/系统详情/对象 viewer/事件详情，其余屏 proto mock 待各自 E 轮；探针=acceptance/loop-37.md】 | 健康度/树真实数据；标识符全可点（细化=L37-01…07） |
 | E3 | Workflow 运行管理（列表+详情+运行抽屉） | 运行次数/相位/涉及文档可见，启停=Apply 闭环 |
 | E4 | 文档编辑器（草稿→Apply 全流程，dry-run 三检查） | LLM 提案→人点 Apply→Revision+1 全链路 |
 | E5 | Agent 会话 + 运行器四选 + 终端 tab（dsh 内置 PTY 为主，gotty 跨机兜底；provider 映射=内嵌 dsh/claude-code 现成 subagent provider，opencode/gotty 自写 SubagentProvider——cross-agent.md §5.7） | 能对 Service agent 发消息并收到 ConnectorOps 卡 |
