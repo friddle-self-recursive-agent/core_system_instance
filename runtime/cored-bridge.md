@@ -33,7 +33,7 @@
 
 ### 2.1 写面（缺省关闭，`--allow-apply` 显式开启）：`POST /v1/apply`
 
-写面是文档面唯一写端点，内部收敛 apply.Engine 三步闸门（scheme 准入→权限准入（**请求级主体**，§2.1 `subject`）→乐观锁落库），不旁路存储；每次成功落库必发 `DocApplied` 事件（eventbus → event_log 归档 + 触发骨架收到留痕 §2.3），幂等重入（同内容）no-op 零提交零事件（concepts/apply.md rule 1）。
+写面是文档面唯一写端点，内部收敛 apply.Engine 三步闸门（scheme 准入=kind 注册+**spec 结构校验**（v0.14：对象 spec 区须过该 kind 注册声明的机读子集——缺必填段/枚举外值/结构错形 → 400，违规路径在错误文本如 `permissions[0].scope`；声明判读口径=scheme.md 设计规则 6）→权限准入（**请求级主体**，§2.1 `subject`）→乐观锁落库），不旁路存储；每次成功落库必发 `DocApplied` 事件（eventbus → event_log 归档 + 触发骨架收到留痕 §2.3），幂等重入（同内容）no-op 零提交零事件（concepts/apply.md rule 1）。
 
 请求体（JSON）：
 
@@ -45,7 +45,7 @@
 | 字段 | 语义 |
 |---|---|
 | `kind/scope/name` | 对象键，三者必填（缺 → 400） |
-| `resourceVersion` | 乐观锁：创建=0（缺省）；更新=读到的版本，不符 → 409；`fromDraft=true` 时须缺省（期望值以草稿 `baseResourceVersion` 为准）。**幂等重入优先**：同内容重入（去 rv 比对）→ `noop` 短路，先于乐观锁判定（内容=现面的写入不可能丢任何更新，不发事件不落提交；loop-9 live 实证：同内容+陈旧 rv → noop 而非 409；409 仅在**内容≠现面且 rv 不符**时发生） |
+| `resourceVersion` | 乐观锁：创建=0（缺省）；更新=读到的版本，不符 → 409；`fromDraft=true` 时须缺省（期望值以草稿 `baseResourceVersion` 为准）。**幂等重入优先**：同内容重入（去 rv 比对）→ `noop` 短路，先于乐观锁判定（内容=现面的写入不可能丢任何更新，不发事件不落提交；loop-9 live 实证：同内容+陈旧 rv → noop 而非 409；409 仅在**内容≠现面且 rv 不符**时发生）。**spec 结构准入先于幂等比对**（v0.14）：内容不合 kind 注册声明 → 400，即使与库内现存一致也不 noop——坏内容不因已在库而获得再确认（现存对象已由声明校验器全量对账合规，loop-10 探针⑦前提不受影响） |
 | `content` | 文档原文（存储层解析 metadata 身份，与对象键不符 → 400）；`fromDraft=true` 时须缺省（差异以草稿缓存为准） |
 | `fieldManager` | 必填，无主写入拒绝 → 400（apply.md rule 2） |
 | `subject` | **请求级主体（v0.9）**：`{user, roles:[…], groups:[…]}`——user=主体标识（审计留痕；user-system 目录侧未接前由调用方断言），roles/groups=断言持有关系（**须对上文档面 Role/Group 对象才产生权限**，断言本身不授权）；缺席回退 `X-Core-Subject` 头（同形 JSON，字段优先于头）；两者皆缺=匿名主体 → 权限准入拒绝 403；`dryRun` 同主体判定（准入结论与真执行一致） |
@@ -54,8 +54,8 @@
 
 响应（200）：`{"resource":"kind/scope/name","rv":<n>,"action":"create|update|noop","dryRun":false,"event":{"id","type","dedupKey"}}`（`event` 仅真实落库时存在，noop/dry-run 不发事件）。
 
-错误→状态码：乐观锁冲突 → **409**（载荷含 `expected`/`current`）；kind 未注册（野对象）或对象不存在 → 404；权限准入拒绝（含匿名主体/断言 role 未对上授权面/硬规则）→ **403**；无主写入/对象键不全/身份不符/内容不可解析/盲写已存在/scope 不相容 → 400；写队列关停 → 503；写面未开启 → **405**（`POST /v1/apply` 恒可探测，`GET /v1/apply` 亦 405）。
-`apply_log` 审计行 result 枚举：`ok`（落库）/`noop`（幂等重入）/`denied`（准入拒绝，**携带主体标识** subject 列——anonymous=匿名，permission.md 规则 3 判定留痕）/`conflict`（乐观锁冲突，含现库版本）——git 提交数 ≙ ok 行数（对账不变量，ops-log.md §3；noop/denied/conflict 不对应提交）。
+错误→状态码：乐观锁冲突 → **409**（载荷含 `expected`/`current`）；kind 未注册（野对象）或对象不存在 → 404；权限准入拒绝（含匿名主体/断言 role 未对上授权面/硬规则）→ **403**；**spec 结构未过准入 → 400（v0.14）**（错误文本携违规路径，如 `permissions[0].scope: 必填段缺失`）；无主写入/对象键不全/身份不符/内容不可解析/盲写已存在/scope 不相容 → 400；写队列关停 → 503；写面未开启 → **405**（`POST /v1/apply` 恒可探测，`GET /v1/apply` 亦 405）。
+`apply_log` 审计行 result 枚举：`ok`（落库）/`noop`（幂等重入）/`denied`（准入拒绝——scheme 结构（v0.14）/权限/硬规则，**携带主体标识** subject 列——anonymous=匿名，permission.md 规则 3 判定留痕，判定摘要携违规路径）/`conflict`（乐观锁冲突，含现库版本）——git 提交数 ≙ ok 行数（对账不变量，ops-log.md §3；noop/denied/conflict 不对应提交）。
 
 ### 2.2 草稿缓存面（编辑与发布分离，apply.md §1/§6 rule 6）
 
@@ -73,7 +73,7 @@
 - **门控**：POST/DELETE 草稿与 `fromDraft` apply 随写面开关 `--allow-apply`（缺省 405，与 §2.1 同一开关）；草稿 GET 属查询面恒开。开启写面须同时 `--docs`（fromDraft 恒有文档库可落）。
 - **乐观锁语义**：`baseResourceVersion` = 落稿时读到的文档面版本（0=预期创建）。文档面前移 → apply-draft **409 且草稿保留**（后写者重读后重整草稿再落——LLM 语义 diff 的人裁落点）；BaseRV=1 而对象不存在同样冲突（expected≠current）。
 - **空稿/幂等**：稿与面一致 → `action=noop`（零提交零事件）且清稿；`fromDraft` 无稿 → **404**（与 noop 可区分）；`fromDraft=true` 携 `content`/`resourceVersion` → 400（约束差异来源唯一）。
-- **草稿不是文档面**：落稿/弃稿零提交零事件零 Revision；落稿面**不做 scheme 校验**（wild kind 稿可落，编辑面与存储闸门解耦——apply-draft 时被 scheme 闸门拒绝 → 404 且稿保留）；落稿须携 `fieldManager`（无主稿拒绝，溯源对齐 rule 2），apply-draft 另校验确认者自身 `fieldManager`。
+- **草稿不是文档面**：落稿/弃稿零提交零事件零 Revision；落稿面**不做 scheme 校验**（wild kind 稿可落，编辑面与存储闸门解耦——apply-draft 时被 scheme 闸门拒绝：野 kind → 404；**spec 结构未过 → 400（v0.14）**；均**稿保留**，改正后再落）；落稿须携 `fieldManager`（无主稿拒绝，溯源对齐 rule 2），apply-draft 另校验确认者自身 `fieldManager`。
 - **草稿读面无 plugin 句柄**：§3.1 持续句柄只封装对象读面（只读不变式不扩面）；草稿面经 HTTP 直查（宿主内调试/验收探针用），是否升句柄随消费端出现再议。
 - **持久化边界（v0.10）**：写穿语义=先持久化后落内存（持久化失败=落稿失败、内存不动——「可见即已持久」，重启恢复不丢稿不多稿）；恢复=整表替换（确定性）；恢复保留 `createdAt/updatedAt` 与 `baseResourceVersion`——重启期间文档面前移则 fromDraft 走既有 **409 保留草稿**语义（乐观锁期望值不因恢复而改写，后写者重读后重整）；草稿表不参与 apply_log 对账不变量（缓存非账，ops-log.md §2）。
 
