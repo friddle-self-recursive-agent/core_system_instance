@@ -33,7 +33,7 @@
 
 ### 2.1 写面（缺省关闭，`--allow-apply` 显式开启）：`POST /v1/apply`
 
-写面是文档面唯一写端点，内部收敛 apply.Engine 三步闸门（scheme 准入→权限准入（**请求级主体**，§2.1 `subject`）→乐观锁落库），不旁路存储；每次成功落库必发 `DocApplied` 事件（eventbus → event_log 归档），幂等重入（同内容）no-op 零提交零事件（concepts/apply.md rule 1）。
+写面是文档面唯一写端点，内部收敛 apply.Engine 三步闸门（scheme 准入→权限准入（**请求级主体**，§2.1 `subject`）→乐观锁落库），不旁路存储；每次成功落库必发 `DocApplied` 事件（eventbus → event_log 归档 + 触发骨架收到留痕 §2.3），幂等重入（同内容）no-op 零提交零事件（concepts/apply.md rule 1）。
 
 请求体（JSON）：
 
@@ -65,6 +65,7 @@
 |---|---|
 | `GET /v1/drafts` | 草稿清单（瘦身，恒开）：`{count, drafts:[{kind,scope,name,fieldManager,baseResourceVersion,updatedAt,bytes}]}`（无正文） |
 | `GET /v1/drafts/{kind}/{name}?scope=<scope>` | 单条草稿（恒开，含 `content` 原文 + `reasonRef` + `createdAt/updatedAt`）；无稿 → 404 |
+| `GET /v1/triggers` | 触发骨架查询面（§2.3，恒开）：`{count, received, dropped, types, records:[…]}`——dispatch 接线第一段的收到留痕 |
 | `POST /v1/drafts` | 落稿（upsert，同对象键覆盖=最新代改稿，`createdAt` 定格 `updatedAt` 更新）：`{kind,scope,name,content,fieldManager,reasonRef,baseResourceVersion}`；键不全/无主/空稿 → 400 |
 | `DELETE /v1/drafts/{kind}/{name}?scope=<scope>` | 弃稿；无稿 → 404 |
 | `POST /v1/apply` + `"fromDraft":true` | 稿→面落库：以草稿 content 为写者输入、草稿 `baseResourceVersion` 为乐观锁期望值，走与直写同一三步闸门（scheme/权限/存储——权限按**请求级主体**判定，同 §2.1 `subject` 语义；成功后**清稿**）；无稿 → 404 |
@@ -75,6 +76,23 @@
 - **草稿不是文档面**：落稿/弃稿零提交零事件零 Revision；落稿面**不做 scheme 校验**（wild kind 稿可落，编辑面与存储闸门解耦——apply-draft 时被 scheme 闸门拒绝 → 404 且稿保留）；落稿须携 `fieldManager`（无主稿拒绝，溯源对齐 rule 2），apply-draft 另校验确认者自身 `fieldManager`。
 - **草稿读面无 plugin 句柄**：§3.1 持续句柄只封装对象读面（只读不变式不扩面）；草稿面经 HTTP 直查（宿主内调试/验收探针用），是否升句柄随消费端出现再议。
 - **持久化边界（v0.10）**：写穿语义=先持久化后落内存（持久化失败=落稿失败、内存不动——「可见即已持久」，重启恢复不丢稿不多稿）；恢复=整表替换（确定性）；恢复保留 `createdAt/updatedAt` 与 `baseResourceVersion`——重启期间文档面前移则 fromDraft 走既有 **409 保留草稿**语义（乐观锁期望值不因恢复而改写，后写者重读后重整）；草稿表不参与 apply_log 对账不变量（缓存非账，ops-log.md §2）。
+
+### 2.3 触发骨架面（dispatch 接线第一段 v0.11，恒开）：`GET /v1/triggers`
+
+「apply→事件→订阅」是 core 主干第一段：cored 内 workflow 包 `TriggerHub` 以**单订阅者**挂事件总线 `DocApplied` 类型，收到即落**进程内可查状态**（本端点读取）。事件本体不落文档库（event.md：事件不是文档对象）；审计账本仍在 event_log 归档（ops-log.md §2）——留痕是观测面不是账本。载荷：
+
+```json
+{"count":1,"received":1,"dropped":0,"types":["DocApplied"],
+ "records":[{"seq":1,"eventId":"evt-DocApplied-…","type":"DocApplied",
+   "dedupKey":"apply:Kind/scope/name:1","source":"apply","involved":"Kind/scope/name",
+   "level":"info","at":"<RFC3339>","receivedAt":"<RFC3339>"}]}
+```
+
+- **收到留痕与发布回执同源**：`eventId`/`dedupKey` 与 apply 响应 `event` 字段、event_log 归档行三方一致——主干第一段的机械对账锚点（apply 落面→订阅方状态可查）。
+- **环形容量**（缺省 256）：溢出丢最旧、`dropped` 计数可见；总线订阅缓冲满时事件按**可丢语义**转死信（event.md P3 level-triggered，系统正确性不依赖事件送达；`received <` 实际落库数属正常爆发态，死信可见兜底）。
+- **写面关断不受影响**：触发骨架随总线装配，查询面恒开——`--allow-apply` 关断时 DocApplied 不产生（`received=0`、`types=["DocApplied"]` 照常 200），只读部署的观测回归点。
+- **退场语义**：进程退场留痕即清（进程内状态，不持久化）；账本在 event_log，重启不丢审计。
+- **触发引擎主体 declared-deferred**：dispatch 表路由（类型+owner+scope→owner-workflow）、相位态机、派发、刹车、冷却期、`minLevel` 过滤——本骨架不含；订阅类型集合暂为固定 `DocApplied`，dispatch 表驱动的动态订阅随引擎主体接入（订阅原语已按多类型 Attach 预留）。
 
 ## 3. plugin↔cored 桥契约（dsh plugin 侧）
 
