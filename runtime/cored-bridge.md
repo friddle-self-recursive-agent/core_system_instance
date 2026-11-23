@@ -8,7 +8,7 @@
 |---|---|
 | scheme 源 | `--scheme <path>`，缺省读环境变量 `CORE_SYSTEM_SCHEME`；二者皆空则拒绝启动 |
 | 文档库根 | `--docs <root>`，缺省读环境变量 `CORE_SYSTEM_DOCS`；为空则对象读面不挂载（`/v1/objects/*` → 503），scheme 面不受影响；给定即打开 repository git 后端（串行写队列+resourceVersion 乐观锁，缺省仅读暴露） |
-| 写面开关 | `--allow-apply`（缺省 false=只读）：显式开启 `POST /v1/apply` 写端点与草稿写操作（§2.2 落稿/弃稿/fromDraft 同开关）；开启时必须同时给 `--docs`（写面依附文档库 git 后端，否则拒绝启动）。开启后写主体=**请求级主体**（v0.9：每次请求携 `subject` 字段或 `X-Core-Subject` 头，§2.1；无主体=匿名照判拒绝 403，本地信任不兜底 HTTP 匿名请求）。授权面=文档面 Role/Group 对象：启动时装载 `global/roles/`、`global/groups/`（坏对象/重名=整体拒绝启动，授权面宁拒不降级；事件驱动刷新随 dispatch 接线 declared-deferred）；进程级本地信任（cored:local 持内置 admin）退化为引擎缺省 fallback，只服务程序化调用（bootstrap/工作流自写） |
+| 写面开关 | `--allow-apply`（缺省 false=只读）：显式开启 `POST /v1/apply` 写端点与草稿写操作（§2.2 落稿/弃稿/fromDraft 同开关）；开启时必须同时给 `--docs`（写面依附文档库 git 后端，否则拒绝启动）。开启后写主体=**请求级主体**（v0.9：每次请求携 `subject` 字段或 `X-Core-Subject` 头，§2.1；无主体=匿名照判拒绝 403，本地信任不兜底 HTTP 匿名请求）。授权面=文档面 Role/Group 对象，**装载即权威快照，两段式刷新（v0.10 免重启热装载）**：① 启动装载 `global/roles/`、`global/groups/`（坏对象/重名=整体拒绝启动，授权面宁拒不降级）；② 其后 `repository.Watch` 变更信号（轮询 HEAD）驱动重投影**整体替换快照**（`gen` 代次每次成功装载 +1；create/update/delete 三态都随刷新生效，stderr 机器行 `权限热装载 gen=<n> roles=<n> groups=<n>`）。**热装载失败语义（declared）=保旧快照 + stderr 告警（`权限热装载失败…`）+ 定时重试自愈**：不半装载（LoadObjects 整体拒绝复用）、不打死运行中授权面——投影读与写面串行队列不互斥，暂态撕读与坏对象都不放大为全系统写面停摆（自举修复路径本身常是写路径）；保旧=上一次成功装载的权威快照继续生效（判定留痕一致：Gen 不动），坏对象清除后自动痊愈。dispatch 接线后由订阅方声明是否升级拒写闸门（本语义不变）。进程级本地信任（cored:local 持内置 admin）退化为引擎缺省 fallback，只服务程序化调用（bootstrap/工作流自写） |
 | ops DB | `--ops-db <path>`（SQLite WAL 单文件）：apply_log/event_log 双轨审计的 DB 侧；为空=进程内存库（DB 非权威、可重建——持久化部署显式传路径） |
 | 监听地址 | `--addr <host:port>`，缺省读 `CORE_SYSTEM_ADDR`，再缺省 `127.0.0.1:0`（回环随机端口，避免多宿主进程端口冲突） |
 | 启动自检 | scheme 载入校验（必填项/唯一性/storage 模板）失败 → 退出码非 0，桥接方据此判定 |
