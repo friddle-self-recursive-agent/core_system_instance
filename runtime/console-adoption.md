@@ -75,6 +75,13 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 审批 | `#/approvals` | diff 预览+批量；批准/驳回=Apply | `approval` |
 | 详情页矩阵 | `#/agent|session|ws|provider|ref|role|event/:id` | 详情页任意互跳；标识符全可点 | `subagent`/`goal`/`secret-mask` |
 
+### 3.7 loop 会话与 agent session 可见性（裁决）
+
+1. **loop 的 dsh session 要在页面上展示**：loop agent（core-headless）本身是文档面注册 Agent（global/agents/core-headless），其会话挂在 `#/agent/core-headless` 的 sessions 列表；每轮 loop 的 session 与 `acceptance/loop-<seq>.md` 报告**双链**——session metadata.tags 带 seq（R17 打标纪律），Session 详情页与报告互跳。loop 轮次同时是 Workflow 运行管理里 dev-delivery/bootstrap 的轮次行（一数据两投影，无双源）。
+2. **能看到具体 agent 的 session**：`#/agent/:name` 详情页必备区块=sessions 列表（tag/时间/状态过滤）；`#/chat/:agent` 左栏同源。数据源=dsh session store（同机直读、跨机经 gateway），console 不复制状态。
+3. **跳转到的 agent 可见**：ServiceInstance 详情 agentRefs chip → `#/agent/:name`——身份=文档面 Agent 对象（权限面/owner/父子），运行态=dsh registry（在线/离线/当前会话徽标，区分「文档已注册但未运行」）→ 「对话」按钮进会话。
+4. **与 dsh 原生会话侧栏的关系**：原生侧栏=宿主全局会话列表保持不动；console 的 Agent 会话屏=同一 session store 按 agent 过滤的投影。
+
 ## 4. 落地顺序（一轮一增量，映射 loop 起点）
 
 | 增量 | 内容 | 验收 |
@@ -93,7 +100,8 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 1. **不改文档面语义**：console 是观测/操作面，一切写操作（启停/编辑/批准/重跑）=Apply 走既有写路径；发现设计不合理→改文档先于改代码（acceptance 纪律）。
 2. **渲染数据无双源**：全部来自 cored 读面+ops DB；console 不自建持久状态。
 3. **R-PUB**：真实域名/IP/token/部署路径不入仓，用占位符；运行时验收产物落 acceptance/（gitignore）。
-4. **交互契约以 proto 为准**：`dsh-core-agent/console-proto/`（四文件，file:// 直开）是交互与信息结构对照物；实现允许复用 dsh 模块替换自绘组件，但屏的路由、区块、验收线不变。
+4. **交互契约以 proto 为准**：`dsh-core-agent/console-proto/`（Mac 侧，四文件，file:// 直开；机器侧副本 `/home/friddle/console-proto/` 由巡检 rsync 同步）是交互与信息结构对照物；实现允许复用 dsh 模块替换自绘组件，但屏的路由、区块、验收线不变。
+5. **Connector/ConnectorOps 代码归属（R-ENG-3）**：gotty/opencode/claude-code/内嵌 dsh 四种运行器驱动与 agent-comm 实现都是 connector 代码——通用能力默认入 `common_connector`；确需独立仓时用 `gh` 建（org 内私有仓）并先在 rule.md R-ENG-3 注册再使用。
 5. **硬性验收**（沿 console-ui.md 3.5）：界面上出现的任何资源标识符必须可点；详情页任意互跳；零控制台 error。
 
 ## 6. 可行性分析
