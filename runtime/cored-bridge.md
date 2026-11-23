@@ -65,7 +65,8 @@
 |---|---|
 | `GET /v1/drafts` | 草稿清单（瘦身，恒开）：`{count, drafts:[{kind,scope,name,fieldManager,baseResourceVersion,updatedAt,bytes}]}`（无正文） |
 | `GET /v1/drafts/{kind}/{name}?scope=<scope>` | 单条草稿（恒开，含 `content` 原文 + `reasonRef` + `createdAt/updatedAt`）；无稿 → 404 |
-| `GET /v1/triggers` | 触发骨架查询面（§2.3，恒开）：`{count, received, dropped, types, records:[…]}`——dispatch 接线第二段的表驱动订阅留痕（records 携命中行 route/for） |
+| `GET /v1/triggers` | 触发骨架查询面（§2.3，恒开）：`{count, received, dropped, types, records:[…]}`——dispatch 表驱动订阅留痕（records 携命中行投影 route/cc/for/owner） |
+| `GET /v1/triggers/resolve` | 派发决策查询面（§2.3 v0.13，恒开）：`?type=<类型>&involved=<kind/scope/name>` → `{type, involved, matched, route, cc, for, owner, row}`——对当前 dispatch 表快照回答「这一事件若到达会路由到哪」（纯决策：零事件注入、零留痕、零派发） |
 | `POST /v1/drafts` | 落稿（upsert，同对象键覆盖=最新代改稿，`createdAt` 定格 `updatedAt` 更新）：`{kind,scope,name,content,fieldManager,reasonRef,baseResourceVersion}`；键不全/无主/空稿 → 400 |
 | `DELETE /v1/drafts/{kind}/{name}?scope=<scope>` | 弃稿；无稿 → 404 |
 | `POST /v1/apply` + `"fromDraft":true` | 稿→面落库：以草稿 content 为写者输入、草稿 `baseResourceVersion` 为乐观锁期望值，走与直写同一三步闸门（scheme/权限/存储——权限按**请求级主体**判定，同 §2.1 `subject` 语义；成功后**清稿**）；无稿 → 404 |
@@ -77,7 +78,7 @@
 - **草稿读面无 plugin 句柄**：§3.1 持续句柄只封装对象读面（只读不变式不扩面）；草稿面经 HTTP 直查（宿主内调试/验收探针用），是否升句柄随消费端出现再议。
 - **持久化边界（v0.10）**：写穿语义=先持久化后落内存（持久化失败=落稿失败、内存不动——「可见即已持久」，重启恢复不丢稿不多稿）；恢复=整表替换（确定性）；恢复保留 `createdAt/updatedAt` 与 `baseResourceVersion`——重启期间文档面前移则 fromDraft 走既有 **409 保留草稿**语义（乐观锁期望值不因恢复而改写，后写者重读后重整）；草稿表不参与 apply_log 对账不变量（缓存非账，ops-log.md §2）。
 
-### 2.3 触发骨架面（dispatch 接线第二段 v0.12 订阅面动态化，恒开）：`GET /v1/triggers`
+### 2.3 触发骨架面（dispatch 第二段 v0.12 订阅面动态化 → 第三段 v0.13 引擎主体第一段：owner 解析激活+决策可查询，恒开）：`GET /v1/triggers` + `GET /v1/triggers/resolve`
 
 「apply→事件→订阅」是 core 主干第一段：cored 内 workflow 包 `TriggerHub` 以**单订阅者**挂事件总线，收到即落**进程内可查状态**（本端点读取）。事件本体不落文档库（event.md：事件不是文档对象）；审计账本仍在 event_log 归档（ops-log.md §2）——留痕是观测面不是账本。载荷：
 
@@ -85,17 +86,18 @@
 {"count":1,"received":1,"dropped":0,"types":["*"],
  "records":[{"seq":1,"eventId":"evt-DocApplied-…","type":"DocApplied",
    "dedupKey":"apply:Kind/scope/name:1","source":"apply","involved":"Kind/scope/name",
-   "level":"info","route":"owner-workflow","for":"owner:*",
+   "level":"info","route":"owner-workflow","cc":"","for":"owner:*","owner":"<scope 根解析>",
    "at":"<RFC3339>","receivedAt":"<RFC3339>"}]}
 ```
 
 - **订阅集合表驱动（v0.12）**：`types` = `scheme.dispatch` 表 `on:` 值按表序去重的推导集合；表含通配行（`on: "*"`）时**坍缩为单条全类型订阅**、`types=["*"]`（通配已覆盖枚举，并存会重复留痕）；空表=零订阅（事件全部落总线死信，路由不到可见）。判别锚：`types` ≠ 固定 `[DocApplied]`——固订时代（v0.11）已收口。
 - **收到留痕与发布回执同源**：`eventId`/`dedupKey` 与 apply 响应 `event` 字段、event_log 归档行三方一致——主干第一段的机械对账锚点（apply 落面→订阅方状态可查）。
-- **命中行投影（v0.12，只留痕不派发）**：每条留痕按**表序**解析首个命中行（`on` 匹配类型 ∧ `for` 谓词命中）投影到 `route`/`for` 字段；`for` 谓词**首段口径**（event.md 设计规则 6）：`any`/`owner:*` 恒命中，`scope:<root>/*` 按 involved scope 前缀式命中（`builtin/*` 命中 builtin；scope 是路径，`systems/<s>` 层级并段），**`owner:<字面量>` 首段不解析→不命中**（顺延后行）；全表未命中 → `route="dead-letter"`（死信兜底可见，event.md rule 4，与 eventbus `routed_to="dead-letter"` 同词汇表）。
+- **命中行投影（v0.13，留痕=过去的决策投影，不执行派发）**：每条留痕按**表序**解析首个命中行（`on` 匹配类型 ∧ `for` 谓词命中）投影到 `route`/`cc`/`for`/`owner` 字段；`for` 谓词口径（event.md 设计规则 6）：`any`/`owner:*` 恒命中，`scope:<root>/*` 按 involved scope 前缀式命中（`builtin/*` 命中 builtin；scope 是路径，`systems/<s>` 层级并段），**`owner:<字面量>` 按 owner 解析命中（v0.13 引擎主体第一段）**——owner 解析模型：involved scope 根 `systems/<s>`→`<s>`、global/builtin 同名（owner=scope 根本身），解析不等 → 不命中顺延后行；`owner` 字段=解析值（决策依据可查）；全表未命中 → `route="dead-letter"`（死信兜底可见，event.md rule 4，与 eventbus `routed_to="dead-letter"` 同词汇表）。
+- **派发决策查询面（v0.13，恒开）**：`GET /v1/triggers/resolve?type=<类型>&involved=<kind/scope/name>`（involved 可缺省=空解析）→ `{"type","involved","matched","route","cc","for","owner","row"}`——对当前 dispatch 表快照回答「这一事件若到达会路由到哪」：**纯决策**（零事件注入、零留痕、零派发，`received` 不动）；`row`=命中表行号（0 起，可回指 scheme.yaml 具体行），全表未命中 `row=-1` ∧ `route="dead-letter"`（合成死信），未挂表 `route=""`；缺 `type` → 400；未接线 → 503。**owner 谓词的 live 机械验证落点**：无事件注入面（connector 未接线）也能验证 `owner:agent` 行按解析命中（如 `type=HeartbeatLost&involved=ServiceInstance/systems/agent/ci` → `route=parent-agent, owner=agent`）——判别器：`owner:agent` 行从「恒不命中顺延」（v0.12）变「按 owner 解析命中」（v0.13）。
 - **环形容量**（缺省 256）：溢出丢最旧、`dropped` 计数可见；总线订阅缓冲满时事件按**可丢语义**转死信（event.md P3 level-triggered，系统正确性不依赖事件送达；`received <` 实际落库数属正常爆发态，死信可见兜底）。
 - **写面关断不受影响**：触发骨架随总线装配，查询面恒开——`--allow-apply` 关断时不产生事件（`received=0`、`types` 照常表驱动值），只读部署的观测回归点。
 - **退场语义**：进程退场留痕即清（进程内状态，不持久化）；账本在 event_log，重启不丢审计。
-- **触发引擎主体 declared-deferred**：owner 字面量解析（`owner:agent`/`owner:instance` 谓词激活）、相位态机、派发（`route:` 目标 owner-workflow/notification/* 等的执行）、刹车、冷却期、`minLevel` 过滤——本骨架不含；订阅面与首段谓词已表驱动（v0.12），引擎主体按 cored-bridge 既有边界另行接入。
+- **触发引擎主体 declared-deferred（v0.13 后余量）**：owner 字面量解析（`owner:agent`/`owner:instance` 谓词激活）**已收口（v0.13）**；余下——相位态机、派发执行（`route:` 目标 owner-workflow/notification/* 等的实际执行，含 `cc:` 旁路投递）、刹车、冷却期、`minLevel` 过滤——本骨架不含；订阅面、全谓词口径与决策查询面已表驱动（v0.13），引擎主体按 cored-bridge 既有边界另行接入。
 
 ## 3. plugin↔cored 桥契约（dsh plugin 侧）
 
