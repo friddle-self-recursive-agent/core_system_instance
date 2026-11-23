@@ -9,10 +9,10 @@
 | 项 | 值 |
 |---|---|
 | 发现时间 | 2026-11-23 |
-| 状态 | **部分已修复（P0 探针无外发段——loop-33，探针零外发+本地 sink 入基线，连跑外发=0）**；通知阶段门+dedup/minLevel 段待修（修复任务 loop-notify 已排入 loop 队列） |
+| 状态 | **已修复（loop-33 P0 探针无外发段 + loop-34 P0 通知阶段门+dedup/minLevel 段）**——探针基线零外发（CORE_MAIL_E2E=1 门控+本地 sink+strace 审计入基线，连跑外发=0）∧ 通知只由相位终态事实触发（人注意终态族恒放行∧其余事件须 involved owner 现势 run 相位终态背书；apply 写入不触发用户通知）∧ dedup.window/minLevel 落地（gated/filtered/deduped 三计数可查询）。P1 静默窗口/频控与 P2 apply 与通知解耦声明面随 notification 规则 5 口径并入（窗口聚合即同因频控首段）；余量=送达记录进 ops DB 账本面 |
 | 严重度 | 中（用户可感知；实发邮件 ≈ 2 封/轮，18 轮累计 30+；验收不可重放） |
 | 影响面 | 验收探针基线（L16/L17 段）、通知触发语义、apply 与通知的耦合 |
-| 修复提交 | 探针段：workservice@f19a6ea（--plain 明文模式）+ common_connector@750eb18（CLI 旗标）+ 探针基线 /probe/loop-33（部署侧不入仓）；通知段：待下轮 |
+| 修复提交 | 探针段：workservice@f19a6ea（--plain 明文模式）+ common_connector@750eb18（CLI 旗标）+ 探针基线 /probe/loop-33（部署侧不入仓）；通知段：workservice@7d65ecf（通知阶段门+dedup/minLevel）+ core_design@3993ee8（notification.md 规则 5+scheme.yaml Notification route.minLevel）+ 探针基线 /probe/loop-34（部署侧不入仓） |
 
 ### 1. 现象
 
@@ -59,4 +59,5 @@
 ### 7. 修复进展
 
 - **P0 探针无外发——已修复（loop-33，2026-11-23）**：继承基线两处真实 SMTP 发送改为 `CORE_MAIL_E2E=1` 门控 + 本地 SMTP sink（本机桩进程，回环监听，JSONL 收件账——断言「sink 收到报文」而非真实投递，Message-ID/收件人与回执对账）；新增 strace connect 审计（非回环连接计数=0 机读断言）；默认路径零真实地址字面（E2E 段走部署侧 NOTIFY_* 配置面注入）；实现面=common_connector `--plain` 明文模式（本地桩联调用，生产恒 TLS 声明面不变）。取证：探针连跑外发连接数=0（run-2/run-3，767/767 ALL-GREEN）。acceptance.md §7「探针继承自动携带」达成。
-- **P0 通知阶段门 + dedup/minLevel、P1 静默窗口、P2 apply 与通知解耦——待修**（下一轮执行）。
+- **P0 通知阶段门 + dedup/minLevel——已修复（loop-34，2026-11-23）**：core_design 先落声明（notification.md 规则 5+scheme.yaml Notification route.minLevel，core_design@3993ee8）→ 运行时送达面门链三闸（判定器 `NotifyPhaseGate`：人注意终态族 ApprovalNeeded/Escalate/HeartbeatLost 恒放行∧其余事件须 involved owner 现势 run 相位终态背书——无 run 面 fail-closed 拦；`--notify-dedup-window` 缺省 10m 同 dedupKey 至多一封；`--notify-min-level` 等级下限）；**apply 写入不触发用户通知**（根因 4 收口）；gated/filtered/deduped 三计数随 `/v1/notifications/deliveries` 新载荷键可查询。取证：run-2/run-3 探针（KI-001 §6 判据逐条——未完成相位 apply 通知计数=0∧gated=1；终态族 ApprovalNeeded 注入送达=1；同 dedupKey N=3 注入实发 1、deduped=2；终态 run 背书 apply 送达=1；门拦事件留痕/run 照常）。
+- **P1 静默窗口/频控——首段随 dedup 窗口并入（loop-34）**：同 dedupKey 窗口聚合即同因频控机读落点（窗口内至多一封、其余 deduped 计数可见——超限进积压非丢弃的账本面随送达记录入 ops DB 账本轮顺延）。P2 apply 与通知解耦——随阶段门收口（apply 只产 DocApplied 事实事件，用户通知由相位终态背书判定，写路径零通知副作用）。
