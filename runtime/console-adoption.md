@@ -211,6 +211,24 @@
 - L44-04 tag 现读守卫摘除：`#/docs` 面对 WorkService 行走正常 fetch（无 WorkService 特判分支——源代码 grep 判别）；notify 无 tags 声明=空集诚实标注（不冒充）。
 - L44-05 回归：npm test 全绿 + go build/test/lint 全绿 + loop-43 探针基线（probe-e7/e7-ui-verify 路径替换版）全绿（E6R-UI-28 `#/ws/notify` 直入判据升级=正文在册）。
 
+### 1.16 对账轮增量：metrics 数据面装配开启 + 阈值声明面最小样本源（2026-11-25，loop-45 轮——标准对账选点）
+
+**缺口根因（R-2，loop-44 缺口清单首选候选）**：v0.33 MetricsInfo 数据面三件套（样本库/自观测采样器/读面）代码在位，但**装配旗标 `--metrics-source` 未在任何部署 profile 开启**——运行时数据面恒关断，`/v1/metrics` 恒空投影（200 `{metrics:[],total:0}`）、`/v1/metrics/query` 恒 404（关断口径）；且文档库零 WorkService 对象声明 `observation.metrics.thresholds`——即使开旗标阈值桥也恒 no-source（绑定面缺口）。附带两处对账缺口：①`metricsrc` 源绑定 involved 投影为两段式 `WorkService/<name>`——违反 involvedRef `kind/scope/name` 三段惯例（event.md 规则 11 首段同构口径），owner/scope 谓词与 console 事件详情 involved 对象链（`involvedRoute` 三段判别，两段=回落 welcome 死链）均不可解析；②采样器窗口计数为闭区间双端（`t.Before(since)` 才跳过）——相邻窗口在端点瞬刻重叠一行，与 E7 半开窗纪律（相邻页零重叠）不同口径。
+
+**收口方向（装配段增量：开旗标+最小声明面+三段同构修正+窗口口径对齐）**：
+1. 装配：三 profile 部署锚 `coredArgs` 增 `--metrics-source`（窗口缺省 30s 不另声明）；carrier profile 同款锚改配置面、进程换代随载体重启轮（不在本轮重启面——自噬会话，沿 loop-44 deviation ①口径）。
+2. 声明面：docsRoot `global/workservices/notify` 增 `observation.metrics` 最小样本源声明（`events.DocApplied` gte 1——桥点火演示口径：首拍全量对账必越限，dedupKey=`<metric>:<window>` 同窗聚合防风暴）。
+3. 代码（workservice）：源绑定收编 `metricsrc.BindWorkservice` 纯函数（阈值解析+involved 三段同构 `WorkService/<scope>/<name>`——零阈值/空 scope=零绑定缺口可见）；采样器窗口改半开 `(since, now]`（与 E7 纪律对齐，相邻窗零重叠）。
+4. 文档对账：event.md 规则 13 与 cored-bridge.md 的 involved 措辞升三段；cored-bridge.md v0.31 行尾 stale 余量注记（被 v0.33 取代）修正——终态制防误读。
+
+**L45 验收线（探针编号 L45-\*；探针=acceptance/loop-45.md）**：
+- L45-01 装配开启：两 web profile cored 进程 cmdline 含 `--metrics-source`（查询代替日志：/proc cmdline）∧ journal 装配锚 `metrics 数据面=on(30s)` ∧ `metrics 阈值源=on(1)`。
+- L45-02 数据面读面：`GET /v1/metrics` → 200 ∧ `total`≥1 ∧ 行集含 `events.DocApplied` 且样本数>0（首拍全量对账=ops DB 既有归档行投影）；`/v1/metrics/query?metric=events.DocApplied&agg=count` → 200 ∧ value>0；声明面外聚合（agg=median）→ 404 不冒充。
+- L45-03 信号面点火：`GET /v1/events?type=MetricThreshold` → count≥1 ∧ 行 `source=metrics` ∧ `involved=WorkService/global/notify`（三段同构）∧ `dedupKey=events.DocApplied:30s`。
+- L45-04 run 同拍落点：`/v1/workflows/runs` 行集含 `eventId` 命中 L45-03 事件 id 的 run（owner 对账锚 core-workflow）；console 事件详情 involved 链 `involvedRoute` 三段可点（`doc/WorkService/global/notify`——两段死链不回归）。
+- L45-05 窗口半开对齐：EventCountsSince 单测——相邻窗端点零重叠（半开 `(since, now]`）∧ 首拍全量口径不变。
+- L45-06 回归：go build/test/lint 六仓绿 + npm test 绿 + loop-44 探针基线（probe-e44/e44-ui-verify 路径替换版）全绿；`/v1/objects/WorkService/notify?scope=global` 200（L44-01 不回退，正文含 observation 声明）。
+
 console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互模式与信息结构，不锁组件 API）：
 
 | dsh 模块 | console v2 用法 |
@@ -287,6 +305,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | E6 | 事件流/审批/连接页 + 详情页矩阵互跳【已完成 2026-11-25：数据面=零 Go 改动（读面复用裁决 §1.13）——事件流=三泳道 `eventLaneOf` 映射+聚合面板实数（成功率/token=n/a 不冒充）；审批=待审区（草稿缓存∪ApprovalNeeded 归档）+diff 现读+批准=Apply 全流程复用（dry-run 三检查→fromDraft 落库，fieldManager=console:approve）+驳回=DELETE 弃稿+批量=同 kind 顺序 Apply；连接页=三组 objects 枚举+编辑器 ConnectorOps 第五 tab「运行面」（agent-comm=comm 落账活体：op 计数/拓扑/消息日志 token 打码/envelope v0.1 表）；agent-comm.ts=CommJournal 环形落账（token 值永不入账）+index.ts=`GET /core-console/comm` 读路由（fail-closed 同款）；事件详情=run 反查（eventId 命中→#/wf/:name/r/:n）+/v1/triggers/resolve 锚链——event→run→workflow→doc 链路活体走通；探针=acceptance/loop-42.md】 | event→run→workflow→doc 链路走通（细化=L42-01…07） |
 | E7 | 场景面四页 + tag 过滤 + 虚拟滚动大列表【已完成 2026-11-25：数据面=读面复用+一 Go 增量（workservice v0.39 `/v1/events` until 游标——半开窗 [since,until) 向后分页，EventQuery 六参）；事件全局/场景面=screenEventsCore 共用核（过滤条同款+until 滚动加载+合成压测窗=客户端合成展示层不入归档 KI-001 裁决 §1.14）；metrics=空投影诚实空态+即席查询 404 不冒充；docs=scope 枚举+spec.metadata.tags 现读一等过滤器（rv 键缓存+WorkService 读面缺口守卫不发 400 fetch）；permissions=Role/Group/Agent 文档面+挂载声明现读溯源+挂载反查表；收口清扫=总览/palette/文档行真数据+manualTick/newGoal 诚实化（mock 渲染面归零）；探针=acceptance/loop-43.md（prep 21/21+UI 53/53+verify 21/21 含补验；千级合成窗扫掠到底 1665ms/DOM 22 行有界/零 console error/零 4xx）】 | 千级事件滚动流畅（细化=L43-01…07） |
 | 对账轮 R-1 | WorkService 单对象读面收口【已完成 2026-11-25（loop-44，§1.15）：storage 模板归 global 桶（声明面 scheme.yaml/concepts/layout.md 四处同步）+docsRoot 迁移（根级 workservices→global/workservices+对象 scope 声明修正）+plugin 两处诚实守卫摘除；探针=acceptance/loop-44.md（prep 27/27+UI 53/53+verify 28/28；旧代双口径 400→新代 scope=global 200 实证）】 | 单对象 GET 可寻址+守卫摘除+迁移零残留（细化=L44-01…05） |
+| 对账轮 R-2 | metrics 数据面装配开启 + 阈值声明面最小样本源【实现拓扑与细化验收=§1.16（loop-45）：三 profile 锚 `--metrics-source` 装配开启（carrier 随载体重启轮换代）+docsRoot notify 对象 observation.metrics 最小声明（桥点火演示口径）+metricsrc.BindWorkservice involved 三段同构（kind/scope/name 惯例——console 事件链两段死链修正）+采样器窗口半开对齐 E7 纪律；cored-bridge v0.31 stale 余量注记修正】 | `/v1/metrics` 真实样本+MetricThreshold 落 run 三段 involved 可导航（细化=L45-01…06） |
 
 ## 5. 执行红线（对 loop 的约束）
 
