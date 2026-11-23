@@ -13,9 +13,23 @@
 | # | 发现 | 根因 | 处置 |
 |---|---|---|---|
 | 1.1 | web 首页静态壳可载，但 gateway 物理流 `/api/remote.mux` 403，插件/会话/任务面板全不可用，左下无限「重新连接中」 | systemd 单元沿用了域名重分配前的 `--trusted-host` 清单，未含现域名；dsh web 信任检查拒绝代理后的 Host | **已修**：单元 ExecStart 追加现域名（留 `.bak`），daemon-reload+restart 后面板全部可用。**机制化**：域名分配是控制面对象，域名重分配必须同步 trusted-host——写入部署检查项（agent-pool-machine.md 已有机器条目处补一行） |
-| 1.2 | `/plugins/events` 长连接反复被代理掐断（error log：`upstream timed out while reading upstream`，约 60s 周期） | NPM 该 host 未配置长 read timeout，SSE/长轮询被默认 60s 掐 | 待修：该 proxy host 的 location 加 `proxy_read_timeout 3600s` + `proxy_buffering off`（按 .bak 纪律变更 NPM conf）；或 dsh 侧对该端点做心跳。由执行 agent 以机器侧可操作者优先 |
+| 1.2 | `/plugins/events` 长连接反复被代理掐断（error log：`upstream timed out while reading upstream`，约 60s 周期） | NPM 该 host 未配置长 read timeout，SSE/长轮询被默认 60s 掐；实测根因：该端点（client-hmr 的 bundle graph 通道）连上后只在 graph 变更时发帧，**空闲期零字节**，前端代理 read 计时器必然超时 | **已修（机器侧，2026-11-23，E0）**：固定钥匙门（§1.3 部署侧工具）对该机 dsh web 反向代理的 SSE 响应（content-type=text/event-stream）做两件事——① idle-only 心跳：上游静默每 20s 注入一行 SSE 注释帧 `: keepalive`（SSE 客户端忽略注释行；注释帧只落在整块上游数据之间，不拆帧），前端代理 read 计时器持续被喂，60s 掐断链消除；② 逐响应加 `x-accel-buffering: no`，前端代理对本响应关缓冲（SSE 逐帧直达浏览器）。代理机 conf 侧 `proxy_read_timeout 3600s` + `proxy_buffering off` 保留为部署侧备选（须跳板变更，非本机可操作面，本轮未动）；dsh 侧端点本体不改（零心跳是 dsh 既有事实，console 红线不动 dsh 本体）。验收证据：经门与经代理域名两条链路 SSE 空闲存活远超 60s 且心跳帧间隔≤20s（acceptance/loop-35.md L35-01/02） |
 | 1.3 | 自循环每轮自替换后重启 web，**token 每次轮换**，已打开的旧页面永久失联且只有死重连 | token 是进程启动期一次性值（实测 dsh 0.2.2-rc.5：launchToken 每进程一枚，无 CLI/env/config 固定口） | **已修（固定钥匙门，2026-11-23）**：agent 机上部署 `dsh-web-gate.service`（部署侧工具，不入仓）——`/?key=<固定值>` 302 到当下 fresh token（60s 周期从 journal 刷新），代理前向改指门，**用户入口从此恒定**；key 只存部署侧 env。console 连接态三色保留（rotated 态被门消化，浏览器重走固定入口即可） |
 | 1.4 | 服务每 30–40min 自替换重启属预期（loop 节奏） | — | 非故障；console 必须把「短暂不可达」当常态设计（连接态灯 + 重试退避），不做崩溃式白屏 |
+
+### 1.5 连接态三色（设计定稿，E0 落文档、E1 落实现）
+
+**console 所有屏幕共用一枚连接态灯（右下角固定浮标）：底座事实=dsh web 客户端连接通道（含 `/plugins/events` 与远端 mux）的实时状态，三态+一指引。**
+
+| 态 | 颜色 | 判定 | 面板行为 |
+|---|---|---|---|
+| connected | 绿 | 通道在册且基线/增量帧或心跳新鲜（≤2×心跳周期内收到过任意帧，含注释帧） | 正常渲染，无提示 |
+| reconnecting | 琥珀 | 通道断开（网络断/服务重启窗口），指数退避重试中（1s 起步、×2、上限 30s） | 顶栏细条「重连中（第 N 次）」；数据区保留最后基线渲染+骨架行提示，**不白屏不报错块**（§1.4 常态化纪律） |
+| rotated | 红+指引 | 重试收到 401/鉴权失效（token 随自替换重启轮换，§1.3）——连续 3 次 401 即判定，**不再无限重试**（旧 token 重试必败） | 指引条「入口已轮换 → 重走固定入口」：点击/自动跳转固定钥匙门入口（浏览器书签恒定），门 302 到当下 fresh token 即恢复；这是唯一需要人（或浏览器自动跟随重定向）动作的态 |
+
+- 判定优先级：rotated ＞ reconnecting ＞ connected；态切换不整页刷新，恢复后走 baseline+increment 重放（重连=新 baseline 原子替换，对齐 console-ui 数据通路规则）。
+- 固定钥匙门消化 rotated 的大部分场景（用户从固定入口进入，token 轮换后重走固定入口即愈）；rotated 态指引的落点就是该固定入口，console 不自存 token 也不自存 key（R-PUB：key 只存部署侧 env）。
+- 心跳注释帧（§1.2）参与「帧新鲜」判定——空闲期通道也有 20s 粒度的活性证据，connected 态不会因无业务帧而误报琥珀。
 
 ## 2. dsh 客户端可复用模块清单（实测自 bundle roster）
 
@@ -86,7 +100,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 
 | 增量 | 内容 | 验收 |
 |---|---|---|
-| E0 | §1.2 代理超时修复 + §1.3 连接三态（rotated 指引） | 断连面板可用≥1 个自替换周期 |
+| E0 | §1.2 代理超时修复 + §1.3 连接三态（rotated 指引）【已完成 2026-11-23：机器侧 SSE 心跳（§1.2）+ 三色设计定稿（§1.5），实现落 E1；探针=acceptance/loop-35.md】 | 断连面板可用≥1 个自替换周期 |
 | E1 | plugin 注册 slot 壳：八入口导航 + hash 路由骨架 + 连接态灯 | 八入口可点、刷新可恢复路由 |
 | E2 | Welcome 大屏 + 系统树（cored 读面：scheme/objects） | 健康度/树真实数据；标识符全可点 |
 | E3 | Workflow 运行管理（列表+详情+运行抽屉） | 运行次数/相位/涉及文档可见，启停=Apply 闭环 |
@@ -112,7 +126,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | Slots 注册面能力不足（能否加顶层导航/整页路由） | ❗高→需先验证 | E1 即是验证增量：注册失败则回退「单页挂 hero slot + 内部 hash 路由」方案（proto 已是 hash 路由，天然兼容） |
 | cored 读面字段不足以渲染（如运行次数聚合） | ⚠️ 中 | ops DB 预聚合查询；缺字段先 E2 只读对齐再扩 cored，不前端拼凑 |
 | loop 一轮体量过大（E3/E4） | ⚠️ 中 | 一轮一增量+探针回归；超一轮则拆（E4a 草稿面/E4b Apply 面） |
-| 长连接被代理反复掐断影响所有面板 | ❗高 | E0 前置；修复前开发不受阻（proto 离线） |
+| 长连接被代理反复掐断影响所有面板 | ✅ 已消化（E0 机器侧） | 固定钥匙门 SSE idle 心跳+逐响应关缓冲（§1.2），空闲存活远超代理默认 60s；代理机 conf 侧改法留作部署备选 |
 | token 轮换打断实现期自测 | ⚠️ 中 | 探针脚本用 journalctl 取最新 token（既有套路） |
 
 **结论：可行。E1 的 Slots 注册验证是唯一方向性风险，E0/E1 先行，其余增量均不阻塞在未知上。**
