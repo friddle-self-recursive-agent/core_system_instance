@@ -124,6 +124,35 @@
 - L40-07 终端 tab：roster 只读真数据（或 ctx.webTerminals 缺席=诚实空态）∧ 主案/兜底标注在册 ∧ attach=xterm 依赖余量标注（不冒充终端）。
 - L40-08 回归：781 基线+E0/E1/E2/E3/E4 专项全绿（零迁移）+ npm test（plugin 仓）全绿。
 
+### 1.12 E5b 实现拓扑与细化验收（2026-11-25，E5b 轮）
+
+**归属裁决（R-ENG-3 核查，2026-11-25 注记 rule.md）**：agent-comm 四 op 工具=core plugin 对 dsh 宿主工具面的贡献（`ctx.tools.register`），**不是 connector 驱动**——四 op 是宿主内进程级通道，不绑部署用法、无独立通信栈（§5.3「无独立通信栈」的机械落点）；工具宿主=plugin 仓本体，不入 common_connector、不建新仓。
+
+**工具面（server 侧，plugin 仓 src/agent-comm.ts）**：四工具以**协议 op 名裸用**（`dispatch`/`query`/`interrupt`/`inbox`——§5.3「agent 只见四个 op」机械落点；E5a 判别器 op 名 ∈ 声明集零改动即命中 ConnectorOps 卡；dsh 保留名 run_code 之外全域撞名核查 2026-11-25 通过）。注册防御面：ctx.tools 缺席宿主=不注册不炸；撞名=warn+跳过该 op 其余照常。
+
+**协议实现（envelope v0.1，§5.1/§5.2 逐字段）**：校验=v 恒 0.1/id uuid（幂等键）/ts RFC3339/from-to=`agent/<name>@<scope>`/kind 四原语枚举/payload 自由对象（object）/refs 可选 string[]/**token dispatch 必带**（§5.2 接收侧硬规则——工具面即发起+接收两侧合一面，缺 token 拒收）。to 解析三步（§5.7 #1）：①ref 形校验 ②文档面 Agent 对象在册（coreSystem bridge get，`status.currentSession.id` 回填体或 agentRefs 显式 `session://` 形）③活体注册表 `ctx.agents.get(sessionId)` 可解析——缺文档面=拒（无服务发现 §5.4）、缺身份载体=拒（身份=SessionId）、活体缺席=拒（同机传输前提；跨机 typert=v0.2 declared 余量）。**inbox 豁免活体检查**（requireLive=false）：拉取面对着自己/冷会话也要可用，mailbox 落账不依赖活体。
+
+**四 op 落点（§5.7 #4 对照表机械映射）**：
+- `dispatch` → sessionController `prompt({mode:'queue'})`（真通路=E5a 已实证的宿主受理面；回执 accepted=消息入对端会话队列；对端业务回复在其 SessionLog——§5.2 dispatch 回执两路之另一路，v0.1 不自动回传）。
+- `query` → 同步只读快照（live/status/pendingInbox 计数/mailboxPending/文档面 phase）——**§2 对齐表 query↔get/list 分支**；inject 文本注入通路=v0.2 declared 余量（对话式问询引导走 dispatch）。
+- `interrupt` → sessionController `cancel({sessionId})`（§5.7 #4 cancel/interruptByUser 对照）。
+- `inbox` → 进程内 mailbox 落账面（error reply 按 to 归档，id 幂等去重，FIFO 容量 50/ref）拉取消费 + 活体 pending 输入计数投影（**不消费 dsh pending 队列**——那是目标 agent 驱动队列）。v0.1 reply 非原语：本面只落 error reply，业务回复走 SessionLog（§5.2）——mailbox 是我方进程内投递面失败回执，from=发起方自记不冒充目标身份。
+
+**from 解析**：exec.agent.id 反查文档面（list Agent→get→currentSession.id 命中）→ `agent/<name>@<scope>`；未回填身份的会话=诚实降级 `agent/<sessionId>@session`（可追溯）；caller 缺席=拒（对等面信任已注册发起方 §5.2）。
+
+**装配（软出现纪律，§1.11 补注①同款）**：sessionController prompt/cancel 面=回调式 `ctx.inject(['sessionController'],…)`（声明式 inject 加新服务名=apply 停等教训原样规避）；`ctx.agents` 服务直读（宿主根 ctx 恒在，缺席=活体解析必拒）；cored 文档面解析=本插件自 provide 的 coreSystem bridge 闭包直引（零新 inject 面）。
+
+**声明集种子（文档库经 apply 落库，三对象）**：WorkService `agent-comm`（category=tool，tools=四 op——ConnectorOps spec.workservice ref 解析锚）→ ConnectorOps `agent-comm`（spec.workservice=agent-comm，ops=四原语——§5.3 挂载面 yaml 落地）→ Agent `core-headless` spec.connectorOps mount `{ops: connector-ops/agent-comm, as: agent-comm}`（E5a 判别器声明集数据源；apply 走三步闸门 rv 递增，DocApplied 归档在册）。
+
+**E5b 细化验收线（§4 E5 行展开；探针编号 L41-\*）**：
+- L41-01 四工具注册活体：宿主日志「agent-comm 四 op 工具已注册（4/4）」∧ 活体=headless 会话转录可见 dispatch/query/interrupt/inbox 四工具（chat 屏新会话内可调用——工具全局注册=各 profile agent 可见）。
+- L41-02 声明集种子在册：cored 直查 `GET /v1/objects/ConnectorOps/agent-comm?scope=global` 200 且 ops=四原语 ∧ WorkService agent-comm 200 ∧ Agent core-headless spec.connectorOps 含该 ref（rv 递增=apply 闸门通路）。
+- L41-03 真调用 ConnectorOps 卡活体（E5 验收线收口）：chat 屏新会话发「用 dispatch 派发测试消息」→ 转录 tool/call name=dispatch 命中声明集 → **ConnectorOps 卡在册**（op 名等宽+payload 展开）——L40-03 的 unverified 标注就此消除。
+- L41-04 协议校验活体：无 token dispatch=工具回执 error（envelope 校验失败：dispatch 必须携带 token）∧ to 未注册=error reply（无服务发现）∧ error reply 落发起方 mailbox（inbox 拉取可见——同会话或探针会话）。
+- L41-05 dispatch 真通路：合法 dispatch → 回执 accepted+sessionId ∧ 对端会话转录出现 user/message 行（SessionLog 承载=对端回复两路之一）。
+- L41-06 回归：781 基线+E0…E4 专项全绿（零迁移）+ npm test（plugin 仓，agent-comm 测试面新增）全绿。
+
+
 
 
 console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互模式与信息结构，不锁组件 API）：
@@ -198,7 +227,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | E2 | Welcome 大屏 + 系统树（cored 读面：scheme/objects）【已完成 2026-11-23：读面通路=`/core-console/api` 宿主只读代理+cored `GET /v1/events`（§1.8）；五屏真数据=Welcome/系统树/系统详情/对象 viewer/事件详情，其余屏 proto mock 待各自 E 轮；探针=acceptance/loop-37.md】 | 健康度/树真实数据；标识符全可点（细化=L37-01…07） |
 | E3 | Workflow 运行管理（列表+详情+运行抽屉）【已完成 2026-11-23：数据面=cored v0.37 `GET /v1/workflows` 聚合投影+run involved 键（§1.9）；写面=宿主 `POST /core-console/apply`（主体宿主注入，唯一写入口零旁路）；启停=override 语义闭环（红线 b）；探针=acceptance/loop-38.md】 | 运行次数/相位/涉及文档可见，启停=Apply 闭环（细化=L38-01…06） |
 | E4 | 文档编辑器（草稿→Apply 全流程，dry-run 三检查）【已完成 2026-11-24：数据面=cored v0.38 `GET /v1/history` 应用史投影（apply_log 审计账——历史 tab 权威）；写面=宿主 `POST/DELETE /core-console/drafts` 草稿通道+既有 apply 通路（dry-run 三检查：admit ①scheme②权限零副作用+乐观锁=回执 rv 与稿 baseRV 客户端比对）；屏=viewer 全线升编辑器（四 tab+吸底 dock+确认弹窗）；LLM 提案=非 console 前缀稿队列（mock 对话输入摘除）；探针=acceptance/loop-39.md】 | LLM 提案→人点 Apply→Revision+1 全链路（细化=L39-01…06） |
-| E5 | Agent 会话 + 运行器四选 + 终端 tab（dsh 内置 PTY 为主，gotty 跨机兜底；provider 映射=内嵌 dsh/claude-code 现成 subagent provider，opencode/gotty 自写 SubagentProvider——cross-agent.md §5.7）【拆分裁决=§1.11：**E5a 已完成 2026-11-24**——会话屏真数据换装（数据源=dsh session store §3.7 裁决）+发消息真通路（session.prompt queue/steer）+ConnectorOps 卡渲染判别器（声明集判别）+身份回填（status.currentSession=SessionId 文档面落点）+ServiceInstance→Agent 对话跳转；终端 tab=内置 PTY roster 只读+attach 余量标注；探针=acceptance/loop-40.md。**E5b=下轮起点**：agent-comm 四 op 工具面（宿主 plugin，R-ENG-3）+声明集种子→「收到 ConnectorOps 卡」活体达】 | 能对 Service agent 发消息并收到 ConnectorOps 卡【E5a 细化=L40-01…08（发消息活体已达；ConnectorOps 卡真调用活体=E5b 达成）】 |
+| E5 | Agent 会话 + 运行器四选 + 终端 tab（dsh 内置 PTY 为主，gotty 跨机兜底；provider 映射=内嵌 dsh/claude-code 现成 subagent provider，opencode/gotty 自写 SubagentProvider——cross-agent.md §5.7）【拆分裁决=§1.11：**E5a 已完成 2026-11-24**——会话屏真数据换装（数据源=dsh session store §3.7 裁决）+发消息真通路（session.prompt queue/steer）+ConnectorOps 卡渲染判别器（声明集判别）+身份回填（status.currentSession=SessionId 文档面落点）+ServiceInstance→Agent 对话跳转；终端 tab=内置 PTY roster 只读+attach 余量标注；探针=acceptance/loop-40.md。**E5b 已完成 2026-11-25**——agent-comm 四 op 工具面（宿主 plugin ctx.tools.register，工具名=协议 op 名裸用；envelope v0.1 全字段校验+to 解析三步+mailbox 幂等落账，§1.12）+声明集种子（WorkService/ConnectorOps agent-comm+core-headless mount 经 apply 落库）→「收到 ConnectorOps 卡」真调用活体达（R-ENG-3 归属注记 rule.md）；探针=acceptance/loop-41.md】 | 能对 Service agent 发消息并收到 ConnectorOps 卡【E5a 细化=L40-01…08；E5b 细化=L41-01…06（真调用卡活体已达=E5 全行收口）】 |
 | E6 | 事件流/审批/连接页 + 详情页矩阵互跳 | event→run→workflow→doc 链路走通 |
 | E7 | 场景面四页 + tag 过滤 + 虚拟滚动大列表 | 千级事件滚动流畅 |
 
