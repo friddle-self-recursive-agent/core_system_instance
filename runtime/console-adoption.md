@@ -29,8 +29,30 @@
 
 - 判定优先级：rotated ＞ reconnecting ＞ connected；态切换不整页刷新，恢复后走 baseline+increment 重放（重连=新 baseline 原子替换，对齐 console-ui 数据通路规则）。
 - **rotated 判定边界=登录面（index）**：实测 dsh 0.2.2-rc.5 中 `/plugins/events` 通道（client-hmr bundle graph）无独立鉴权（任意/无 token 皆 200，传输面内部通道，鉴权边界在前端代理+固定钥匙门）；401 判据只能在登录面（index 授权门）上做——连接态灯实现（E1）以 index 重试响应码为 rotated 依据，不得以 events 通道响应为依据。
+- **E1 实测补注（2026-11-23，loop-36）**：①登录面判据的载体=查询串 token 授权门（旧 token 过登录面=401 实测复现）；**cookie 会话面不随 launch token 轮换失效**（签名 cookie 跨进程有效=重启后旧 cookie 过 index/API/WS 全部通过实测）——launch token 轮换只影响「新进入」，由固定钥匙门消化；既有会话不因自替换重启失联（§1.3 前提在本 build 上收窄）。②rotated 态的触发面=真鉴权失效（会话吊销/签名拒绝/部署策略变更）；连接稳态下灯以登录面周期复检（60s）兜底覆盖该面；「重启→events 流重连→灯回绿」是正确行为（会话确未失效），非误报。
 - 固定钥匙门消化 rotated 的大部分场景（用户从固定入口进入，token 轮换后重走固定入口即愈）；rotated 态指引的落点就是该固定入口，console 不自存 token 也不自存 key（R-PUB：key 只存部署侧 env）。
 - 心跳注释帧（§1.2）参与「帧新鲜」判定——空闲期通道也有 20s 粒度的活性证据，connected 态不会因无业务帧而误报琥珀。
+
+### 1.6 E1 实现拓扑与细化验收（2026-11-23，E1 轮）
+
+**Slots 注册面结论（方向性风险 §6 的主案验证）**：dsh 0.2.2-rc.5 的顶层导航扩展位=客户端 slot `sidebar.panellist`（list，`id` ↔ `main` 面板键）+ `main`（keyed，`key`=面板 id，非 `conversation` 键无 Session 绑定）。注册该对即获得「顶层导航入口 + 整页路由承载面」。
+
+**E1 拓扑裁决（八入口不占八个 dsh 面板）**：dsh 侧只加一枚入口（panellist id=`core-console` ↔ main key=`core-console`）；console 壳自带侧栏（proto 同构：Welcome/总览/系统树/Workflows/文档/事件/审批/连接/会话=§3.4 八组+总览），hash 路由在壳内（dsh client 不占用 location.hash——bundle roster 实测零引用）。路由即状态：**刷新恢复=注册完成后按 hash 判定 `layout.selectPanel`**（hash 是 console 路由而宿主面板选择已回落 → 重选本面板，不整页刷新）。proto 四文件整体内嵌为起点代码（用户裁决 2026-11-24）：app.js 手术=MOCK 数据走闭包不落 window、`$`/事件委托/键盘监听收进容器根（不触宿主全局 DOM）、挂载/卸载对称（卸载清定时器+摘监听）；css 全量作用域化（每条规则选择器收进容器类，keyframes 改名防全局碰撞）；SVG symbol id 加前缀防宿主碰撞。
+
+**连接态灯实现依据（§1.5 落实现）**：判定核 DOM 无关、fetch/时钟可注入（单测确定性）。流面=对 `/plugins/events` 自持 **fetch 流式读**（非 EventSource——门注入的心跳是 SSE 注释帧，浏览器 EventSource 吞注释帧零回调，流式读才能把注释帧当活性证据）；新鲜窗=2×心跳周期=40s，超窗=流静默死亡→断流重连。rotated 判定边界=登录面（§1.5）：重连尝试期对页面自身地址（含 token 查询串）重取，**连续 3 次 401 → rotated 且停止重试**；2xx 清零；网络错误不计入。退避 1s 起步 ×2 封顶 30s；优先级 rotated＞reconnecting＞connected；rotated 指引=顶栏细条「入口已轮换→重走固定入口」+右下浮标红色，落点=固定钥匙门入口（key 只存部署侧，console 不自存）。
+
+**E1 细化验收线（§4 E1 行展开；探针编号 L36-\*）**：
+- L36-01 client bundle 链路：`window.__DSH_BOOT__` graph 含 `dsh-plugin-core-system` 行 ∧ `/plugins` combo 脚本 200 且为 lazy-CJS 工厂形（HTTP 机读）。
+- L36-02 Slots 注册面：bundle 载荷含 `main` key=`core-console` 与 `sidebar.panellist` id=`core-console` 成对注册（静态断言）∧ 活体=headless 浏览器侧面板可选中。
+- L36-03 八入口可点：壳内导航九项（§3.4 八组+总览）逐项点击 → hash 变更 ∧ 主区渲染对应屏（headless 活体断言）。
+- L36-04 刷新可恢复：停在 `#/workflows` reload → 恢复同屏（headless）。
+- L36-05 连接态灯：判定核状态机单测（帧新鲜=connected；断流退避=reconnecting 计数前进；登录面 3×401=rotated 停重试+2xx 清零）∧ 活体=浏览器内浮标绿色 connected。
+- L36-06 零控制台 error：headless console 监听（宿主壳与本插件载荷均计；dsh 既有告警不计=基线先采）。
+- L36-07 回归：781 项基线+E0 11 项全绿（零迁移）。
+
+### 1.7 门面 Origin 改写（E1 轮实测发现，部署侧工具）
+
+**现象**：固定钥匙门（§1.3）部署后，浏览器经门进入时 dsh 客户端壳可载（静态+登录链 200），但 `/api` XHR 与 `/api/remote.mux` WebSocket 全部 403——面板级数据面（会话/插件/任务）全不可用。**根因**：dsh web 的连接插件对每条 Host API 路由与流做 Host/Origin 检查（web-server.md 语义）；门的反代把 Host 改写为后端地址（在 `--trusted-host` 清单）但 **Origin/Referer 原样透传**——浏览器 Origin=门的 host:port，不在信任清单 → 403。HTTP 表现层此前未暴露=裸 curl 探针不带 Origin 头（查询代替日志的盲区：curl 证据覆盖不了浏览器才有的头）。**处置（部署侧，2026-11-23）**：门对反代与 WS upgrade 两路统一把 Origin/Referer 改写为后端自身 origin（门呈现=后端的信任面）；实测经门 WS 403→101、页面 403 群→零 error。**教训**：代理链上的鉴权面诊断必须用带浏览器头的探针（Origin/Referer/Cookie 三件套），纯 curl 2xx ≠ 浏览器可用；前端代理（openresty 面）对 WS upgrade 的转发配置仍是独立待验面（本机不可操作，挂账）。
 
 ## 2. dsh 客户端可复用模块清单（实测自 bundle roster）
 
@@ -102,7 +124,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 增量 | 内容 | 验收 |
 |---|---|---|
 | E0 | §1.2 代理超时修复 + §1.3 连接三态（rotated 指引）【已完成 2026-11-23：机器侧 SSE 心跳（§1.2）+ 三色设计定稿（§1.5），实现落 E1；探针=acceptance/loop-35.md】 | 断连面板可用≥1 个自替换周期 |
-| E1 | plugin 注册 slot 壳：八入口导航 + hash 路由骨架 + 连接态灯 | 八入口可点、刷新可恢复路由 |
+| E1 | plugin 注册 slot 壳：八入口导航 + hash 路由骨架 + 连接态灯【实现拓扑与细化验收=§1.6；主案验证通过=顶层导航扩展位（panellist+main 成对注册），回退案未动用】 | 八入口可点、刷新可恢复路由（细化=L36-01…07） |
 | E2 | Welcome 大屏 + 系统树（cored 读面：scheme/objects） | 健康度/树真实数据；标识符全可点 |
 | E3 | Workflow 运行管理（列表+详情+运行抽屉） | 运行次数/相位/涉及文档可见，启停=Apply 闭环 |
 | E4 | 文档编辑器（草稿→Apply 全流程，dry-run 三检查） | LLM 提案→人点 Apply→Revision+1 全链路 |
