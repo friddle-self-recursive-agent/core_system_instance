@@ -111,6 +111,9 @@
 
 **E5a 屏面换装范围**：`#/chat/:agent` 全屏（左栏=会话清单归属两层+owner 反查；中栏=转录渲染[chat/trajectory 双视图]+输入条[queue/steer 模式开关]+**运行器四选 modal**（内嵌 dsh 可用；claude-code/opencode/gotty=在册禁用+why 诚实余量标注）；右栏=权限面 Agent 文档面真数据（connectorOps 挂载 refs/Provider/Ref/Role/autoLevel/op 声明集——mock token 字样摘除））；`#/session/:id` 真数据（session 事件页轨迹+归属反查）；ServiceInstance 详情页真数据（实例条目=ServiceDesc 正文现读、agentRefs chips 全可点、「在对话框调用该 Agent」跳转 `#/chat/:agent`=任务原文 #3 跳转链；conditions/metrics=引擎回写面，对象缺席=诚实空态）；`#/agent/:name` 保持编辑器屏（E4 文档与资源同规则——sessions 列表落 `#/chat/:agent` 左栏，同源不复制）。假动作摘除：pin/archive 按钮（session store 无客户端面）、仿 gotty 终端、personaReply 假流式回复。**ConnectorOps 卡判别器**：转录工具调用 op 名 ∈ agent 文档面声明集（spec.connectorOps[].ops × ConnectorOps 对象 spec.ops 并集）→ ConnectorOps 卡（op 名等宽+payload/result 展开+凭据值打码）；声明缺席=普通工具卡（不冒充协议挂载）。
 
+**E5a 实现补注（2026-11-24，探针活体实测沉淀）**：①cordis 客户端服务护栏=**回调式 `ctx.inject(['sessions'],…)` 软出现**（声明式 `exports.inject` 加 `sessions/remote` 名会让 cordis apply 停等=整面板缺席——E5 探针字节级二分实证：E4 字节活/E5 任意重建停等；`remote.session` 命名空间未声明即访问抛 without inject）——faces 一律回调注入，缺席宿主回调不启动=chat 屏 ready()=false 诚实降级。②转录活体源=**sessions.retain 持有的 `binding.eventSource` 事件窗**（retain 自带初始历史开窗+订阅即活体；热路径[create→prompt→回复]全链实证；**冷会话空窗=declared 余量**——console 面板上下文冷 retain 事件窗不回放全史，native 会话视图承载全史，console 深链历史=同源余量；loadOlder 显式补拉已接仍空窗，如实标注）。③对话/终端切换**恒在册**（proto 原型=仅终端态显示切换，chat 视图不可达终端 tab=可达性破缺，探针修正）。④身份回填：首回填（无 status 块）=rv 前进落库实证；**已有 status 块=结构化合并 E5b 余量**（不盲写覆盖，诚实 toast）。⑤探针入口 locator 须知：面板入口 title 随 pin 态改写（`core console` ↔ `Unpin core console from sidebar`），活体断言用 `[title*="core console" i]` 子串匹配。
+
+
 **E5a 细化验收线（§4 E5 行展开；探针编号 L40-\*；E5b 线=E5b 轮补入）**：
 - L40-01 会话数据源活体：chat 屏左栏=dsh session store 真实行（headless：新建后清单行 id ∈ 宿主 store 投影）∧ 零 mock 会话名（sess-term-*/builtinRoot 摘除判据）。
 - L40-02 发消息真通路：headless 活体——新建会话（内嵌 dsh）→ 输入 Enter → prompt 回执 accepted（发送面判别联合 ok）∧ 转录重读出现真实 user/message 行（session.page 读面）∧ 零 console error。
