@@ -69,6 +69,24 @@
 - L37-06 事件详情：`#/event/:id` 命中归档行=字段投影；未命中=空态（不报错块）。
 - L37-07 回归：781 基线+E0 11 项+E1 16 项全绿（零迁移）+ npm test（plugin 仓）全绿。
 
+### 1.9 E3 实现拓扑与细化验收（2026-11-23，E3 轮）
+
+**数据面（cored v0.37 console 读面第二段）**：`GET /v1/workflows` 聚合投影——三源同投（声明=builtin 注册表∪文档库 Workflow 对象（本体/override 并存，origin 投影）；现势=run 环每锚最新 run 相位/状态；计数=event_log 归档分组×dispatch 决议，`workflow.RunAnchor` 与 run 投影同一锚解析）+ run 载荷新增 `involved` 键（运行抽屉「涉及文档」直接取字段落对象链接，无前端拼凑）。口径三诚实（入桥文档）：计数=归档触发量（含 braked 拦阻——不冒充已执行）；成功率不投影=run 终态事件未落归档（declared 余量，UI n/a 不冒充）；`enabled=null`=未声明不冒充。
+
+**写面（E3 起 console Apply 通路）**：宿主插件新增 `POST /core-console/apply`（与只读代理 `/core-console/api` 前缀分立的 exact 路由）：connection 鉴权栅栏 fail-closed 同款 → 转发 cored `POST /v1/apply`（唯一写入口，三步闸门零旁路）→ 主体由**宿主注入**（config.applySubject，浏览器不携带主体；授权仍走文档面 Role/Group 判定）。部署侧：两 web profile coredArgs 追加 `--allow-apply`（写面显式开启=部署决策，锚点记台账）。
+
+**启停=Apply 闭环（红线 b 的机械落点）**：console 对 workflow 的启停不直写 builtin 本体——落 Instance/系统层同名 override（origin: override-of-builtin，concepts/workflow.md §1）：override 在册=更新该对象 spec.enabled（rv 乐观锁）；override 缺席=builtin 有文档本体时克隆本体为 override（改 scope+origin 标注+翻转 enabled）、builtin 无文档对象=诚实拒绝（不发明 builtin spec 字段，E4 编辑器轮补全）。闭环判定=对象面：Apply 落库 rv+1 ∧ DocApplied 归档 ∧ UI 重读显示已停用 ∧ builtin 本体对象 rv 不动。**触发路径对 enabled 的实时 honoring 余量**（触发接线检查 spec.enabled=下一段）——本面闭环止于对象面+审计面，如实标注。
+
+**E3 屏面换装范围**：Workflows 列表 / Workflow 详情（六 tab：运行默认/流程图/事件/流转/数据流/配置）/ 运行独立页 `#/wf/:name/r/:n`。运行 tab=dsh Jobs 双栏（run 列表+抽屉内联：相位时间线（声明序列+当前落点）/留痕 kv/涉及文档（run.involved+对象行）/action log=诚实空态余量/SessionLog=诚实空态余量）；流程图=生效相位序列线性渲染当前落点高亮；事件 tab=触发留痕过滤（route→该锚，eventId 可点=归档事件详情）；流转=run 行投影（相位+状态+时刻，前端过滤）；数据流=聚合面 dataflowInputs/Outputs 拼图节点全可点；配置=生效对象 YAML 只读+编辑深链。重跑/取消=余量不画按钮（mock 移除——不冒充动作）。
+
+**E3 细化验收线（§4 E3 行展开；探针编号 L38-\*）**：
+- L38-01 聚合面代际：新代 `GET /v1/workflows` 200 ∧ 覆写前旧代 405（carrier-pre 预采快照）——双状态码判别。
+- L38-02 聚合面载荷：runs 载荷含 `involved` 键 ∧ 聚合行含 effective/phases/runsTotal（新代判别器键组）。
+- L38-03 代理与写路由：经 dsh web（浏览器头）`/core-console/api/v1/workflows` 200 ∧ 与 cored 直查双读一致（同键同值）；`GET /core-console/apply` 405（写路由方法分立）。
+- L38-04 Apply 闭环活体：经 dsh web `POST /core-console/apply` 停用 override → 200 rv+1 ∧ DocApplied 归档在册 ∧ 再启用回 true ∧ builtin 本体 rv 不动（双读取证，全程 API 查询代替日志）。
+- L38-05 屏活体（headless）：Workflows 列表真数据（真实对象名/对象行）∧ `#/wf/:name` 六 tab 真数据 ∧ 运行抽屉 `#/wf/:name/r/:n` 相位时间线∧涉及文档可点 ∧ 零 console error。
+- L38-06 回归：781 基线+E0/E1/E2 专项全绿（零迁移）+ npm test（plugin 仓）全绿。
+
 ## 2. dsh 客户端可复用模块清单（实测自 bundle roster）
 
 console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互模式与信息结构，不锁组件 API）：
@@ -141,7 +159,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | E0 | §1.2 代理超时修复 + §1.3 连接三态（rotated 指引）【已完成 2026-11-23：机器侧 SSE 心跳（§1.2）+ 三色设计定稿（§1.5），实现落 E1；探针=acceptance/loop-35.md】 | 断连面板可用≥1 个自替换周期 |
 | E1 | plugin 注册 slot 壳：八入口导航 + hash 路由骨架 + 连接态灯【实现拓扑与细化验收=§1.6；主案验证通过=顶层导航扩展位（panellist+main 成对注册），回退案未动用】 | 八入口可点、刷新可恢复路由（细化=L36-01…07） |
 | E2 | Welcome 大屏 + 系统树（cored 读面：scheme/objects）【已完成 2026-11-23：读面通路=`/core-console/api` 宿主只读代理+cored `GET /v1/events`（§1.8）；五屏真数据=Welcome/系统树/系统详情/对象 viewer/事件详情，其余屏 proto mock 待各自 E 轮；探针=acceptance/loop-37.md】 | 健康度/树真实数据；标识符全可点（细化=L37-01…07） |
-| E3 | Workflow 运行管理（列表+详情+运行抽屉） | 运行次数/相位/涉及文档可见，启停=Apply 闭环 |
+| E3 | Workflow 运行管理（列表+详情+运行抽屉）【已完成 2026-11-23：数据面=cored v0.37 `GET /v1/workflows` 聚合投影+run involved 键（§1.9）；写面=宿主 `POST /core-console/apply`（主体宿主注入，唯一写入口零旁路）；启停=override 语义闭环（红线 b）；探针=acceptance/loop-38.md】 | 运行次数/相位/涉及文档可见，启停=Apply 闭环（细化=L38-01…06） |
 | E4 | 文档编辑器（草稿→Apply 全流程，dry-run 三检查） | LLM 提案→人点 Apply→Revision+1 全链路 |
 | E5 | Agent 会话 + 运行器四选 + 终端 tab（dsh 内置 PTY 为主，gotty 跨机兜底；provider 映射=内嵌 dsh/claude-code 现成 subagent provider，opencode/gotty 自写 SubagentProvider——cross-agent.md §5.7） | 能对 Service agent 发消息并收到 ConnectorOps 卡 |
 | E6 | 事件流/审批/连接页 + 详情页矩阵互跳 | event→run→workflow→doc 链路走通 |
