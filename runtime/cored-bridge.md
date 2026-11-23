@@ -45,7 +45,7 @@
 | 字段 | 语义 |
 |---|---|
 | `kind/scope/name` | 对象键，三者必填（缺 → 400） |
-| `resourceVersion` | 乐观锁：创建=0（缺省）；更新=读到的版本，不符 → 409；`fromDraft=true` 时须缺省（期望值以草稿 `baseResourceVersion` 为准） |
+| `resourceVersion` | 乐观锁：创建=0（缺省）；更新=读到的版本，不符 → 409；`fromDraft=true` 时须缺省（期望值以草稿 `baseResourceVersion` 为准）。**幂等重入优先**：同内容重入（去 rv 比对）→ `noop` 短路，先于乐观锁判定（内容=现面的写入不可能丢任何更新，不发事件不落提交；loop-9 live 实证：同内容+陈旧 rv → noop 而非 409；409 仅在**内容≠现面且 rv 不符**时发生） |
 | `content` | 文档原文（存储层解析 metadata 身份，与对象键不符 → 400）；`fromDraft=true` 时须缺省（差异以草稿缓存为准） |
 | `fieldManager` | 必填，无主写入拒绝 → 400（apply.md rule 2） |
 | `subject` | **请求级主体（v0.9）**：`{user, roles:[…], groups:[…]}`——user=主体标识（审计留痕；user-system 目录侧未接前由调用方断言），roles/groups=断言持有关系（**须对上文档面 Role/Group 对象才产生权限**，断言本身不授权）；缺席回退 `X-Core-Subject` 头（同形 JSON，字段优先于头）；两者皆缺=匿名主体 → 权限准入拒绝 403；`dryRun` 同主体判定（准入结论与真执行一致） |
