@@ -103,7 +103,25 @@
 - L39-05 空草稿纪律：无 diff → dock 禁用（活体）∧ 直发 `POST /core-console/apply {fromDraft:true}` 无稿 → 404（与 noop 可区分，服务端兜底）。
 - L39-06 回归：781 基线+E0/E1/E2/E3 专项全绿（零迁移）+ npm test（plugin 仓）全绿。
 
-## 2. dsh 客户端可复用模块清单（实测自 bundle roster）
+### 1.11 E5 实现拓扑与细化验收（2026-11-24，E5 轮）
+
+**E5 拆分裁决（E5a/E5b，一轮一增量纪律）**：E5 含两条独立数据面——①会话面=dsh session store（client 侧 ctx.sessions/ctx.remote/ctx.webTerminals）；②agent-comm 运行面=宿主四 op 工具（envelope v0.1，§5.3 挂载面）。同轮落地违反一轮一增量体量纪律（§6 风险行同款处置）：**E5a=会话屏真数据换装+发消息真通路+ConnectorOps 卡渲染判别器（本轮）；E5b=agent-comm 四 op 工具面入 plugin 宿主（R-ENG-3：通用能力默认 common_connector，确需独立仓先 rule.md 注册——工具宿主=core plugin 本体，落 plugin 仓）+agent 声明集种子（global/connector-ops/agent-comm 对象+Agent.mount），使「收到 ConnectorOps 卡」活体达**。E5b 完成前，卡片活体=判别器单测+真会话工具卡渲染，ConnectorOps 卡活体如实标注 unverified（不冒充）。
+
+**数据通路（E5a）**：浏览器 client cordis ctx——`ctx.inject(['sessions','remote'])` 软出现（缺席宿主回调不启动，chat 屏 `ready()=false` 诚实降级）；`ctx.sessions.list/create/using`（清单快照/新建/**prompt 真通路**——beginSubmission+prompt(mode=queue|steer, requestId)，cross-agent.md §5.7 #2 机械落点）；`ctx.remote.session.page`（转录事件页读面：user/message、assistant/message、tool/call+tool/result 按 callId 配对；context 注入行不上对话面只入轨迹）；`ctx.webTerminals.watch`（内置 PTY roster 真数据，§5.7 #6 主案）。**身份=SessionId 的文档面落点**：console 新建会话成功 → 既有 apply 通路（fieldManager=`console:chat-backfill`，rv 乐观锁）回填 Agent `status.currentSession={id,startedAt,docsLoaded}`（§5.7 #1；已有 status 块=结构化合并 E5b 余量诚实跳过不盲写）。归属过滤（§3.7 会话组织裁决）三层证据：①文档面 status.currentSession.id ②console 发起（内存 UI 态，零持久状态）③agentRefs 显式 `session://<id>` 形；其余行入「宿主全部会话」组不冒充归属。渲染数据双权威面（红线 2 细化）：文档面/资源状态=cored 读面；会话运行态=dsh session store（§3.7 显式裁决）——两权威各管一面无双源。
+
+**E5a 屏面换装范围**：`#/chat/:agent` 全屏（左栏=会话清单归属两层+owner 反查；中栏=转录渲染[chat/trajectory 双视图]+输入条[queue/steer 模式开关]+**运行器四选 modal**（内嵌 dsh 可用；claude-code/opencode/gotty=在册禁用+why 诚实余量标注）；右栏=权限面 Agent 文档面真数据（connectorOps 挂载 refs/Provider/Ref/Role/autoLevel/op 声明集——mock token 字样摘除））；`#/session/:id` 真数据（session 事件页轨迹+归属反查）；ServiceInstance 详情页真数据（实例条目=ServiceDesc 正文现读、agentRefs chips 全可点、「在对话框调用该 Agent」跳转 `#/chat/:agent`=任务原文 #3 跳转链；conditions/metrics=引擎回写面，对象缺席=诚实空态）；`#/agent/:name` 保持编辑器屏（E4 文档与资源同规则——sessions 列表落 `#/chat/:agent` 左栏，同源不复制）。假动作摘除：pin/archive 按钮（session store 无客户端面）、仿 gotty 终端、personaReply 假流式回复。**ConnectorOps 卡判别器**：转录工具调用 op 名 ∈ agent 文档面声明集（spec.connectorOps[].ops × ConnectorOps 对象 spec.ops 并集）→ ConnectorOps 卡（op 名等宽+payload/result 展开+凭据值打码）；声明缺席=普通工具卡（不冒充协议挂载）。
+
+**E5a 细化验收线（§4 E5 行展开；探针编号 L40-\*；E5b 线=E5b 轮补入）**：
+- L40-01 会话数据源活体：chat 屏左栏=dsh session store 真实行（headless：新建后清单行 id ∈ 宿主 store 投影）∧ 零 mock 会话名（sess-term-*/builtinRoot 摘除判据）。
+- L40-02 发消息真通路：headless 活体——新建会话（内嵌 dsh）→ 输入 Enter → prompt 回执 accepted（发送面判别联合 ok）∧ 转录重读出现真实 user/message 行（session.page 读面）∧ 零 console error。
+- L40-03 ConnectorOps 卡判别器：单测（声明集命中→ConnectorOps 卡；缺席→普通工具卡；callId 配对回填 result）∧ 活体=真会话工具事件渲染在册。**E5b 前真调用卡活体=unverified（如实标注）**。
+- L40-04 运行器四选：modal 四项在册 ∧ 内嵌 dsh=真创建（新 SessionId 入 store）∧ 其余三=禁用+余量标注（headless 断言 disabled+why）。
+- L40-05 身份回填写面：创建成功 → cored 直查 `GET /v1/objects/Agent/<name>` 含 `status.currentSession.id=<新 SessionId>` ∧ DocApplied 归档在册（fieldManager=console:chat-backfill）。
+- L40-06 ServiceInstance→Agent 对话跳转：实例页 agentRefs 来自 ServiceDesc 正文现读 ∧ 「在对话框调用该 Agent」→ `#/chat/:agent` 渲染该 agent 文档面（headless 活体）。
+- L40-07 终端 tab：roster 只读真数据（或 ctx.webTerminals 缺席=诚实空态）∧ 主案/兜底标注在册 ∧ attach=xterm 依赖余量标注（不冒充终端）。
+- L40-08 回归：781 基线+E0/E1/E2/E3/E4 专项全绿（零迁移）+ npm test（plugin 仓）全绿。
+
+
 
 console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互模式与信息结构，不锁组件 API）：
 
@@ -177,7 +195,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | E2 | Welcome 大屏 + 系统树（cored 读面：scheme/objects）【已完成 2026-11-23：读面通路=`/core-console/api` 宿主只读代理+cored `GET /v1/events`（§1.8）；五屏真数据=Welcome/系统树/系统详情/对象 viewer/事件详情，其余屏 proto mock 待各自 E 轮；探针=acceptance/loop-37.md】 | 健康度/树真实数据；标识符全可点（细化=L37-01…07） |
 | E3 | Workflow 运行管理（列表+详情+运行抽屉）【已完成 2026-11-23：数据面=cored v0.37 `GET /v1/workflows` 聚合投影+run involved 键（§1.9）；写面=宿主 `POST /core-console/apply`（主体宿主注入，唯一写入口零旁路）；启停=override 语义闭环（红线 b）；探针=acceptance/loop-38.md】 | 运行次数/相位/涉及文档可见，启停=Apply 闭环（细化=L38-01…06） |
 | E4 | 文档编辑器（草稿→Apply 全流程，dry-run 三检查）【已完成 2026-11-24：数据面=cored v0.38 `GET /v1/history` 应用史投影（apply_log 审计账——历史 tab 权威）；写面=宿主 `POST/DELETE /core-console/drafts` 草稿通道+既有 apply 通路（dry-run 三检查：admit ①scheme②权限零副作用+乐观锁=回执 rv 与稿 baseRV 客户端比对）；屏=viewer 全线升编辑器（四 tab+吸底 dock+确认弹窗）；LLM 提案=非 console 前缀稿队列（mock 对话输入摘除）；探针=acceptance/loop-39.md】 | LLM 提案→人点 Apply→Revision+1 全链路（细化=L39-01…06） |
-| E5 | Agent 会话 + 运行器四选 + 终端 tab（dsh 内置 PTY 为主，gotty 跨机兜底；provider 映射=内嵌 dsh/claude-code 现成 subagent provider，opencode/gotty 自写 SubagentProvider——cross-agent.md §5.7） | 能对 Service agent 发消息并收到 ConnectorOps 卡 |
+| E5 | Agent 会话 + 运行器四选 + 终端 tab（dsh 内置 PTY 为主，gotty 跨机兜底；provider 映射=内嵌 dsh/claude-code 现成 subagent provider，opencode/gotty 自写 SubagentProvider——cross-agent.md §5.7）【拆分裁决=§1.11：**E5a 已完成 2026-11-24**——会话屏真数据换装（数据源=dsh session store §3.7 裁决）+发消息真通路（session.prompt queue/steer）+ConnectorOps 卡渲染判别器（声明集判别）+身份回填（status.currentSession=SessionId 文档面落点）+ServiceInstance→Agent 对话跳转；终端 tab=内置 PTY roster 只读+attach 余量标注；探针=acceptance/loop-40.md。**E5b=下轮起点**：agent-comm 四 op 工具面（宿主 plugin，R-ENG-3）+声明集种子→「收到 ConnectorOps 卡」活体达】 | 能对 Service agent 发消息并收到 ConnectorOps 卡【E5a 细化=L40-01…08（发消息活体已达；ConnectorOps 卡真调用活体=E5b 达成）】 |
 | E6 | 事件流/审批/连接页 + 详情页矩阵互跳 | event→run→workflow→doc 链路走通 |
 | E7 | 场景面四页 + tag 过滤 + 虚拟滚动大列表 | 千级事件滚动流畅 |
 

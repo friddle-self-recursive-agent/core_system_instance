@@ -152,3 +152,5 @@ spec:
 | 5 | **token 不落消息通道映射**：dsh 授权=Peer Principal + remote-access 每资源角色 + 连接级凭证（trusted-host/BasicAuth/piko token）。信封内 token 仅作我方端到端校验保留；通道安全借 dsh 既有层 | remote-access principal kind→policy→role→resource(session id)→action |
 | 6 | **终端面=dsh 内置优先**：`remote.terminal.*`（真 PTY，每 session ≤8 路，scrollback 1000，进程活过浏览器 reload 不活过 owner disposal，TERM=xterm-256color）承载 opencode/claude-code 等 TUI；**gotty 降级为跨机场景**（ServiceInstance 在别的机器、或终端要独立分享给无 console 权限者时经 piko 暴露），不再作 console 默认终端 | dsh terminal 与会话同生命周期同鉴权，单机全面占优；gotty 价值在独立鉴权/跨机暴露 |
 | 7 | **agent-team 是纯展示**（共享任务板+成员导航）：console 拓扑图数据源=subagentCatalog projection + listDescendants（pre-order，行带 parentId/depth/path），我方文档面拓扑与之并存（§3.7 裁决） | client-ui-agent-team README；无 lifecycle 控制面 |
+
+> **console 解析落点（E5a 补注，2026-11-24）**：#1 的「文档面地址→(host, sessionId)」解析源=Agent 文档面 `status.currentSession.id`（console 在 `#/chat/:agent` 新建会话后经既有 apply 通路回填，fieldManager=`console:chat-backfill`）；agentRefs 的显式 `session://<id>` 形同样在册可解析。实现=console-adoption.md §1.11。
