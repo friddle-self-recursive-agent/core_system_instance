@@ -33,7 +33,7 @@
 
 ### 2.1 写面（缺省关闭，`--allow-apply` 显式开启）：`POST /v1/apply`
 
-写面是文档面唯一写端点，内部收敛 apply.Engine 三步闸门（scheme 准入=kind 注册+**spec 结构校验**（v0.14：对象 spec 区须过该 kind 注册声明的机读子集——缺必填段/枚举外值/结构错形 → 400，违规路径在错误文本如 `permissions[0].scope`；声明判读口径=scheme.md 设计规则 6）→权限准入（**请求级主体**，§2.1 `subject`）→乐观锁落库），不旁路存储；每次成功落库必发 `DocApplied` 事件（eventbus → event_log 归档 + 触发骨架收到留痕 §2.3；workflow 触发面接线后该留痕同步推进为对账 run 投影 §2.3 v0.15），幂等重入（同内容）no-op 零提交零事件（concepts/apply.md rule 1）。
+写面是文档面唯一写端点，内部收敛 apply.Engine 三步闸门（scheme 准入=kind 注册+**spec 结构校验**（v0.14：对象 spec 区须过该 kind 注册声明的机读子集——缺必填段/枚举外值/结构错形 → 400，违规路径在错误文本如 `permissions[0].scope`；声明判读口径=scheme.md 设计规则 6）→权限准入（**请求级主体**，§2.1 `subject`）→乐观锁落库），不旁路存储；每次成功落库必发 `DocApplied` 事件（eventbus → event_log 归档 + 触发骨架收到留痕 §2.3；workflow 触发面接线后该留痕同步推进为对账 run 投影 §2.3 v0.15；notification 族绑定则推进为送达受理投影 §2.3 v0.16），幂等重入（同内容）no-op 零提交零事件（concepts/apply.md rule 1）。
 
 请求体（JSON）：
 
@@ -68,6 +68,7 @@
 | `GET /v1/triggers` | 触发骨架查询面（§2.3，恒开）：`{count, received, dropped, types, records:[…]}`——dispatch 表驱动订阅留痕（records 携命中行投影 route/cc/for/owner + 执行绑定投影 execution） |
 | `GET /v1/triggers/resolve` | 派发决策查询面（§2.3 v0.13+v0.14，恒开）：`?type=<类型>&involved=<kind/scope/name>` → `{type, involved, matched, route, cc, for, owner, row, execution}`——对当前 dispatch 表快照回答「这一事件若到达会路由到哪、由谁执行」（纯决策：零事件注入、零留痕、零派发；execution=`{route:{executor,target,wired}, cc:{…}}` 执行面绑定投影） |
 | `GET /v1/workflows/runs` | 对账 run 投影面（§2.3 v0.15，恒开）：`{count, started, dropped, runs:[…]}`——route 目标执行面=workflow 且装配层已接线的留痕推进为一次对账 run 投影（触发已受理+声明起点；run 溯源字段与留痕/发布回执同源） |
+| `GET /v1/notifications/deliveries` | 送达投影面（§2.3 v0.16，恒开）：`{count, accepted, dropped, deliveries:[…]}`——执行面=notification 且装配层已接线的绑定（route 主路与 cc 旁路，origin 维度留痕）推进为一条送达受理投影（送达已受理+通道投影；真实通道投递 deferred；溯源字段与留痕/发布回执同源） |
 | `POST /v1/drafts` | 落稿（upsert，同对象键覆盖=最新代改稿，`createdAt` 定格 `updatedAt` 更新）：`{kind,scope,name,content,fieldManager,reasonRef,baseResourceVersion}`；键不全/无主/空稿 → 400 |
 | `DELETE /v1/drafts/{kind}/{name}?scope=<scope>` | 弃稿；无稿 → 404 |
 | `POST /v1/apply` + `"fromDraft":true` | 稿→面落库：以草稿 content 为写者输入、草稿 `baseResourceVersion` 为乐观锁期望值，走与直写同一三步闸门（scheme/权限/存储——权限按**请求级主体**判定，同 §2.1 `subject` 语义；成功后**清稿**）；无稿 → 404 |
@@ -79,7 +80,7 @@
 - **草稿读面无 plugin 句柄**：§3.1 持续句柄只封装对象读面（只读不变式不扩面）；草稿面经 HTTP 直查（宿主内调试/验收探针用），是否升句柄随消费端出现再议。
 - **持久化边界（v0.10）**：写穿语义=先持久化后落内存（持久化失败=落稿失败、内存不动——「可见即已持久」，重启恢复不丢稿不多稿）；恢复=整表替换（确定性）；恢复保留 `createdAt/updatedAt` 与 `baseResourceVersion`——重启期间文档面前移则 fromDraft 走既有 **409 保留草稿**语义（乐观锁期望值不因恢复而改写，后写者重读后重整）；草稿表不参与 apply_log 对账不变量（缓存非账，ops-log.md §2）。
 
-### 2.3 触发骨架面（dispatch 第二段 v0.12 订阅面动态化 → 第三段 v0.13 引擎主体第一段：owner 解析激活+决策可查询 → 第四段 v0.14 引擎主体第二段：派发执行投影 → 第五段 v0.15 引擎主体第三段：真实拉起第一子段——workflow 触发面接线+对账 run 投影，恒开）：`GET /v1/triggers` + `GET /v1/triggers/resolve` + `GET /v1/workflows/runs`
+### 2.3 触发骨架面（dispatch 第二段 v0.12 订阅面动态化 → 第三段 v0.13 引擎主体第一段：owner 解析激活+决策可查询 → 第四段 v0.14 引擎主体第二段：派发执行投影 → 第五段 v0.15 引擎主体第三段：真实拉起第一子段——workflow 触发面接线+对账 run 投影 → 第六段 v0.16 引擎主体第四段：真实拉起第二子段——notification 送达面接线+送达受理投影，恒开）：`GET /v1/triggers` + `GET /v1/triggers/resolve` + `GET /v1/workflows/runs` + `GET /v1/notifications/deliveries`
 
 「apply→事件→订阅」是 core 主干第一段：cored 内 workflow 包 `TriggerHub` 以**单订阅者**挂事件总线，收到即落**进程内可查状态**（本端点读取）。事件本体不落文档库（event.md：事件不是文档对象）；审计账本仍在 event_log 归档（ops-log.md §2）——留痕是观测面不是账本。载荷：
 
@@ -98,10 +99,11 @@
 - **派发决策查询面（v0.13，恒开）**：`GET /v1/triggers/resolve?type=<类型>&involved=<kind/scope/name>`（involved 可缺省=空解析）→ `{"type","involved","matched","route","cc","for","owner","row"}`——对当前 dispatch 表快照回答「这一事件若到达会路由到哪」：**纯决策**（零事件注入、零留痕、零派发，`received` 不动）；`row`=命中表行号（0 起，可回指 scheme.yaml 具体行），全表未命中 `row=-1` ∧ `route="dead-letter"`（合成死信），未挂表 `route=""`；缺 `type` → 400；未接线 → 503。**owner 谓词的 live 机械验证落点**：无事件注入面（connector 未接线）也能验证 `owner:agent` 行按解析命中（如 `type=HeartbeatLost&involved=ServiceInstance/systems/agent/ci` → `route=parent-agent, owner=agent`）——判别器：`owner:agent` 行从「恒不命中顺延」（v0.12）变「按 owner 解析命中」（v0.13）。
 - **派发执行投影（v0.14 引擎主体第二段，决策与留痕同投影）**：命中行的 `route:`/`cc:` 目标再经映射表投影执行面绑定 `execution={route:{executor,target,wired}, cc:{executor,target,wired}}`——「路由到哪」之后的下一问「谁来执行」可查询。映射表按**目标族**收编（event.md 规则 6；通用性=新目标落已知家族即自动映射，扩展性=新家族登记一行，解耦=映射只投影不执行）：`dead-letter`→`none`（死信无执行，观测兜底出口）；`notification/<channel>`→`notification`（`*`=全部已绑通道）；`workflows/<name>`→`workflow`（直接 workflow 引用）；`<p>-agent`→`agent`（parent、root 等前缀）；`<p>-workflow`→`workflow`（owner 对账锚，如 `owner-workflow`→`{workflow, owner}`）；**未知目标族原样投影 `executor=unbound`**（缺口可见，不静默吞并——`observation-bus`/`instance-docs` 等未设计执行面的目标族即由此可见）；空 `cc`=零值绑定（`executor=""`）。`wired`=执行面接线态：装配层登记（hub `WireExecutor`）前恒 **false**——**执行计划可查 ≠ 执行面已在位**（诚实投影），真实拉起落地轮登记后翻转=机械判别器；全表未命中的合成死信 `execution.route.executor=none`，未挂表=无决策即无执行计划（零值绑定）。留痕 `execution` 区=收到时刻的执行计划快照。
 - **对账 run 投影（v0.15 引擎主体第三段——真实拉起第一子段：workflow 触发面接线）**：装配层**双登记**（hub `BindRuns` 挂 run 投影落点 ∧ `WireExecutor(workflow)` 翻转接线态）后，route 目标执行面=workflow 的留痕同步推进为一条 run 投影（`GET /v1/workflows/runs`，载荷 `{count, started, dropped, runs}`；单登记不推进——接线判定=两登记同时在场，机械判别器=决策投影 `wired` 翻转 ∧ run 面出现）。run 字段：`workflow`（锚）/`specSource`（`builtin`=内置注册表命中，`object`=平台对象引用）/`phases`+`phase`（声明相位序列与起点=首相位；仅 builtin 命中投影）/`status`（`triggered`=触发已受理）/`triggerSeq`/`eventId`/`dedupKey`/`route`/`owner`/`target`（溯源字段与留痕、发布回执同源，run 可回指 `/v1/triggers` 留痕）。锚解析纯映射（event.md 规则 6）：对账锚（`<p>-workflow` 族）→ 对账循环锚 `core-workflow`（对账=系统级循环本体，workflow.md Controller/Reconciler 对照；owner 维度由 `owner` 字段承载）；以 workflows 为前缀的直接引用 → 按名解析 builtin 注册表，未命中=平台对象引用（Workflow 对象 spec 随文档面——锚保留、相位不投影，不吞并不缺口化）。**run 出现 ≠ 对账执行完毕**：相位态机 deferred，run 只证明触发面把事件接进了 workflow 域（诚实投影的起点语义）。非 workflow 执行面（notification/agent/none）不产生 run。
-- **环形容量**（缺省 256）：溢出丢最旧、`dropped` 计数可见；总线订阅缓冲满时事件按**可丢语义**转死信（event.md P3 level-triggered，系统正确性不依赖事件送达；`received <` 实际落库数属正常爆发态，死信可见兜底）。run 投影环同口径（容量独立、`started`=`dropped`+环内条数对账不变量）。
+- **送达受理投影（v0.16 引擎主体第四段——真实拉起第二子段：notification 送达面接线）**：装配层**双登记**（hub `BindDeliveries` 挂送达投影落点 ∧ `WireExecutor(notification)` 翻转接线态）后，执行面=notification 的绑定同步推进为一条送达投影（`GET /v1/notifications/deliveries`，载荷 `{count, accepted, dropped, deliveries}`；单登记不推进——接线判定=两登记同时在场，机械判别器=决策投影 `wired` 翻转 ∧ 送达面出现，与 run 面同口径）。与 run 面的声明差异：送达投影**route 主路与 cc 旁路双路同 sink 收编**——通知本身即旁路语义（以通知为主路的行如 ApprovalNeeded，以通知为旁路的行如 Escalate/HeartbeatLost 的 `cc:`——主/旁维度由 `origin` 字段留痕，不再为旁路单开 sink 面）。送达字段：`delivery`（序号）/`channel`（通道投影，`*`=全部已绑通道）/`origin`（`route`/`cc`）/`status`（`accepted`=送达已受理）/`level`（事件等级，fatal 必接 Notification 规则的机械观察点）/`triggerSeq`/`eventId`/`dedupKey`/`route`/`owner`（溯源字段与留痕、发布回执同源，送达可回指 `/v1/triggers` 留痕）。**送达投影出现 ≠ 已送达真实通道**：真实通道投递（im/email/webhook 经 Provider 出站、重试、降级）deferred，送达只证明触发面把 notification 族绑定接进了送达域（诚实投影的受理语义，与 run 起点语义同构）。非 notification 执行面（workflow/agent/none）不产生送达投影。
+- **环形容量**（缺省 256）：溢出丢最旧、`dropped` 计数可见；总线订阅缓冲满时事件按**可丢语义**转死信（event.md P3 level-triggered，系统正确性不依赖事件送达；`received <` 实际落库数属正常爆发态，死信可见兜底）。run 投影环与送达投影环同口径（容量独立、`started`/`accepted`=`dropped`+环内条数对账不变量）。
 - **写面关断不受影响**：触发骨架随总线装配，查询面恒开——`--allow-apply` 关断时不产生事件（`received=0`、`types` 照常表驱动值），只读部署的观测回归点。
 - **退场语义**：进程退场留痕即清（进程内状态，不持久化）；账本在 event_log，重启不丢审计。
-- **触发引擎主体 declared-deferred（v0.15 后余量）**：owner 字面量解析（v0.13）、**派发执行投影**（route/cc 目标→执行面绑定，v0.14）与 **workflow 触发面接线+对账 run 投影**（真实拉起第一子段，v0.15）**已收口**；余下——notification 送达、agent 唤醒、`cc:` 旁路投递（真实拉起第二子段起）、相位态机、刹车、冷却期、`minLevel` 过滤——本骨架不含；订阅面、全谓词口径、决策查询面、执行投影与 run 投影已表驱动（v0.15），引擎主体按 cored-bridge 既有边界另行接入。
+- **触发引擎主体 declared-deferred（v0.16 后余量）**：owner 字面量解析（v0.13）、**派发执行投影**（route/cc 目标→执行面绑定，v0.14）、**workflow 触发面接线+对账 run 投影**（真实拉起第一子段，v0.15）与 **notification 送达面接线+送达受理投影**（真实拉起第二子段，v0.16，route+cc 双路同 sink）**已收口**；余下——notification 真实通道投递（im/email/webhook 经 Provider 出站）、agent 唤醒、相位态机、刹车、冷却期、`minLevel` 过滤——本骨架不含；订阅面、全谓词口径、决策查询面、执行投影、run 投影与送达投影已表驱动（v0.16），引擎主体按 cored-bridge 既有边界另行接入。
 
 ## 3. plugin↔cored 桥契约（dsh plugin 侧）
 
