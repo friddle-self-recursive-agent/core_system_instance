@@ -104,6 +104,7 @@
 - **写面关断不受影响**：触发骨架随总线装配，查询面恒开——`--allow-apply` 关断时不产生事件（`received=0`、`types` 照常表驱动值），只读部署的观测回归点。
 - **退场语义**：进程退场留痕即清（进程内状态，不持久化）；账本在 event_log，重启不丢审计。
 - **触发引擎主体 declared-deferred（v0.16 后余量）**：owner 字面量解析（v0.13）、**派发执行投影**（route/cc 目标→执行面绑定，v0.14）、**workflow 触发面接线+对账 run 投影**（真实拉起第一子段，v0.15）与 **notification 送达面接线+送达受理投影**（真实拉起第二子段，v0.16，route+cc 双路同 sink）**已收口**；余下——notification 真实通道投递（im/email/webhook 经 Provider 出站）、agent 唤醒、相位态机、刹车、冷却期、`minLevel` 过滤——本骨架不含；订阅面、全谓词口径、决策查询面、执行投影、run 投影与送达投影已表驱动（v0.16），引擎主体按 cored-bridge 既有边界另行接入。
+- **notification 真实通道投递的契约面与首实现已落（loop-16 通知增量，非 cored 面）**：workservice `connectors` 包 **OpsConnector 五方法契约**（工具调用域：`Type/Version/Ops/Invoke/Probe`——与资源域 ProviderImpl 两物；注册表 `RegisterOpsConnector/LookupOpsConnector`）+ common_connector **notify 实现**（`notify`/`send-email` op，SMTP implicit TLS 出站，secret 引用式取值 `env:QQ_SMTP_AUTH_CODE`，收件人清单在 Provider 配置面；依赖方向恒为 connector 仓 → 契约层，cored 不 import 连接器仓）。**cored 进程内自动投递仍余量**：装配侧经 connector 仓出站入口（`cmd/send-email`）代达为现状口径——送达投影（受理）与真实出站分离；进程内注入机制（注册进装配层、DeliverySink 出站挂接）为下一轮候选，落地面再改本段。
 
 ## 3. plugin↔cored 桥契约（dsh plugin 侧）
 
