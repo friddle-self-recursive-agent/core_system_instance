@@ -59,7 +59,7 @@
 
 ### 2.2 草稿缓存面（编辑与发布分离，apply.md §1/§6 rule 6）
 
-草稿缓存是**编辑的家**：代改代审的改动先落草稿——不触碰文档面（无 Revision/无事件），apply 落库那一刻才算数。落点=进程内存（重启即清，草稿可重放；持久化随 ops DB 部署决策另行 declared）。
+草稿缓存是**编辑的家**：代改代审的改动先落草稿——不触碰文档面（无 Revision/无事件），apply 落库那一刻才算数。落点=进程内存为底；**持久化随 `--ops-db` 部署决策一并注入（v0.10）**：给定 `--ops-db`（文件路径）⇒ 落稿/弃稿**写穿** ops DB draft 表（ops-log.md §2）+ 启动**恢复**（stderr 恢复行 `草稿恢复 restored=<n> skipped=<n>` 机器可取证）；缺省内存语义不变（重启即清，草稿可重放）。
 
 | 端点 | 载荷/语义 |
 |---|---|
@@ -74,6 +74,7 @@
 - **空稿/幂等**：稿与面一致 → `action=noop`（零提交零事件）且清稿；`fromDraft` 无稿 → **404**（与 noop 可区分）；`fromDraft=true` 携 `content`/`resourceVersion` → 400（约束差异来源唯一）。
 - **草稿不是文档面**：落稿/弃稿零提交零事件零 Revision；落稿面**不做 scheme 校验**（wild kind 稿可落，编辑面与存储闸门解耦——apply-draft 时被 scheme 闸门拒绝 → 404 且稿保留）；落稿须携 `fieldManager`（无主稿拒绝，溯源对齐 rule 2），apply-draft 另校验确认者自身 `fieldManager`。
 - **草稿读面无 plugin 句柄**：§3.1 持续句柄只封装对象读面（只读不变式不扩面）；草稿面经 HTTP 直查（宿主内调试/验收探针用），是否升句柄随消费端出现再议。
+- **持久化边界（v0.10）**：写穿语义=先持久化后落内存（持久化失败=落稿失败、内存不动——「可见即已持久」，重启恢复不丢稿不多稿）；恢复=整表替换（确定性）；恢复保留 `createdAt/updatedAt` 与 `baseResourceVersion`——重启期间文档面前移则 fromDraft 走既有 **409 保留草稿**语义（乐观锁期望值不因恢复而改写，后写者重读后重整）；草稿表不参与 apply_log 对账不变量（缓存非账，ops-log.md §2）。
 
 ## 3. plugin↔cored 桥契约（dsh plugin 侧）
 

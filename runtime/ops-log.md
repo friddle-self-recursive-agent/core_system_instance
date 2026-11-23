@@ -22,9 +22,15 @@ event_log    (ts, event_id, type, source, involved, dedup_key, severity, routed_
 control_log  (ts, root_agent, primitive, target_agent, task_id, result)   -- 直控审计
 approval_log (ts, approval_id, permission_rule, judged_by, decision)   -- v0.9：权限系统判定（A44）
 escalate_log (ts, from_workflow, reason, chain_depth)
+draft        (kind, scope, name, content, field_manager, reason_ref, base_rv, created_at, updated_at)
+             -- PRIMARY KEY (kind, scope, name)；v0.10：草稿缓存持久化面（apply.md §1 编辑与
+             -- 发布分离）——随 --ops-db 持久化部署决策一并注入：给定 --ops-db=落稿/弃稿写穿
+             -- 本表 + cored 启动恢复；缺省内存语义不变（重启即清，草稿可重放）
 ```
 
 > 预算/成本流水（budget_log 类）**不在 ops DB v1 内**：budget 是 metrics 关注的东西，不是核心循环内容——暂不做，日后随 metrics 默认 workflow 落。
+
+> **draft 表的两点边界**：① 它不是操作流水，是「待发布稿」缓存（apply.md §1：草稿不是文档面——无 Revision、零提交零事件，git 权威不受碰），落 DB 是部署决策：DB 可丢弃可重建 ⇒ 丢草稿=丢待确认编辑（可重放），不违反「DB 不管文档内容」（草稿尚不是文档面）。② 它**不参与 §3 对账不变量**（对账对象=apply_log(ok) ≙ DocApplied；草稿是缓存非账），恢复语义=整表替换内存（确定性：恢复后内存态=表现态；单行非法跳过并计数——草稿非权威，坏行不拖垮进程）。
 
 ## 3. 双写与对账
 
