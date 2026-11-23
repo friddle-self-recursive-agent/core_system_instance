@@ -21,12 +21,14 @@
 |---|---|
 | [runtime/execution-model.md](runtime/execution-model.md) | 四层执行：用户意图→Agent→Scheme→代码；基础调度可配置 |
 | [runtime/dsh-plugin.md](runtime/dsh-plugin.md) | dsh 基础 agent、root 直控通道、Plugin 首批四件 |
-| [runtime/console-ui.md](runtime/console-ui.md) | 总控 Plugin 界面：资源视角第一层 / 信息流视角第二层 |
+| [runtime/console-ui.md](runtime/console-ui.md) | 总控界面：资源视角第一层 / 信息流视角第二层 / 服务关注区 + v2 Web 界面定稿（proto 交互契约） |
+| [runtime/console-adoption.md](runtime/console-adoption.md) | console v2 落地盘点：线上实测现状 / 环境阻塞（trusted-host·代理超时·token 轮换）/ 逐页功能与 UI 建议 / E0–E7 落地顺序 |
 | [runtime/agent-session.md](runtime/agent-session.md) | Agent Plan/Session 记录制（PlanDoc/SessionLog）+ AUTOLEVEL 默认（R2） |
 | [runtime/ops-log.md](runtime/ops-log.md) | git 管文档 + DB 管 ops 历史操作日志（双轨与对账） |
 | [runtime/install-service.md](runtime/install-service.md) | install 流程：GitHub org 找 template→WorkServiceTemplate→询问→安装 |
 | [runtime/agent-pool-machine.md](runtime/agent-pool-machine.md) | agent_pool 机器与双 dsh profile 分工（core-system 自举 / kube-inner 接入） |
 | [runtime/event-bus.md](runtime/event-bus.md) | 内置 Event 分发扩展：Kafka 总线（通知用，非真相源）+ 飞书通知到账号（A59） |
+| [runtime/cross-agent.md](runtime/cross-agent.md) | dsh 跨 agent 调用（ctx.agents / typert 网关）+ 跨 Agent 协议 v0.1（ConnectorOps agent-comm：最小信封+四原语） |
 
 ## 其他
 
