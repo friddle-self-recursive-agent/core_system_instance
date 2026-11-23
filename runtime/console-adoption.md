@@ -176,6 +176,25 @@
 - L42-06 零 console error（headless 全程监听；宿主壳+插件载荷均计；dsh 既有告警=基线先采不计）。
 - L42-07 回归：781 基线+E0…E5 专项全绿（零迁移）+ npm test（plugin 仓，comm 落账/读路由测试面新增）全绿 + go build/test/lint（零 Go 改动轮=全仓同代确认）全绿。
 
+### 1.14 E7 实现拓扑与细化验收（2026-11-25，E7 轮——console 全收口）
+
+**数据面裁决（读面复用优先，一处 Go 小增量）**：四页场景面全部走既有读面——events=归档窗投影（`/v1/events`）client 过滤 involved scope（involved 中段=scope，`systems/<name>` 前缀形兼容）；metrics=`/v1/metrics` 数据面投影（**关断口径=空投影诚实空态**——loop-43 实测 `{"metrics":[],"total":0}`，不冒充曲线）+ `/v1/metrics/query` 即席查询（404=无投影结果如实标注）；docs=`/v1/objects` scope 枚举（文档与资源同规则——inScopeObjects 同一匹配）+ 对象正文 tag 现读；permissions=Role/Group/Agent 文档面（objects 枚举 + docContent 现读——docsRoot 零 Role/Group 对象=诚实空态；Agent 挂载=声明正文 `spec.connectorOps` 现读，溯源=挂载声明行全可点）。唯一 Go 增量=`/v1/events` 增 `until` 游标（RFC3339，严格早于——向后分页读锚）；limit≤500 收敛口径不变（防拖库）。
+
+**tag 过滤口径（一等过滤器）**：tags=对象正文 `spec.metadata.tags`（scheme.yaml conventions.tags 检索元数据声明；fallback `metadata.tags`）——客户端现读解析（纯函数 `tagsOf`；hydrate 注水，渲染层缓存 keyed 对象键+rv）。chips=当前面 base 集合实读 tag 并集；docsRoot 现状零 tag 声明=chips 空集+空态注记（不冒充）；探针激活=经 `POST /core-console/apply`（subject=admin，console 唯一写入口）真写一枚 tag——写路径即 Apply 红线不破。全局 `#/docs` 与单系统 `#/s/:name/docs` 同一 paintDocsScreen 同款过滤器（tag chips × kind × 草稿 × 搜索）。
+
+**千级虚拟滚动（验收线「千级事件滚动流畅」）**：vlist=常量行高虚拟列表（DOM 只留视口±6 行缓冲）组件恒定不变；E7 增量=①事件窗 limit=100→500（收敛口径单窗）②`until` 游标滚动加载（近底阈值→fetch 上一页→按 eventId 去重合并→repaint；页行数<limit=已到底 exhausted 如实标注）③**合成压测窗=客户端合成展示层**（`synEvents` 确定性合成行：`syn-` 前缀 id+「合成」tag+不可点——不入归档、不入聚合面板计数），真实归档不足千级时滚动流畅验收的合规载荷（KI-001 探针无副作用：**审计账保真优先，不注入放大归档**——loop-43 裁决；POST /v1/events 注入路径保留为按需选项不做缺省）。合成窗入口=事件屏显式「压测窗」toggle（人点为准），计数注「合成展示层不入归档」。
+
+**收口清扫（mock 渲染面归零）**：总览屏（`#/overview`）真数据换装（ServiceDesc 卡=读面枚举+相位投影、进行中运行=runs 面投影、最近事件=归档窗）；命令面板系统/workflow/文档行=读面枚举（M 静态锚摘除）；manualTick/newGoalDraft 假动作换诚实提示（写路径=Apply/新建文档=落稿经 Apply——不画假回执不推 mock 库）；设置页「全部本地 mock」声明摘除。console-data.js mock 数据文件保留（proto 内嵌起点代码；渲染引用归零后=死数据，摘除裁决→下轮标准对账）。
+
+**E7 细化验收线（§4 E7 行展开；探针编号 L43-\*）**：
+- L43-01 场景事件面：`#/s/:name/events` 真归档行（真 DocApplied/Escalate 行在册 ∧ 零 mock 事件名）∧ 过滤条=全局同款（type chips/level/lane/range/q）∧ involved scope 过滤（系统外行不出现）∧ 行点击→`#/event/:id`。
+- L43-02 场景指标面：`/v1/metrics` 空投影=诚实空态在册（「数据面未装配」字样 ∧ 零 mock 曲线/零 mock 指标名）∧ MetricThreshold 归档行区（系统过滤，行可点）。
+- L43-03 场景文档面：scope 对象枚举真名 ∧ tag chips=实读并集（apply 真写 tag 激活后 chip 在册 ∧ 点选过滤命中该对象）∧ kind/草稿/搜索组合 ∧ 行点击→编辑器。
+- L43-04 场景权限面：矩阵行=Agent 文档面真名（core-headless）∧ 列=ConnectorOps/Provider/Ref 真名 ∧ 命中格=挂载声明现读（agent-comm × core-headless=✓，溯源=spec.connectorOps 挂载行可点）∧ Role/Group 零对象=诚实空态注记 ∧ 标识符全可点。
+- L43-05 tag 全局同款：`#/docs` 全局文档面同一 paintDocsScreen（真对象行+tag chips/kind/草稿/搜索四件套）。
+- L43-06 千级虚拟滚动：合成压测窗 ≥1000 行渲染 ∧ DOM `.vrow` 行数有界（≤80——视口缓冲）∧ canvas 高度=行数×行高 ∧ 全程滚动扫掠到底完成 ∧ 零 console error；`until` 游标=Go 测试面（分页无重叠/坏参数 400）+ 活体相邻页 fetch 零重复 eventId。
+- L43-07 回归：E0…E6 专项全绿 + npm test 全绿 + go build/test/lint 全绿（workservice until 增量在册）。
+
 console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互模式与信息结构，不锁组件 API）：
 
 | dsh 模块 | console v2 用法 |
