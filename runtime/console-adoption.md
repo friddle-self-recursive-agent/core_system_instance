@@ -87,6 +87,22 @@
 - L38-05 屏活体（headless）：Workflows 列表真数据（真实对象名/对象行）∧ `#/wf/:name` 六 tab 真数据 ∧ 运行抽屉 `#/wf/:name/r/:n` 相位时间线∧涉及文档可点 ∧ 零 console error。
 - L38-06 回归：781 基线+E0/E1/E2 专项全绿（零迁移）+ npm test（plugin 仓）全绿。
 
+### 1.10 E4 实现拓扑与细化验收（2026-11-24，E4 轮）
+
+**数据面（cored v0.38 console 读面第三段）**：`GET /v1/history/{kind}/{name}?scope=<scope>` 对象应用史投影——数据源=ops DB `apply_log`（ops-log.md §2：一次 Apply 判定的流水，repository 双写钩子落 ok/noop/conflict 行+引擎 denied 行；**历史 tab 的权威=审计账不是 git 考古**——git 权威在正文，rev 流水在账）；`obj=kind/scope/name` 过滤+rv 降序+limit 收敛（≤500 防拖库同口径）；`ApplyLogFace` 可变口面（`QueryApplies` 新方法不占冻结 Store 签名，与 EventLogFace.GroupEvents 同款模式）+face 缺席=503 防御面（旧代兜底 405=代际判别器恒成立）；行载荷 `ts/rv/result/fieldManager/subject/reasonRef`（denied 行 subject 必带=判定主体可追溯）。装配层随 ops DB 恒注入（cmd/cored 与 WithEventLog 同点位）。
+
+**写面（E4 草稿通道，浏览器→cored 的第二条宿主路由）**：宿主插件新增 `POST /core-console/drafts`（落稿 upsert）+ `DELETE /core-console/drafts/{kind}/{name}?scope=`（弃稿）——prefix 路由内按方法+路径分立（exact 段=POST，子路径=DELETE；其余=405 allow: POST,DELETE），connection 栅栏 fail-closed 与 apply 路由同款（handler 内再锁一道：reject 缺席=拒全部）；体不可解析=400；cored 未就绪=503；上游不可达=502。**fieldManager=客户端溯源串**（与 E3 apply 的 `console:workflow-toggle` 同款——溯源非授权：授权主体仍由宿主注入 apply subject，草稿面不触文档面零授权面）；客户端缺主=宿主补缺省 `console:editor`（无主稿 cored 侧 400 拒绝，宿主兜底保 UX）。dry-run 三检查不经新路由——`POST /core-console/apply` 既有通路携 `fromDraft:true, dryRun:true`（引擎 admit ①scheme②权限 零副作用预检+dry-run 回执 `rv`=文档面现值——**乐观锁检查=客户端比对**：回执 rv ≠ 草稿 baseResourceVersion → 弹窗判 ✗（真 apply 将 409 且稿保留））。
+
+**E4 屏面换装范围**：对象 viewer 全线升编辑器（`#/doc/:kind/:scope/:name` 直链+`#/doc/:name` 名字解析+ws/provider/ref/role/agent/connector 详情路由共用同屏——文档与资源同规则）：中央编辑器（textarea，编辑=debounced 落稿不触文档面不发事件）+右栏协作面板四 tab（**LLM 提案**=提案队列：数据源=草稿缓存中 fieldManager 非 `console:` 前缀的稿（agent 经草稿通道落的提案，会话页提案卡深链至此=E5 接线余量如实标注）——diff 卡 vs 文档面现值，每张 [加入草稿]（采纳=工作副本更新）/ [丢弃]（DELETE 弃稿）；proto 的 LLM 对话输入摘除=真实生成面（agent 会话）接线前不冒充）；**草稿**（默认）=累积 diff（手动+已采纳提案同通道）+条目留痕（来源/摘要/时刻）+完整 diff+吸底 Apply dock+弃稿；**历史**=apply_log 投影行（rv/结果/fieldManager/subject/reasonRef；点行 diff 上一版=rev-content 面余量如实标注）；**元数据**=对象身份键+rev+草稿态+写路径说明。确认弹窗=完整 diff+dry-run 三项检查（scheme 校验/权限准入/乐观锁）逐行 ✓/✗ 机械呈现，三 ✓ 才解锁确认按钮；空草稿=dock 禁用（服务端 noop/无稿 404 双保险）。
+
+**E4 细化验收线（§4 E4 行展开；探针编号 L39-\*）**：
+- L39-01 历史面代际：新代 `GET /v1/history/{kind}/{name}?scope=` 200 ∧ 覆写前旧代 405（carrier-pre 预采快照）——双状态码判别。
+- L39-02 草稿写面通路：经 dsh web（浏览器头）`POST /core-console/drafts` 落稿 200 ∧ `GET /core-console/api/v1/drafts` 在册且与 cored 直查双读一致（同键同值）∧ `DELETE` 弃稿 → 404 后续（幂等清场）；`GET /core-console/drafts` 405（写路由方法分立）。
+- L39-03 dry-run 三检查：有稿 `POST /core-console/apply {fromDraft:true,dryRun:true}` → 200 `action=dry-run` 且 `rv`=文档面现值；野 kind → 404（scheme ✗）；受限主体直查 cored → 403（权限 ✗——宿主注入的 console-operator 全权，403 判据走 cored 直查面）；陈旧 baseRV → 回执 rv ≠ baseRV（乐观锁 ✗ 判据=客户端比对，单测覆盖）。
+- L39-04 全链路闭环活体（headless）：LLM 提案落稿（fieldManager=`agent:…` 非 console 前缀）→ 编辑器屏 LLM tab 提案卡在册（diff 卡）→ [加入草稿] → dock N 处变更 → 点 Apply → 确认弹窗三检查 ✓ → 确认 → Revision+1 ∧ DocApplied 归档在册 ∧ 草稿清空（GET /v1/drafts 无此稿）∧ UI rev 更新 ∧ 零 console error。
+- L39-05 空草稿纪律：无 diff → dock 禁用（活体）∧ 直发 `POST /core-console/apply {fromDraft:true}` 无稿 → 404（与 noop 可区分，服务端兜底）。
+- L39-06 回归：781 基线+E0/E1/E2/E3 专项全绿（零迁移）+ npm test（plugin 仓）全绿。
+
 ## 2. dsh 客户端可复用模块清单（实测自 bundle roster）
 
 console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互模式与信息结构，不锁组件 API）：
@@ -160,7 +176,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | E1 | plugin 注册 slot 壳：八入口导航 + hash 路由骨架 + 连接态灯【实现拓扑与细化验收=§1.6；主案验证通过=顶层导航扩展位（panellist+main 成对注册），回退案未动用】 | 八入口可点、刷新可恢复路由（细化=L36-01…07） |
 | E2 | Welcome 大屏 + 系统树（cored 读面：scheme/objects）【已完成 2026-11-23：读面通路=`/core-console/api` 宿主只读代理+cored `GET /v1/events`（§1.8）；五屏真数据=Welcome/系统树/系统详情/对象 viewer/事件详情，其余屏 proto mock 待各自 E 轮；探针=acceptance/loop-37.md】 | 健康度/树真实数据；标识符全可点（细化=L37-01…07） |
 | E3 | Workflow 运行管理（列表+详情+运行抽屉）【已完成 2026-11-23：数据面=cored v0.37 `GET /v1/workflows` 聚合投影+run involved 键（§1.9）；写面=宿主 `POST /core-console/apply`（主体宿主注入，唯一写入口零旁路）；启停=override 语义闭环（红线 b）；探针=acceptance/loop-38.md】 | 运行次数/相位/涉及文档可见，启停=Apply 闭环（细化=L38-01…06） |
-| E4 | 文档编辑器（草稿→Apply 全流程，dry-run 三检查） | LLM 提案→人点 Apply→Revision+1 全链路 |
+| E4 | 文档编辑器（草稿→Apply 全流程，dry-run 三检查）【实现拓扑与细化验收=§1.10】 | LLM 提案→人点 Apply→Revision+1 全链路（细化=L39-01…06） |
 | E5 | Agent 会话 + 运行器四选 + 终端 tab（dsh 内置 PTY 为主，gotty 跨机兜底；provider 映射=内嵌 dsh/claude-code 现成 subagent provider，opencode/gotty 自写 SubagentProvider——cross-agent.md §5.7） | 能对 Service agent 发消息并收到 ConnectorOps 卡 |
 | E6 | 事件流/审批/连接页 + 详情页矩阵互跳 | event→run→workflow→doc 链路走通 |
 | E7 | 场景面四页 + tag 过滤 + 虚拟滚动大列表 | 千级事件滚动流畅 |
