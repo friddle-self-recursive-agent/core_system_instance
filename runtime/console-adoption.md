@@ -100,7 +100,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 1. **不改文档面语义**：console 是观测/操作面，一切写操作（启停/编辑/批准/重跑）=Apply 走既有写路径；发现设计不合理→改文档先于改代码（acceptance 纪律）。
 2. **渲染数据无双源**：全部来自 cored 读面+ops DB；console 不自建持久状态。
 3. **R-PUB**：真实域名/IP/token/部署路径不入仓，用占位符；运行时验收产物落 acceptance/（gitignore）。
-4. **交互契约以 proto 为准**：`dsh-core-agent/console-proto/`（Mac 侧，四文件，file:// 直开；机器侧副本 `/home/friddle/console-proto/` 由巡检 rsync 同步）是交互与信息结构对照物；实现允许复用 dsh 模块替换自绘组件，但屏的路由、区块、验收线不变。
+4. **交互契约以 proto 为准**：`dsh-core-agent/console-proto/`（Mac 侧，四文件，file:// 直开；机器侧副本 `<本机proto副本目录>` 由巡检 rsync 同步，实际路径记台账）是交互与信息结构对照物；实现允许复用 dsh 模块替换自绘组件，但屏的路由、区块、验收线不变。
 5. **Connector/ConnectorOps 代码归属（R-ENG-3）**：gotty/opencode/claude-code/内嵌 dsh 四种运行器驱动与 agent-comm 实现都是 connector 代码——通用能力默认入 `common_connector`；确需独立仓时用 `gh` 建（org 内私有仓）并先在 rule.md R-ENG-3 注册再使用。
 5. **硬性验收**（沿 console-ui.md 3.5）：界面上出现的任何资源标识符必须可点；详情页任意互跳；零控制台 error。
 
