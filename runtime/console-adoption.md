@@ -28,6 +28,7 @@
 | rotated | 红+指引 | 重试收到 401/鉴权失效（token 随自替换重启轮换，§1.3）——连续 3 次 401 即判定，**不再无限重试**（旧 token 重试必败） | 指引条「入口已轮换 → 重走固定入口」：点击/自动跳转固定钥匙门入口（浏览器书签恒定），门 302 到当下 fresh token 即恢复；这是唯一需要人（或浏览器自动跟随重定向）动作的态 |
 
 - 判定优先级：rotated ＞ reconnecting ＞ connected；态切换不整页刷新，恢复后走 baseline+increment 重放（重连=新 baseline 原子替换，对齐 console-ui 数据通路规则）。
+- **rotated 判定边界=登录面（index）**：实测 dsh 0.2.2-rc.5 中 `/plugins/events` 通道（client-hmr bundle graph）无独立鉴权（任意/无 token 皆 200，传输面内部通道，鉴权边界在前端代理+固定钥匙门）；401 判据只能在登录面（index 授权门）上做——连接态灯实现（E1）以 index 重试响应码为 rotated 依据，不得以 events 通道响应为依据。
 - 固定钥匙门消化 rotated 的大部分场景（用户从固定入口进入，token 轮换后重走固定入口即愈）；rotated 态指引的落点就是该固定入口，console 不自存 token 也不自存 key（R-PUB：key 只存部署侧 env）。
 - 心跳注释帧（§1.2）参与「帧新鲜」判定——空闲期通道也有 20s 粒度的活性证据，connected 态不会因无业务帧而误报琥珀。
 
