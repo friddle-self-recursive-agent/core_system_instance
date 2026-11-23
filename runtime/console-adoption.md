@@ -155,6 +155,27 @@
 
 
 
+### 1.13 E6 实现拓扑与细化验收（2026-11-25，E6 轮）
+
+**读面复用裁决（零 Go 改动，复用优先）**：E6 全部数据源=既有读面（`/v1/events`、`/v1/drafts`、`/v1/objects`、`/v1/workflows/runs`、`/v1/workflows`、`/v1/triggers`——E2/E3/E4 通路）+ **一个插件宿主新读路由** `GET /core-console/comm`（plugin 侧非 cored——agent-comm 运行时落账面的浏览器读出口）。run→doc 反查链=`/v1/workflows/runs` 载荷 `eventId`/`involved` 键（v0.37 已有）客户端过滤，不扩 cored；事件→路由→workflow 锚=既有 `/v1/triggers/resolve` 查询面（决策投影恒开）。**载体同代口径成立：cored 零重建**（carrier-pre 快照照采，判别器=新端点旧代 404）。
+
+**事件泳道映射（三泳道，console-ui.md 屏幕 9 机制化）**：泳道=类型族映射纯函数 `eventLaneOf(type)`——**状态变迁 lane={DocApplied}**（对象 rv 前进=状态变迁的机械落点）；**数据事件 lane={ExternalChanged, MetricThreshold, DriftFixed, ReconcileTick}**（数据面/巡检驱动源族）；**事件流 lane=其余**（ApprovalNeeded/Escalate/HeartbeatLost/InstallRequested/TemplateFound/SessionClosed/未知类型缺省——缺省归事件流不丢行）。右聚合面板=归档窗内实数（渲染数据无双源）：审批积压=归档 ApprovalNeeded 行数；死信率=`routedTo` 含 `dead-letter` 行占比；类型分布=top5 计数；**workflow 成功率=declared 余量 n/a**（run 终态事件未落归档，v0.37 口径不冒充）；**token/预算消耗=无数据面 n/a**（mock spark 摘除）。事件窗=`/v1/events?limit=100`（E7 虚拟滚动收口千级——declared 余量如实标注）。
+
+**审批（屏幕 10，红线 1：批准/驳回=Apply）**：待审区=**草稿缓存**（`GET /v1/drafts` 全量——草稿=代改代审的家，apply.md §6；草稿在册即待审项，无论主是人是 agent）∪ **ApprovalNeeded 归档行**（`GET /v1/events?type=`）；**diff 预览=稿 content vs 文档面现值**（`GET /v1/drafts/{kind}/{name}` + `GET /v1/objects/{kind}/{name}` 渲染时现读，不缓存）；**批准=既有 Apply 全流程复用**（dry-run 三检查→人确认→fromDraft 落库——E4 通路零旁路；approval_log 独立账=declared 余量，留痕=apply_log 行 fieldManager=`console:approve` + DocApplied 归档）；**驳回=`DELETE /core-console/drafts/{kind}/{name}`**（弃稿零文档面动作——驳回≠反落库，不发明反向写路径）；**批量=同 kind 多稿顺序 Apply**（逐条 dry-run→apply 独立判别结果，单条失败不中断后续；高危单条必审判据未声明=批量限同 kind 草稿组，机制如实标注）。ApprovalNeeded 无稿行=只读待审卡（批准面缺席不冒充——深链 involved 对象编辑器，批准动作缺席即 UI 不出现按钮）。
+
+**连接页（屏幕 8）**：三组=cored objects 跨 scope 枚举（`/v1/objects/{WorkService,ConnectorOps,Provider}`——E2 通路复用）；ConnectorOps 详情=**编辑器屏第五 tab「运行面」**（ConnectorOps kind 专属，缺省 tab=运行面）：agent-comm：op 面（四原语卡+实时计数）+拓扑（节点=文档面 Agent×connectorOps mount 命中 ∪ comm 落账 from/to refs，边=comm 落账行——SVG 静态投影全可点）+消息日志（comm 落账流水：ts/from→to/op/payload 摘要/token 打码/状态/sessionId 深链 `#/session/:id`）+envelope 表（v0.1 字段静态说明=协议文档非数据）；非 agent-comm ConnectorOps：op 面（spec.ops 现读）+挂载方（Agent docContent 反查）+相关事件（归档 involved 过滤）+编辑器深链。**comm 落账面（E6 新）**：`executeAgentCommOp` 每次调用落一条流水（ts/from/to/op/ok/error/envelopeId/sessionId/hasToken——**token 值永不落账**，只记 hasToken 布尔），进程内环形缓冲 200 条 FIFO；回执结果全量在册（accepted+error 两路——§5.2 dispatch 回执与 error reply 落账面合一，v0.1 SessionLog 业务回复仍不回传）。**红线 2 边界澄清：comm 落账=agent-comm 协议运行时自身记账（mailbox 同族扩展），非 console UI 自建持久状态**——console 只渲染；进程内不跨重启。暴露=`GET /core-console/comm`（exact，GET only；connection 栅栏 fail-closed 与 apply 路由同款——handler 内再锁一道；载荷 `{ops, refs, journal, mailboxPending}`）。旧插件代=该路由缺席（dsh 兜底 404）=代际判别器（carrier-pre 快照）。
+
+**详情页矩阵（硬性验收 §5 规则 6）**：event 详情=E6 增强——involved 对象链（E2 既有）+**run 反查链**（`/v1/workflows/runs` eventId 命中→`#/wf/:name/r/:n`）+**workflow 锚链**（`/v1/triggers/resolve` route 投影→`wfAnchorOfRoute`→`#/wf/:name`）——**event→run→workflow→doc 链路走通=E6 验收主线**；ws/provider/ref/role 详情=编辑器屏（E4 文档与资源同规则既有路由零改动）+标识符 chips（refChips）可点；ConnectorOps 详情=编辑器屏+运行面 tab（本节）；`#/connectors` 三组卡全可点落详情路由——矩阵互跳网闭合。
+
+**E6 细化验收线（§4 E6 行展开；探针编号 L42-\*）**：
+- L42-01 事件流屏实数：headless 活体——真实归档行渲染（真 DocApplied 行在册 ∧ 零 mock 事件名）∧ 泳道标注=lane 映射（DocApplied 行=状态变迁 lane）∧ 聚合面板审批积压数=API 双读一致 ∧ 成功率/token 字样=n/a 在册（不冒充）∧ 行点击→`#/event/:id`。
+- L42-02 审批闭环活体（headless）：探针落稿（fieldManager=`agent:probe-loop42`，对象=ConnectorOps/global/agent-comm，差异=注释行）→ 审批屏待审卡在册（diff 预览=稿 vs 面真实差异）→ 批准（dry-run 三检查 ✓→确认）→ 200 rv+1 ∧ DocApplied 归档在册 ∧ 草稿清空（GET /v1/drafts 无此稿）；驳回路径=第二稿 DELETE → 后续 GET 404；ApprovalNeeded 无稿只读行（注入事件）在册且无批准按钮。
+- L42-03 连接页实数：三组=cored objects 枚举真名（agent-comm/notify-send-email/email-notify 等在册）∧ agent-comm 运行面 tab=四原语卡+envelope 表在册 ∧ 消息日志=comm 落账真行（探针 dispatch 失败回执落账）∧ token 列打码（值不出现）。
+- L42-04 comm 读面代际：新代 `GET /core-console/comm` 200 ∧ 载荷含 ops/refs/journal/mailboxPending 键 ∧ ok=false 失败落账行在册 ∧ 双读一致（幂等快照）∧ 旧代 404（carrier-pre 快照）。
+- L42-05 详情页矩阵互跳链（headless 活体）：`#/event/:id`（DocApplied 归档行）→ involved 对象 chip 可点 → 编辑器屏；run 反查（批准 Apply 产的 DocApplied → `/v1/workflows/runs` eventId 命中 → 事件详情 run 链在册可点 → `#/wf/:name/r/:n` 渲染）→ workflow 锚链 → `#/wf/:name`；ws/provider/role 路由直入=编辑器屏渲染（矩阵行落点）。
+- L42-06 零 console error（headless 全程监听；宿主壳+插件载荷均计；dsh 既有告警=基线先采不计）。
+- L42-07 回归：781 基线+E0…E5 专项全绿（零迁移）+ npm test（plugin 仓，comm 落账/读路由测试面新增）全绿 + go build/test/lint（零 Go 改动轮=全仓同代确认）全绿。
+
 console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互模式与信息结构，不锁组件 API）：
 
 | dsh 模块 | console v2 用法 |
