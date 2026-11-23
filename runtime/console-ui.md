@@ -260,7 +260,7 @@ Apply 流（确认弹窗）：
 
 布局：左 session 列表 + 中线程 + 右权限面。
 
-- 新建会话**运行器四选**：内嵌 dsh（默认）/ opencode cli / claude-code / gotty 终端（选 gotty 会话页带终端 tab）。选型的权威记录在 ConnectorOps 挂载 yaml（下节），页面仅是选择入口。
+- 新建会话**运行器四选**：内嵌 dsh（默认）/ opencode cli / claude-code / 终端（选终端会话页带终端 tab）。选型的权威记录在 ConnectorOps 挂载 yaml（下节），页面仅是选择入口。**落地映射（dsh 0.2.2-rc.5 实测，证据见 cross-agent.md §5.7）**：内嵌 dsh=`subagent-dsh-sdk` provider（现成）；claude-code=`subagent-claude-code` provider（现成）；opencode/gotty=自写 SubagentProvider（`registerProvider`）跑 TUI，承载面用 dsh 内置 web 终端（`remote.terminal.*`，真 PTY、按 SessionId 寻址、沙箱随 session、与终端同生命周期）；gotty 仅用于跨机 ServiceInstance 的独立终端链接（piko 暴露），不再作为 console 默认终端面。
 - 线程内三类卡片：
 
 | 卡片 | 内容 | 交互 |
@@ -322,7 +322,7 @@ Apply 流（确认弹窗）：
 
 **网页终端不是特殊通道，是一次普通 ConnectorOps 挂载；runner 选型记录在挂载 yaml，会话页只是入口。**
 
-- ConnectorOps/Connector 默认支持 gotty 网页终端形态；会话运行器可选 opencode cli / claude-code / 内嵌另一个 dsh——与"子 agent 运行时不限于 dsh"（A60）同一判断，运行器=子 agent 运行时选型在会话场景的投影。
+- ConnectorOps/Connector 支持四种运行器：内嵌另一个 dsh / opencode cli / claude-code / 终端——与"子 agent 运行时不限于 dsh"（A60）同一判断，运行器=子 agent 运行时选型在会话场景的投影。**终端承载面（0.2.2-rc.5 实测裁决，cross-agent.md §5.7#6）：console 默认终端=dsh 内置 PTY（remote.terminal.*，与会话同生命周期同鉴权）；gotty 只作跨机 ServiceInstance 或需独立分享终端时的暴露通道（piko），不再作默认。**
 
 ```yaml
 apiVersion: core/v1

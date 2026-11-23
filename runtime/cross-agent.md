@@ -138,3 +138,17 @@ spec:
 | reply 无相关性字段时错队 | ⚠️ 低 | 多会话并发时 error 归错任务 | v0.1 靠 SessionLog 顺序归档；v0.2 threadId/correlationId 偿还 |
 
 **结论：可行。v0.1 用"最小信封+四原语+一个挂载面"把跨 agent 通道立起来，全部简化都是列在账上的有意负债，按分层计划偿还——先跑通，再收紧。**
+
+### 5.7 dsh 映射决定（0.2.2-rc.5 实测，2026-11-23）
+
+> 研究源：宿主包 docs（subagent/terminal/typert/web-client）、node_modules `@deepseek-ai/dsh-agent` 等全套 .d.ts（0.1.5-rc.2）、npm 包 dsh-subagent/-claude-code/-dsh-sdk/agent-presets/api-session-controller/api-terminal-controller/api-remote-access/client-ui-agent-team（0.0.1-0.2.2 rc/alpha）。事实表与决策过程略，此处只落终态。
+
+| # | 决定 | 依据 |
+|---|---|---|
+| 1 | **Agent 身份=SessionId**（dsh 原生不变量）。ServiceInstance.agentRefs 存 dsh sessionId；`agent/<name>@<scope>` 是文档面地址，由 console 解析成 (host, sessionId) | typert wire 身份=SessionId（TypertLookupMap.agent=Lookup<Agent,SessionId>）；无名称 URI 语法 |
+| 2 | **「与 Service Agent 对话」=** agentRefs 有 sessionId → `session.prompt(sessionId, requestId, queue\|steer)`（离线自动 cold-resume）；无 → `session.create({cwd: 该 Service 工作目录, agentPreset: <service-preset>})` 后回填 sessionId。浏览器不直接 spawn 子 agent（session.create 无 parent 字段）；需要真父子拓扑时再加控制面插件自定义 @Remote `services.spawnAgent(instanceId)`（内部 ctx.agents.create） | session-controller 生成 remote 面；SubagentRuntime 的 `subagents.prompt` 是 rc.5 补上的浏览器投递通道 |
+| 3 | **Service agent 身份载体=preset 基座+setup 注入实例态**：preset（agent.cordis.yml 文件，随部署分发）承载该类 Service 的静态工具面；实例级文档面/权限由控制面插件在 `ctx.agents.create({setup})` 里 `mount(preset)` 后注入。preset 创建时锁定（agent-preset-locked），实例态变更=新会话 | preset 无插件内联注册 API（仅目录发现）；setup 是唯一合法挂载点；dsh-subagent 权威注释要求工具集可从日志重建 |
+| 4 | **四原语 ↔ dsh 原语对照**：dispatch↔`followup`（或 subagents.prompt delivery:queue）；query↔`inject`/只读查询；inbox↔`subagents.prompt` delivery 语义+SessionLog 投影；interrupt↔`cancel`/`interruptByUser`（user authority 恰好对应 trusted-host 通道）。信封增可选 `dsid`（目标 dsh SessionId）字段，v0.1 兼容不加版本 | 一一对应且语义无损 |
+| 5 | **token 不落消息通道映射**：dsh 授权=Peer Principal + remote-access 每资源角色 + 连接级凭证（trusted-host/BasicAuth/piko token）。信封内 token 仅作我方端到端校验保留；通道安全借 dsh 既有层 | remote-access principal kind→policy→role→resource(session id)→action |
+| 6 | **终端面=dsh 内置优先**：`remote.terminal.*`（真 PTY，每 session ≤8 路，scrollback 1000，进程活过浏览器 reload 不活过 owner disposal，TERM=xterm-256color）承载 opencode/claude-code 等 TUI；**gotty 降级为跨机场景**（ServiceInstance 在别的机器、或终端要独立分享给无 console 权限者时经 piko 暴露），不再作 console 默认终端 | dsh terminal 与会话同生命周期同鉴权，单机全面占优；gotty 价值在独立鉴权/跨机暴露 |
+| 7 | **agent-team 是纯展示**（共享任务板+成员导航）：console 拓扑图数据源=subagentCatalog projection + listDescendants（pre-order，行带 parentId/depth/path），我方文档面拓扑与之并存（§3.7 裁决） | client-ui-agent-team README；无 lifecycle 控制面 |

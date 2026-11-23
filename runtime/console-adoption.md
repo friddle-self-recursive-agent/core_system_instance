@@ -91,7 +91,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | E2 | Welcome 大屏 + 系统树（cored 读面：scheme/objects） | 健康度/树真实数据；标识符全可点 |
 | E3 | Workflow 运行管理（列表+详情+运行抽屉） | 运行次数/相位/涉及文档可见，启停=Apply 闭环 |
 | E4 | 文档编辑器（草稿→Apply 全流程，dry-run 三检查） | LLM 提案→人点 Apply→Revision+1 全链路 |
-| E5 | Agent 会话 + 运行器四选 + gotty 终端 tab | 能对 Service agent 发消息并收到 ConnectorOps 卡 |
+| E5 | Agent 会话 + 运行器四选 + 终端 tab（dsh 内置 PTY 为主，gotty 跨机兜底；provider 映射=内嵌 dsh/claude-code 现成 subagent provider，opencode/gotty 自写 SubagentProvider——cross-agent.md §5.7） | 能对 Service agent 发消息并收到 ConnectorOps 卡 |
 | E6 | 事件流/审批/连接页 + 详情页矩阵互跳 | event→run→workflow→doc 链路走通 |
 | E7 | 场景面四页 + tag 过滤 + 虚拟滚动大列表 | 千级事件滚动流畅 |
 
