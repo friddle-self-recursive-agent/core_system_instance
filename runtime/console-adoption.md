@@ -165,7 +165,7 @@
 
 **连接页（屏幕 8）**：三组=cored objects 跨 scope 枚举（`/v1/objects/{WorkService,ConnectorOps,Provider}`——E2 通路复用）；ConnectorOps 详情=**编辑器屏第五 tab「运行面」**（ConnectorOps kind 专属，缺省 tab=运行面）：agent-comm：op 面（四原语卡+实时计数）+拓扑（节点=文档面 Agent×connectorOps mount 命中 ∪ comm 落账 from/to refs，边=comm 落账行——SVG 静态投影全可点）+消息日志（comm 落账流水：ts/from→to/op/payload 摘要/token 打码/状态/sessionId 深链 `#/session/:id`）+envelope 表（v0.1 字段静态说明=协议文档非数据）；非 agent-comm ConnectorOps：op 面（spec.ops 现读）+挂载方（Agent docContent 反查）+相关事件（归档 involved 过滤）+编辑器深链。**comm 落账面（E6 新）**：`executeAgentCommOp` 每次调用落一条流水（ts/from/to/op/ok/error/envelopeId/sessionId/hasToken——**token 值永不落账**，只记 hasToken 布尔），进程内环形缓冲 200 条 FIFO；回执结果全量在册（accepted+error 两路——§5.2 dispatch 回执与 error reply 落账面合一，v0.1 SessionLog 业务回复仍不回传）。**红线 2 边界澄清：comm 落账=agent-comm 协议运行时自身记账（mailbox 同族扩展），非 console UI 自建持久状态**——console 只渲染；进程内不跨重启。暴露=`GET /core-console/comm`（exact，GET only；connection 栅栏 fail-closed 与 apply 路由同款——handler 内再锁一道；载荷 `{ops, refs, journal, mailboxPending}`）。旧插件代=该路由缺席（dsh 兜底 404）=代际判别器（carrier-pre 快照）。
 
-**读面缺口（E6 探针实证，declared 余量）**：WorkService 单对象读面缺席——storage 模板 `workservices/<name>/workservice.yaml` 无 scope 段，单对象 GET 无可寻址分支恒 400（写入面同款闸=loop-41 deviation ④）；客户端诚实守卫：编辑器屏对 WorkService kind 不发 400 fetch（浏览器 console error=违零 error 线），正文/草稿/Apply 区=诚实空态标注，连接页枚举卡照常——缺口可见待 cored 读面扩展轮收口。**详情页矩阵（硬性验收 §5 规则 6）**：event 详情=E6 增强——involved 对象链（E2 既有）+**run 反查链**（`/v1/workflows/runs` eventId 命中→`#/wf/:name/r/:n`）+**workflow 锚链**（`/v1/triggers/resolve` route 投影→`wfAnchorOfRoute`→`#/wf/:name`）——**event→run→workflow→doc 链路走通=E6 验收主线**；ws/provider/ref/role 详情=编辑器屏（E4 文档与资源同规则既有路由零改动）+标识符 chips（refChips）可点；ConnectorOps 详情=编辑器屏+运行面 tab（本节）；`#/connectors` 三组卡全可点落详情路由——矩阵互跳网闭合。
+**读面缺口（E6 探针实证——loop-44 收口，见 §1.15）**：WorkService 单对象读面缺席已收口：storage 模板归 global 桶（`global/workservices/<name>/workservice.yaml`——作用域=Global 物化），单对象 GET 可寻址；客户端两处诚实守卫（编辑器屏/tag 现读）随之摘除。原缺口记录：storage 模板 `workservices/<name>/workservice.yaml` 无 scope 段，单对象 GET 无可寻址分支恒 400（写入面同款闸=loop-41 deviation ④），客户端不发 400 fetch 走诚实空态。**详情页矩阵（硬性验收 §5 规则 6）**：event 详情=E6 增强——involved 对象链（E2 既有）+**run 反查链**（`/v1/workflows/runs` eventId 命中→`#/wf/:name/r/:n`）+**workflow 锚链**（`/v1/triggers/resolve` route 投影→`wfAnchorOfRoute`→`#/wf/:name`）——**event→run→workflow→doc 链路走通=E6 验收主线**；ws/provider/ref/role 详情=编辑器屏（E4 文档与资源同规则既有路由零改动）+标识符 chips（refChips）可点；ConnectorOps 详情=编辑器屏+运行面 tab（本节）；`#/connectors` 三组卡全可点落详情路由——矩阵互跳网闭合。
 
 **E6 细化验收线（§4 E6 行展开；探针编号 L42-\*）**：
 - L42-01 事件流屏实数：headless 活体——真实归档行渲染（真 DocApplied 行在册 ∧ 零 mock 事件名）∧ 泳道标注=lane 映射（DocApplied 行=状态变迁 lane）∧ 聚合面板审批积压数=API 双读一致 ∧ 成功率/token 字样=n/a 在册（不冒充）∧ 行点击→`#/event/:id`。
@@ -194,6 +194,22 @@
 - L43-05 tag 全局同款：`#/docs` 全局文档面同一 paintDocsScreen（真对象行+tag chips/kind/草稿/搜索四件套）。
 - L43-06 千级虚拟滚动：合成压测窗 ≥1000 行渲染 ∧ DOM `.vrow` 行数有界（≤80——视口缓冲）∧ canvas 高度=行数×行高 ∧ 全程滚动扫掠到底完成 ∧ 零 console error；`until` 游标=Go 测试面（分页无重叠/坏参数 400）+ 活体相邻页 fetch 零重复 eventId。
 - L43-07 回归：E0…E6 专项全绿 + npm test 全绿 + go build/test/lint 全绿（workservice until 增量在册）。
+
+### 1.15 对账轮增量：WorkService 单对象读面收口（2026-11-25，loop-44 轮——标准对账选点）
+
+**缺口根因（E6 探针实证 declared 余量的收口轮）**：WorkService storage 模板 `workservices/<name>/workservice.yaml` 无 scope 段——模板解析闸门（repository.git storagePatterns）要求展开结果落 scope 目录前缀之下，根级路径对任何四层 scope 均不可寻址 → 单对象 GET/写入面恒 400（`ErrScope` 无可寻址分支）。且 docsRoot 既有对象 `workservices/notify/` 本身 metadata.scope 声明 `notify`（非法四层段）——对象身份与声明双重漂移。
+
+**收口方向（对账裁决：concepts/workservice.md §头表「作用域=Global」为准绳，layout.md §2「路径=scope」为物化规则——§1 旧树根级 workservices 属声明漂移）**：
+1. 声明面：scheme.yaml WorkService storage → `global/workservices/<name>/workservice.yaml`（concepts/scheme.md / concepts/workservice.md / layout.md §1 / examples 同步）。
+2. docsRoot 迁移：`workservices/notify/` → `global/workservices/notify/`（git mv 零残留）∧ 对象 metadata.scope `notify`→`global`（身份声明与物化位置一致）。
+3. 客户端：编辑器屏/tag 现读两处 WorkService 诚实守卫摘除（单对象 GET 200 后走正常 fetch——守卫存在前提=读面缺口，缺口不在即摘除，勿留死分支）。
+
+**L44 验收线（探针编号 L44-\*）**：
+- L44-01 单对象读面：`GET /v1/objects/WorkService/notify?scope=global` → 200 ∧ content 含 `kind: WorkService` ∧ `metadata.name: notify`；跨 scope 枚举（`/v1/objects/WorkService` 无 scope 参）行集含 notify 且行 scope=global。
+- L44-02 编辑器屏活体（headless）：`#/ws/notify` 直入 → 正文 textarea 有值（非诚实空态）∧ rev chip=资源版本数字 ∧ 零「读面缺口」字样。
+- L44-03 docsRoot 迁移零残留：docsRoot 根级 `workservices/` 目录不存在 ∧ `global/workservices/notify/workservice.yaml` 在册 ∧ cored 读面（objects 枚举）与新位置一致。
+- L44-04 tag 现读守卫摘除：`#/docs` 面对 WorkService 行走正常 fetch（无 WorkService 特判分支——源代码 grep 判别）；notify 无 tags 声明=空集诚实标注（不冒充）。
+- L44-05 回归：npm test 全绿 + go build/test/lint 全绿 + loop-43 探针基线（probe-e7/e7-ui-verify 路径替换版）全绿（E6R-UI-28 `#/ws/notify` 直入判据升级=正文在册）。
 
 console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互模式与信息结构，不锁组件 API）：
 

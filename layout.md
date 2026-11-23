@@ -20,7 +20,11 @@
 │   ├── binds/<bind-name>.yaml
 │   ├── roles/<role-name>.yaml           # v0.9 权限系统（A45）
 │   ├── groups/<group-name>.yaml
-│   └── credentials/<credential-name>.yaml
+│   ├── credentials/<credential-name>.yaml
+│   └── workservices/<name>/             # WorkService（作用域=Global，workservice.md §头表；v0.44 起归 global/ 桶——路径=scope 准绳 §2）
+│       ├── workservice.yaml
+│       ├── desc.md
+│       └── connectors/                  # 该外部系统专用驱动（若有）
 ├── systems/<system-name>/               # ServiceDesc（一系统一目录）
 │   ├── system.yaml                      # 元数据对象（servicedesc.md §3）
 │   ├── goal.md / desc.md                # required DocType
@@ -33,10 +37,6 @@
 │       ├── instance.yaml                # 对象 + Status
 │       ├── docs/                        # 实现侧：impl.md / verify.md / drift-*.md / runbook.md
 │       └── metrics/                     # MetricsInfo（数据区，非文档对象，gitignore 可选）
-└── workservices/<name>/                 # WorkService
-    ├── workservice.yaml
-    ├── desc.md
-    └── connectors/                      # 该外部系统专用驱动（若有）
 ```
 
 ## 2. 映射规则
