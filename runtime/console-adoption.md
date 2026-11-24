@@ -411,6 +411,30 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 - 移交通知（邮件/页面）必须含**固定入口链接**与接管清单；未配置通知通道=仅页面展示（notification.md 规则 6）；
 - 判据：收件箱条目可点达对应操作面；完成任务后事件回链可查；无待办时显式空态。
 
+### 1.26 用户裁决增量：能力 A——设计文档在线编辑（2026-11-24 裁决「B 之后做 A」，loop-53 轮）
+
+**缺口根因（用户裁决 2026-11-24）**：console 屏幕 6 目前只能编辑**文档库对象**（core-docs 的 YAML 对象），用户要能直接在界面上编辑**设计文档 md**（core_design/concepts/*.md、core_system_instance/runtime/*.md 等）：打开 → 编辑 → 草稿 → dry-run（结构/lint 检查）→ Apply → **git commit**（权威=git 仓）。对账：①设计文档无读面（cored 只知 docsRoot 对象，设计文档仓零投影）；②无写面（git commit 写路径零落点）；③屏幕 6 无设计文档入口。
+
+**路线裁决（任务书两路线择一，机械面取舍）**：**路线②受限文件面**——设计文档正文的真相本来就在其 git 仓，对象化（路线① kind:DesignDoc 落 docsRoot）会在文档库造第二副本、再靠同步器写回目标仓，单向权威可定义但多一跳同步与漂移判定面；本面零新权威：Apply=写工作树文件+git add+git commit（本地落盘不 push），读面=git HEAD 内容（**未提交的工作树改动不进读面**）——红线「权威必须唯一」的机械落点：无同步器、无双源、无漂移判定面。契约落点=cored-bridge.md §2.4（v0.52）。
+
+**收口方向**：
+1. workservice v0.52（`internal/docrepo` 新包）：`--design-repo <name>=<仓根>`（可重复）注册白名单仓；读面=git HEAD（ls-tree/cat-file/log）；写面引擎随 `--allow-apply` 装配——Apply 三检查（白名单 403 / R-PUB-1 lint 400 携违规 / 乐观锁 baseSha 409）+ 权限准入（`core/design-docs` 资源域，permission.md 机读——scheme.yaml Role 声明词汇 v0.52 扩 `core/*` 家族）+ git commit（message 自动生成，提交身份随仓 config）+ 审计（apply_log 行 obj=`DesignDoc/<repo>/<path>` + DocApplied 事件 involved 三段同构）。幂等 noop（同内容零提交）；工作树脏=拒绝 409（不吞他人未提交编辑）。
+2. core_design 声明面随行：scheme.yaml Role permissions scope 词汇 `global|systems/<n>/*` → `global|systems/<n>/*|core/*`（cored 资源域家族——core/design-docs 写设计文档域）；docsRoot 镜像同步 commit+admin Role 增 `{scope: core/*, actions: ['*']}` 条目（净入 lint 随行，files 基线不动）。
+3. plugin 宿主：`/core-console/design-docs` 写路由（POST exact=apply 主体宿主注入 / POST draft=落稿 / DELETE draft/{repo}/{path...}=弃稿——栅栏 fail-closed 同款）；读面走既有只读代理。
+4. console：屏幕 6 增「设计文档」页签（全 kind）+ `#/designdoc/:repo/:path` 深链路由共用同一工作台渲染核——三栏=文件树（白名单仓分组+过滤）/ 编辑器（HEAD 权威正文+最近提交行）/ 协作面板（草稿 diff+审计史）+ Apply dock（dry-run 三检查确认弹窗，三 ✓ 才解锁确认按钮）；审批屏 DesignDoc 稿=设计文档卡（HEAD vs 稿 diff+批准=designApply 全流程+驳回=designDraftDelete）；DesignDoc involved 深链=工作台。
+5. 草稿=与对象草稿同一缓存同一持久化面（draft.Store kind=DesignDoc, scope=<repo>, name=<path>——写穿/恢复/审批屏待审区全继承；baseSha 不入草稿在 apply 请求随行）。
+
+**L53 验收线（探针编号 L53-\*；探针=acceptance/loop-53.md）**：
+- L53-01 读面代际：新代 `GET /v1/design-docs` 200（清单=白名单仓 .md 行集含 sha）∧ carrier-pre 旧代 405（代际判别器）；单文档读面（真实概念文档）content+sha+lastCommit 在册。
+- L53-02 写面判据三件：①界面（headless）打开 core_design 概念文档 → 编辑并 Apply → 目标仓出现新 commit（message 自动生成）∧ DocApplied 归档在册（eventId 同源）∧ apply_log ok 行在账；②基线 sha 不符 → 409（expected/current 在载荷）；③非白名单路径（.yaml/越权）→ 403；④lint 失败 → 400 携违规（line/rule）。
+- L53-03 幂等与幂等不派单：同内容重入 noop（零提交零事件）；DocApplied×DesignDoc 不触发 flowbind/proposal/metrics 任一 watcher（下游零动作）。
+- L53-04 权限面：受限主体（role/design-editor 断言）dryRun 写 → admit 过；匿名主体 → 403 denied 行在账（permission.md 规则 3 判定留痕）。
+- L53-05 UI 活体（headless）：屏幕 6「设计文档」页签=文件树+编辑器+diff+Apply dock 在册 ∧ 文件树=白名单仓真名∧行可点 ∧ Apply dock 空稿禁用 ∧ 零 console error；截图 ≥2 张（acceptance/shots/loop-53-*.png）。
+- L53-06 审批屏 DesignDoc 稿：设计文档稿落稿 → 审批屏卡片（HEAD vs 稿 diff+批准=git commit+驳回=弃稿）在册（headless 活体）。
+- L53-07 回归：六仓 go build/test/lint 绿 + npm test 绿 + loop-52 基线判据只读段（L52-01…05 提案面/派单面 kind=proposal 行）不回退 + cored-lint `files=14 findings=0 mirror=ok`（Role 条目编辑不改 files 基线）+ E4 对象编辑回归不掉（L39-04 全链路判据）。
+- L53-08 零残留：探针设计文档改动复原（原内容 apply 回 HEAD——git log 两枚探针 commit 为合法审计留痕，终态内容零漂移）∧ docsRoot git 状态=内容轮 commit 非探针残留 ∧ 探针草稿清场。
+
+
 ### 3.1 会话主页（dsh hero「探索未至之境」）
 - **现状**：纯 dsh hero：工作区选择 + 空输入框；无任何 core 信息。
 - **功能建议**：hero 之上注册 Welcome 大屏 slot（v2 屏幕 0：业务健康度大数字、dev-delivery 阶段条、Service 简卡行、业务视角重要事件、快捷入口）；「选择工作区」语义映射为「选择要查看/对话的系统 scope」，下拉里并排列出系统清单（来自 cored 读面）。
@@ -478,6 +502,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 R-7 | workflow 执行模型绑定面：execution 判别器 + apply 即实现骨架物化【实现拓扑与细化验收=§1.21（loop-50）：workservice v0.49 `internal/flowbind`（绑定物化器=装配期枚举+DocApplied×Workflow 热路径，走 apply 闸门 fieldManager=workflow:bind，origin=workflow-bind 所有面）+聚合面 execution 投影+scheme.yaml ConnectorOps flow 声明+docsRoot workflow-engine 宿主 WorkService+console workflows 屏执行 chip】 | apply 即同名 ConnectorOps 骨架出现且 diff 可查+决策面 execution=unbound 可见（细化=L50-01…09） |
 | 对账轮 R-8 | apply-workflow agent 派单面：骨架物化即派单受理投影【实现拓扑与细化验收=§1.22（loop-51）：workservice v0.50 flowbind `dispatch.go`（DispatchLog 环=wake 同构——created/updated 即派单，noop/skipped 不派单，autoLevel=ask 数据面）+`GET /v1/agents/dispatches` 读面+console wf 详情骨架态派单行；受理≠拉起——真实拉起=dsh 会话挂载 declared-deferred】 | 骨架物化即 apply-workflow 派单受理投影可查且幂等/所有面/元数据变更零噪音（细化=L51-01…09） |
 | 用户裁决 能力 B | 需求提交流：console 提交需求 → Proposal 对象 → 审批 → 自动落文档/派工【实现拓扑与细化验收=§1.24（loop-52）：workservice v0.51 `internal/proposal`（分流 watcher=DocApplied×Proposal 订阅——approved 即 apply-workflow 派单 kind=proposal 行/auto-approve 引擎自写 fieldManager=proposal:auto/高危提交 ApprovalNeeded 自产 source=core）+`GET /v1/proposals` 读面+apiserver `console:reject` 对称扩展（rejected 行+ApprovalRejected 事件）+core_design kind:Proposal+concepts/proposal.md+console「需求提案」屏（表单/列表/详情/批准/驳回）】 | 界面提交→Proposal 在库（rv=1 submitted）∧批准→approved+派单投影+eventId 同源∧驳回→rejected+无派单∧分流可配（细化=L52-01…09） |
+| 用户裁决 能力 A | 设计文档在线编辑：console 屏幕 6 直接改 md → Apply → git commit【实现拓扑与细化验收=§1.26（loop-53）：workservice v0.52 `internal/docrepo`（受限文件面路线②——`--design-repo` 白名单+git HEAD 读面+三检查 403/400/409+权限域 core/design-docs+本地 commit 不 push）+`/v1/design-docs*` 面+plugin `/core-console/design-docs` 写路由+console 屏 6「设计文档」页签+`#/designdoc` 工作台（文件树/编辑器/diff/Apply）+审批屏 DesignDoc 稿；cored-bridge.md §2.4+scheme.yaml Role 词汇 core/*】 | 打开概念文档→编辑 Apply→目标仓新 commit+DocApplied 同源+审计在账∧409/403/400 判据三件∧UI 截图（细化=L53-01…08） |
 
 ## 5. 执行红线（对 loop 的约束）
 
