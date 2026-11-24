@@ -404,6 +404,13 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 - L52-08 回归：六仓 go build/test/lint 绿 + npm test 绿 + loop-51 基线判据只读段（派单面 workflow 行/幂等不派单/所有面不派单）不回退 + cored-lint 全绿（探针对象清场后 files 基线复原）。
 - L52-09 零残留：探针 Proposal 对象 git rm 清场 → 读面行消失 ∧ docsRoot git 洁性。
 
+### 1.25 待你处理收件箱与接管路径（2026-11-24 用户裁决）
+
+- console 首页与侧栏提供**「待你处理」收件箱**：汇总 NeedsHuman / ApprovalNeeded / Proposal 待批 / 文档待审四类，带计数与深链；
+- **接管路径**：①提交需求（能力 B：Proposal 表单）②编辑文档（能力 A：设计文档编辑器）③审批（ApprovalNeeded）；完成即产事件回链，loop 自动续跑对应分支；
+- 移交通知（邮件/页面）必须含**固定入口链接**与接管清单；未配置通知通道=仅页面展示（notification.md 规则 6）；
+- 判据：收件箱条目可点达对应操作面；完成任务后事件回链可查；无待办时显式空态。
+
 ### 3.1 会话主页（dsh hero「探索未至之境」）
 - **现状**：纯 dsh hero：工作区选择 + 空输入框；无任何 core 信息。
 - **功能建议**：hero 之上注册 Welcome 大屏 slot（v2 屏幕 0：业务健康度大数字、dev-delivery 阶段条、Service 简卡行、业务视角重要事件、快捷入口）；「选择工作区」语义映射为「选择要查看/对话的系统 scope」，下拉里并排列出系统清单（来自 cored 读面）。
