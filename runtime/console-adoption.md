@@ -264,6 +264,25 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 - L46-06 回归：go build/test/lint 绿+npm test 绿+loop-45 基线探针（路径替换版）全绿（数据面真实样本表判据不回退）。
 - L46-07 账面零耦合：Reconcile 不变量不受 approval_log 影响（apply_log(ok) ≙ DocApplied 单测断言）。
 
+### 1.18 对账轮增量：metrics 阈值声明面 apply 事件驱动热重绑（2026-11-26，loop-47 轮——标准对账选点）
+
+**缺口根因（R-4，loop-46 缺口清单首选候选，R-2 装配段余量）**：阈值声明面绑定是**装配期一次枚举**（main.go 启动时 `repo.List(WorkService)` 逐对象 `BindWorkservice` → 桥源集合固定进程生命周期）——console 对 WorkService 对象 `observation.metrics` 的编辑 apply 落库后**不生效，需重启才重绑**。三重不一致：①与 workflow 文档查找「零缓存：每次现读（git 后端权威，apply 落库即生效）」同库不同待遇；②与权限热装载（v0.10 免重启，repository.Watch 变更信号→重投影→快照整体替换）同类场景分立两套语义；③apply.md rule 1「落库即生效（DocApplied 必发）」对阈值声明面失效——声明面写路径的回执语义与实际生效面劈叉。
+
+**收口方向（绑定表与样本流解耦——重绑 O(1) 零通道抖动）**：
+1. 桥契约重构（workservice v0.47，`metricsrc` 内部包）：**样本流从每源一通道升为桥级单通道**（装配层一条 `metricsStore.Subscribe()` 经泵适配直投——per-source 通道形态下重绑=通道级联重建（订阅泄漏/泵 goroutine 阻塞弃Channel），单流+绑定表=重绑只换声明不碰流）；`Source` 契约=纯绑定声明 `{name, involved, thresholds}`（`Samples` 字段退场）；事件产出语义面零变化（同判定谓词/同 dedupKey/同 involved 三段同构/同主干零旁路——多绑定同键越限由总线窗口聚合，与原多源各自发布同态）。
+2. `Bridge.Rebind(srcs)`：绑定表整体替换（锁内快照换装——样本流不动）；**零绑定=合法等待态**（装配期零声明不再是不启动的终态——`no-source` 状态退场为 `on(0)`，桥挂流等待 apply 热激活）。
+3. `metricsrc.StartRebind`：apply 事件驱动热重绑主循环——订阅 `DocApplied`（与 apply 落库同一条总线主干零旁路）→ involved kind=WorkService 精确过滤（非 WorkService 对象 apply 零无效重枚举）→ 连续变更合并（积压排干后一次重枚举装到最新面）→ 枚举失败=保旧表+stderr 告警+下次 apply 重试自愈（权限热装载同款 declared 语义，不半装载）。
+4. stderr 装配锚词表：`metrics 阈值源=off|unregistered|on(n)`（`no-source` 退场——零绑定成为瞬态等待态 `on(0)`，apply 后热激活升 `on(n)`）。
+
+**L47 验收线（探针编号 L47-\*；探针=acceptance/loop-47.md）**：
+- L47-01 热激活面（核心判据）：新代 cored 装配后对既有 WorkService 对象 apply 增补 `observation.metrics` 阈值（不经重启）→ 下一个采样窗内 `GET /v1/events?type=MetricThreshold` 出现**新 dedupKey**（`<新metric>:<window>`——旧绑定从未声明的键=热重绑激活的机械判别器）∧ `source=metrics` ∧ involved 三段同构 `WorkService/global/<对象名>`。
+- L47-02 免重启对照：事件 `at` 晚于 apply 时刻 ∧ cored 进程 exe sha 在 apply 前后不变（`/proc/<pid>/exe` 双读一致——进程未换代，判定面变化纯事件驱动）。
+- L47-03 run 同拍不回归：新 MetricThreshold 事件落 run 同拍（`/v1/workflows/runs` 含 `eventId` 命中行——workflow.md 规则 15 零改动）。
+- L47-04 单测：Rebind 换表即时生效（旧阈值→新阈值判定切换）+ 零绑定等待态（挂流零事件→Rebind→越限即发）+ DocApplied×WorkService 过滤（非 WorkService involved 不触发重枚举）+ 枚举失败保旧表（Failed 回调+旧表继续判定）。
+- L47-05 UI：指标面真实样本表出现新 metric 行（`events.<新type>` 在册——数据面照常产样本）；事件流屏 MetricThreshold 行在册且详情 involved 链三段可点（L45-04 不回归）。
+- L47-06 回归：go build/test/lint 绿+npm test 绿+loop-46 基线探针（路径替换版）全绿（approval_log 双账/已决账面判据不回退）。
+- L47-07 复原：探针声明面残留 apply 原文清场（docsRoot 权威=git，rv 乐观锁复原——探针零残留）。
+
 ## 3. 逐页建议（现状 → 功能 → UI）
 ### 3.1 会话主页（dsh hero「探索未至之境」）
 - **现状**：纯 dsh hero：工作区选择 + 空输入框；无任何 core 信息。
@@ -326,6 +345,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 R-1 | WorkService 单对象读面收口【已完成 2026-11-25（loop-44，§1.15）：storage 模板归 global 桶（声明面 scheme.yaml/concepts/layout.md 四处同步）+docsRoot 迁移（根级 workservices→global/workservices+对象 scope 声明修正）+plugin 两处诚实守卫摘除；探针=acceptance/loop-44.md（prep 27/27+UI 53/53+verify 28/28；旧代双口径 400→新代 scope=global 200 实证）】 | 单对象 GET 可寻址+守卫摘除+迁移零残留（细化=L44-01…05） |
 | 对账轮 R-2 | metrics 数据面装配开启 + 阈值声明面最小样本源【已完成 2026-11-25（loop-45，§1.16）：三 profile 锚 `--metrics-source` 装配开启（carrier 随载体重启轮换代）+docsRoot notify 对象 observation.metrics 最小声明（桥点火演示口径）+metricsrc.BindWorkservice involved 三段同构（kind/scope/name 惯例——console 事件链两段死链修正）+采样器窗口半开对齐 E7 纪律；cored-bridge v0.31 stale 余量注记修正；探针=acceptance/loop-45.md】 | `/v1/metrics` 真实样本+MetricThreshold 落 run 三段 involved 可导航（细化=L45-01…07） |
 | 对账轮 R-3 | approval_log 审批判定独立账【实现拓扑与细化验收=§1.17（loop-46）：opslog approval_log 表+读写面（schema v0.46 修订——v0.9 A44 声明收编落地）+apiserver 两写钩子（批准 granted/驳回 rejected——驳回零留痕缺口收口）+`GET /v1/approvals` 读面+console 审批屏「已决账面」现读区块】 | 批准/驳回判定独立账面可查（细化=L46-01…07） |
+| 对账轮 R-4 | metrics 阈值声明面 apply 事件驱动热重绑【实现拓扑与细化验收=§1.18（loop-47）：桥契约重构（样本流桥级单通道+Source=纯绑定声明——重绑 O(1) 零通道抖动）+`Bridge.Rebind` 绑定表整体替换（零绑定=合法等待态，no-source 终态退场）+`StartRebind`（DocApplied×WorkService 过滤+积压合并+失败保旧表自愈）】 | 阈值声明 apply 落库即生效免重启（细化=L47-01…07） |
 
 ## 5. 执行红线（对 loop 的约束）
 
