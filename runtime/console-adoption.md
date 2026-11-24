@@ -361,6 +361,26 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 - L51-09 零残留：探针对象 git rm 清场（flow-probe 两件+probe-owned 两件）→ 聚合面行消失 ∧ docsRoot git 洁性（内容轮 commit 非探针残留）。
 
 
+### 1.23 用户裁决（2026-11-24）：console 原生整合 + Workspace 按 Service（第一波）
+
+**保留**：现 console 独立页（proto/现有页面）**单独留着**，不改不拆（作为完整形态参照与独立入口）。
+
+**整合（第一波）**：把 console 九项功能（Welcome/总览/系统树/Workflows/文档/事件/审批/连接/会话）**嵌入 dsh 主侧栏**，采用 **DeepSeek console 原生风格与样式**——不出现第二列导航，全部经 dsh plugin Slot 注册为宿主侧栏分组（如「核心控制台」），点击进入各屏。
+
+**样式基线（验收硬线）**：
+- 行高/字号/图标尺寸/hover/选中态与 dsh 原生侧栏一致；深浅色 token 取自宿主；
+- 卡片统一 spacing（8/12/16）与边框色；每屏主 CTA 唯一（其余降次级）；
+- 中英混排字体栈一致；正文最大行宽约 72ch；长说明用抽屉/展开，不用 tooltip 压内容；
+- 红色只用于「需要行动」的告警（审批 badge）；事件计数用中性色；空态显式（无 run=「等待触发」而非灰点排）。
+
+**Workspace 改造（第一波）**：Workspace 按 **Service** 创建 project（如 `self-recursive-core`）；Service 的 agent 会话归入对应 project（service agent = dsh project 页）；`Ungrouped` 噪音隐藏或折叠（仅保留当前项目）。概念影响=改动 agent 归属（service ↔ project），先按**最小映射**实现（project 名=service 名；会话 metadata.project 绑定），不得破坏既有会话可访问性；更深的 agent 概念改造后续轮次再动。
+
+**判据（机读）**：
+- 主侧栏出现「核心控制台」分组且含九项，DOM 无第二列 nav；
+- 样式抽查=与 dsh 原生项同 token（截图比对入报告）；
+- Workspace 出现按 Service 的 project，新会话归组正确；Ungrouped 折叠/隐藏；
+- 独立页路由仍可达（保留）；截图走 acceptance-screenshot（Chromium headless），报告按 §8。
+
 ### 3.1 会话主页（dsh hero「探索未至之境」）
 - **现状**：纯 dsh hero：工作区选择 + 空输入框；无任何 core 信息。
 - **功能建议**：hero 之上注册 Welcome 大屏 slot（v2 屏幕 0：业务健康度大数字、dev-delivery 阶段条、Service 简卡行、业务视角重要事件、快捷入口）；「选择工作区」语义映射为「选择要查看/对话的系统 scope」，下拉里并排列出系统清单（来自 cored 读面）。
