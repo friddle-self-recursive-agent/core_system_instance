@@ -245,8 +245,26 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | `dsh-api-terminal-controller` | gotty 之外的宿主内终端（终端 tab 的另一实现选项） |
 | `dsh-client-ui-settings-*` | settings-card 风格基准（proto 的「?」说明面板沿用） |
 
-## 3. 逐页建议（现状 → 功能 → UI）
+### 1.17 对账轮增量：approval_log 审批判定独立账（2026-11-25，loop-46 轮——标准对账选点）
 
+**缺口根因（R-3，loop-45 缺口清单首选候选，E6 declared 余量）**：console 审批屏的批准/驳回判定留痕现投影=apply_log 行（fieldManager=console:approve）+DocApplied 归档——但①**驳回=DELETE 弃稿零留痕**（草稿缓存非账，弃稿动作在 ops DB 无行：审计问"这条提案谁何时驳了"答不出来）；②批准判定与普通 apply 落库在账面不可判别（要靠 field_manager 字符串考古）；③ops-log.md §2 v0.9 声明的 approval_log 独立账至今零表零读面（v1 最小实现只建了 apply/event 两表）。
+
+**收口方向（账面+读面+UI 现读，零旁路零新写路径）**：
+1. opslog（workservice v0.46）：approval_log 建表+`AppendApproval`/`QueryApprovals`（decision/obj 精确过滤+rv 降序+limit 收敛防拖库同口径）；schema 修订=ts/approval_id/obj/decision/judged_by/field_manager/resource_version/reason_ref（v0.9 permission_rule 列并入 field_manager/reason_ref——A44 权限系统落地后随行具体化；细则见 ops-log.md §2 v0.46 注记）。
+2. apiserver 写钩子两段（账面非权威：落账失败不翻转写路径结果）：POST /v1/apply（fromDraft ∧ 非 dry-run ∧ fieldManager=console:approve 成功）→ granted 行（rv=落库后 rv；noop 幂等重入照落，rv=面上现值）；DELETE /v1/drafts 成功 → rejected 行（rv=0，judged_by=请求主体头）。引擎侧落稿清除（fromDraft apply 后清稿）不经 HTTP DELETE handler，无双计。
+3. 读面：`GET /v1/approvals`（decision/obj 过滤+rv 降序+limit；face 缺席=503 同口径；旧代=405 兜底代际判别器）。
+4. console：审批屏增「已决账面」区块（`GET /v1/approvals` 现读不缓存——批准/驳回即决即见；渲染失败=诚实降级注记，零 console error 零 4xx）。
+
+**L46 验收线（探针编号 L46-\*；探针=acceptance/loop-46.md）**：
+- L46-01 建表面：ops DB approval_log 表在册（sqlite_master 机械查询）∧ 新代 `GET /v1/approvals` 200（carrier-pre 旧代 405=代际判别器）。
+- L46-02 批准落账：console:approve fromDraft apply 成功 → approval_log granted 行（obj/approval_id=draft:\<键\>/judged_by=主体/rv=落库 rv）∧ apply_log ok 行同拍在册（双账并存）。
+- L46-03 驳回落账：DELETE 弃稿成功 → rejected 行（rv=0）∧ 文档面零变化（弃稿零文档面动作不回归）∧ 弃稿后读面无稿。
+- L46-04 读面投影：GET /v1/approvals rv 降序+decision/obj 过滤+limit 收敛+face 缺席 503+decision 非闭合集拒（单测）。
+- L46-05 UI：审批屏「已决账面」区块行集=真实账面数据（granted/rejected 行在册可见）；零 console error 零 4xx。
+- L46-06 回归：go build/test/lint 绿+npm test 绿+loop-45 基线探针（路径替换版）全绿（数据面真实样本表判据不回退）。
+- L46-07 账面零耦合：Reconcile 不变量不受 approval_log 影响（apply_log(ok) ≙ DocApplied 单测断言）。
+
+## 3. 逐页建议（现状 → 功能 → UI）
 ### 3.1 会话主页（dsh hero「探索未至之境」）
 - **现状**：纯 dsh hero：工作区选择 + 空输入框；无任何 core 信息。
 - **功能建议**：hero 之上注册 Welcome 大屏 slot（v2 屏幕 0：业务健康度大数字、dev-delivery 阶段条、Service 简卡行、业务视角重要事件、快捷入口）；「选择工作区」语义映射为「选择要查看/对话的系统 scope」，下拉里并排列出系统清单（来自 cored 读面）。
@@ -306,7 +324,8 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | E6 | 事件流/审批/连接页 + 详情页矩阵互跳【已完成 2026-11-25：数据面=零 Go 改动（读面复用裁决 §1.13）——事件流=三泳道 `eventLaneOf` 映射+聚合面板实数（成功率/token=n/a 不冒充）；审批=待审区（草稿缓存∪ApprovalNeeded 归档）+diff 现读+批准=Apply 全流程复用（dry-run 三检查→fromDraft 落库，fieldManager=console:approve）+驳回=DELETE 弃稿+批量=同 kind 顺序 Apply；连接页=三组 objects 枚举+编辑器 ConnectorOps 第五 tab「运行面」（agent-comm=comm 落账活体：op 计数/拓扑/消息日志 token 打码/envelope v0.1 表）；agent-comm.ts=CommJournal 环形落账（token 值永不入账）+index.ts=`GET /core-console/comm` 读路由（fail-closed 同款）；事件详情=run 反查（eventId 命中→#/wf/:name/r/:n）+/v1/triggers/resolve 锚链——event→run→workflow→doc 链路活体走通；探针=acceptance/loop-42.md】 | event→run→workflow→doc 链路走通（细化=L42-01…07） |
 | E7 | 场景面四页 + tag 过滤 + 虚拟滚动大列表【已完成 2026-11-25：数据面=读面复用+一 Go 增量（workservice v0.39 `/v1/events` until 游标——半开窗 [since,until) 向后分页，EventQuery 六参）；事件全局/场景面=screenEventsCore 共用核（过滤条同款+until 滚动加载+合成压测窗=客户端合成展示层不入归档 KI-001 裁决 §1.14）；metrics=空投影诚实空态+即席查询 404 不冒充；docs=scope 枚举+spec.metadata.tags 现读一等过滤器（rv 键缓存+WorkService 读面缺口守卫不发 400 fetch）；permissions=Role/Group/Agent 文档面+挂载声明现读溯源+挂载反查表；收口清扫=总览/palette/文档行真数据+manualTick/newGoal 诚实化（mock 渲染面归零）；探针=acceptance/loop-43.md（prep 21/21+UI 53/53+verify 21/21 含补验；千级合成窗扫掠到底 1665ms/DOM 22 行有界/零 console error/零 4xx）】 | 千级事件滚动流畅（细化=L43-01…07） |
 | 对账轮 R-1 | WorkService 单对象读面收口【已完成 2026-11-25（loop-44，§1.15）：storage 模板归 global 桶（声明面 scheme.yaml/concepts/layout.md 四处同步）+docsRoot 迁移（根级 workservices→global/workservices+对象 scope 声明修正）+plugin 两处诚实守卫摘除；探针=acceptance/loop-44.md（prep 27/27+UI 53/53+verify 28/28；旧代双口径 400→新代 scope=global 200 实证）】 | 单对象 GET 可寻址+守卫摘除+迁移零残留（细化=L44-01…05） |
-| 对账轮 R-2 | metrics 数据面装配开启 + 阈值声明面最小样本源【实现拓扑与细化验收=§1.16（loop-45）：三 profile 锚 `--metrics-source` 装配开启（carrier 随载体重启轮换代）+docsRoot notify 对象 observation.metrics 最小声明（桥点火演示口径）+metricsrc.BindWorkservice involved 三段同构（kind/scope/name 惯例——console 事件链两段死链修正）+采样器窗口半开对齐 E7 纪律；cored-bridge v0.31 stale 余量注记修正】 | `/v1/metrics` 真实样本+MetricThreshold 落 run 三段 involved 可导航（细化=L45-01…06） |
+| 对账轮 R-2 | metrics 数据面装配开启 + 阈值声明面最小样本源【已完成 2026-11-25（loop-45，§1.16）：三 profile 锚 `--metrics-source` 装配开启（carrier 随载体重启轮换代）+docsRoot notify 对象 observation.metrics 最小声明（桥点火演示口径）+metricsrc.BindWorkservice involved 三段同构（kind/scope/name 惯例——console 事件链两段死链修正）+采样器窗口半开对齐 E7 纪律；cored-bridge v0.31 stale 余量注记修正；探针=acceptance/loop-45.md】 | `/v1/metrics` 真实样本+MetricThreshold 落 run 三段 involved 可导航（细化=L45-01…07） |
+| 对账轮 R-3 | approval_log 审批判定独立账【实现拓扑与细化验收=§1.17（loop-46）：opslog approval_log 表+读写面（schema v0.46 修订——v0.9 A44 声明收编落地）+apiserver 两写钩子（批准 granted/驳回 rejected——驳回零留痕缺口收口）+`GET /v1/approvals` 读面+console 审批屏「已决账面」现读区块】 | 批准/驳回判定独立账面可查（细化=L46-01…07） |
 
 ## 5. 执行红线（对 loop 的约束）
 

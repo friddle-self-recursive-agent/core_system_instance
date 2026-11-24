@@ -33,6 +33,7 @@
 | `GET /v1/metrics/query` | 数据面窗口聚合查询（v0.33）：`?metric=<名>&window=<窗口标签>&agg=count\|sum\|avg\|max\|min\|last` → `{metric, window, agg, value}`；缺参=400；未命中/声明面外聚合=404（不冒充零值）；数据面未装配=404 |
 | `GET /v1/events` | 事件归档查询面（v0.36 console 读面首段；v0.39 E7 增 until 游标）：event_log 归档行最新优先投影（ts 降序，同刻按归档序）→ `{count, events:[{ts, eventId, type, source, involved, dedupKey, level, routedTo}]}`；`?limit=<n>&type=<t>&level=<l>&involved=<i>&since=<RFC3339>&until=<RFC3339>`（limit≤0=缺省 50，>500 收敛 500——读面防拖库，归档全量走重建/导出面；since/until=半开窗 [since, until)，until 严格不含端点——E7 向后分页游标=上一页最旧行 ts 翻页，相邻页零重叠；since/until 不可解析=400）；face 随 ops DB 装配恒注入（含内存库）；旧代（路由未注册）经兜底 handler 405=代际判别器。只读投影恒开，非 GET=405；数据来源=归档（event.md：审计素材）——Welcome 最近重要事件与事件流页（E6/E7 场景面）共用本面，渲染数据无双源（console-adoption.md §5 规则 2） |
 | `GET /v1/history/{kind}/{name}` | 对象应用史投影面（v0.38 console 读面第三段，E4——console-ui.md 屏幕 6 历史 tab 数据面）：数据源=ops DB `apply_log`（一次 Apply 判定的流水，repository 双写钩子落 ok/noop/conflict 行+引擎 denied 行）——rev 流水的权威=审计账不是 git 考古（git 权威在正文，不在此考古）。`?scope=<scope>&limit=<n>`：obj=`kind/scope/name` 精确过滤（scope 缺席=空 scope 匹配——对象键全匹配语义）+rv 降序（同 rv 按时刻降序：ok 行 rv=落库后版本，conflict 行 rv=现库版本）+limit 收敛（≤500 同口径）→ `{count, obj, entries:[{ts, rv, result, fieldManager, subject, reasonRef}]}`；`ApplyLogFace` 可变口面（`QueryApplies` 新方法不占冻结 Store 签名，EventLogFace.GroupEvents 同款模式）；face 缺席=503 防御面（装配层随 ops DB 恒注入）；旧代 405=代际判别器。只读 GET 恒开，非 GET=405 |
+| `GET /v1/approvals` | 审批判定账面查询面（v0.46 审批独立账——console-adoption.md §1.17，console-ui.md 屏幕 10 已决账面区块数据面）：数据源=ops DB `approval_log`（审批判定独立账，ops-log.md §2 v0.46 注记——apply_log 承落库流水，本账承"谁在何时对哪条提案做了什么判定"；批准=console:approve fromDraft 非 dry-run apply 成功落 granted 行（rv=落库后 rv，noop 幂等重入照落 rv=面上现值）；驳回=DELETE 弃稿成功落 rejected 行（rv=0——弃稿零文档面动作仍落账；幂等 404 无判定不落账）；dry-run 预检/非 fromDraft 直接落库不落账）。`?decision=<granted\|rejected>&obj=<kind/scope/name>&limit=<n>`：decision/obj 精确过滤+rv 降序+limit 收敛（≤500 同口径）→ `{count, approvals:[{ts, approvalId, obj, decision, judgedBy, fieldManager, rv, reasonRef}]}`；`ApprovalLogFace` 可变口面（写钩子+查询读面，opslog.SQLiteStore 满足）；face 缺席=503 防御面（装配层随 ops DB 恒注入；账面非权威——落账失败不翻转写路径结果）；旧代 405=代际判别器。只读 GET 恒开，非 GET=405 |
 | `GET /v1/secrets` | 秘密元数据清单（v0.34）：`{count, secrets:[{name, updatedAt}]}`——**只出名称与更新时刻，值永不回显**（脱敏红线）；秘密库未装配=503 |
 | `POST /v1/secrets` | 秘密落值（v0.34）：`{name, value}` → `{name, set:true}`——受理即吞值（请求体 value 不出现在任何响应/留痕）；写面门控同 apply（`--allow-apply`，未开启=405）；秘密库未装配=503；空 name/value=400 |
 | `DELETE /v1/secrets/{name}` | 秘密删除（v0.34）：幂等（键不存在=成功）；写面门控同上 |
@@ -67,6 +68,7 @@
 
 错误→状态码：乐观锁冲突 → **409**（载荷含 `expected`/`current`）；kind 未注册（野对象）或对象不存在 → 404；权限准入拒绝（含匿名主体/断言 role 未对上授权面/硬规则）→ **403**；**spec 结构未过准入 → 400（v0.14）**（错误文本携违规路径，如 `permissions[0].scope: 必填段缺失`）；无主写入/对象键不全/身份不符/内容不可解析/盲写已存在/scope 不相容 → 400；写队列关停 → 503；写面未开启 → **405**（`POST /v1/apply` 恒可探测，`GET /v1/apply` 亦 405）。
 `apply_log` 审计行 result 枚举：`ok`（落库）/`noop`（幂等重入）/`denied`（准入拒绝——scheme 结构（v0.14）/权限/硬规则，**携带主体标识** subject 列——anonymous=匿名，permission.md 规则 3 判定留痕，判定摘要携违规路径）/`conflict`（乐观锁冲突，含现库版本）——git 提交数 ≙ ok 行数（对账不变量，ops-log.md §3；noop/denied/conflict 不对应提交）。
+**审批判定落账（v0.46 审批独立账）**：`fromDraft=true ∧ !dryRun ∧ fieldManager=console:approve` 成功（create/update/noop）→ `approval_log` granted 行（rv=落库后版本；noop 幂等重入照落 rv=面上现值）——判定识别键=`ApproveFieldManager` 约定串（console 客户端与 cored 共用）；dry-run 预检/非 fromDraft 直接落库不落账（预检非判定、直落非审批屏动作）。approval_log 与 apply_log 双账并存不互斥（见 `GET /v1/approvals` 行）。
 
 ### 2.2 草稿缓存面（编辑与发布分离，apply.md §1/§6 rule 6）
 
@@ -84,7 +86,7 @@
 | `GET /v1/agents/wakes` | 唤醒投影面（§2.3 v0.18，恒开）：`{count, accepted, dropped, wakes:[…]}`——执行面=agent（`<p>-agent` 族：root-agent/parent-agent）且装配层已接线的绑定（route 主路与 cc 旁路，origin 维度留痕）推进为一条唤醒投影（唤醒已受理+agent 锚投影；溯源字段与留痕/发布回执同源） |
 | `POST /v1/events` | 事件注入面（§2.3 v0.20 发布面首段，**写面门控**：未开启=405 与 apply 同口径）：`{type, involved?, level?, dedupKey?}` + 请求级主体（§2.1 同形 `subject`）→ `{id, type, dedupKey, level, source, involved}`——类型注册校验（Scheme.eventTypes 唯一权威，未注册=404）→ 发布权限域判定（动作=`publish` × 域=`events`，与 apply 写权限域分立，拒绝=403）→ level 缺省=注册表 defaultLevel 投影（越词=400）→ 总线发布（与引擎内部事件同管线：去重/派发/归档零旁路；载荷声明的 source 非 human 值=400——来源是服务侧判定的审计事实；回执 id 与留痕 eventId 同源） |
 | `POST /v1/drafts` | 落稿（upsert，同对象键覆盖=最新代改稿，`createdAt` 定格 `updatedAt` 更新）：`{kind,scope,name,content,fieldManager,reasonRef,baseResourceVersion}`；键不全/无主/空稿 → 400 |
-| `DELETE /v1/drafts/{kind}/{name}?scope=<scope>` | 弃稿；无稿 → 404 |
+| `DELETE /v1/drafts/{kind}/{name}?scope=<scope>` | 弃稿；无稿 → 404。**v0.46 驳回落账**：弃稿成功 → `approval_log` rejected 行（rv=0——弃稿零文档面动作，判定仍落账；judged_by=请求主体头 `X-Core-Subject`，DELETE 无 body；幂等 404 无判定不落账）——审批屏「驳回」与编辑器「弃稿」同动作同账面（变更不采纳的判定在册可审计） |
 | `POST /v1/apply` + `"fromDraft":true` | 稿→面落库：以草稿 content 为写者输入、草稿 `baseResourceVersion` 为乐观锁期望值，走与直写同一三步闸门（scheme/权限/存储——权限按**请求级主体**判定，同 §2.1 `subject` 语义；成功后**清稿**）；无稿 → 404 |
 
 - **门控**：POST/DELETE 草稿与 `fromDraft` apply 随写面开关 `--allow-apply`（缺省 405，与 §2.1 同一开关）；草稿 GET 属查询面恒开。开启写面须同时 `--docs`（fromDraft 恒有文档库可落）。

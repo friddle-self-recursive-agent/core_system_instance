@@ -32,7 +32,19 @@ apply_log    (ts, field_manager, subject, obj, resource_version, result, policy_
              -- repository 双写落（Write 契约冻结不携主体），归属看 field_manager
 event_log    (ts, event_id, type, source, involved, dedup_key, severity, routed_to)
 control_log  (ts, root_agent, primitive, target_agent, task_id, result)   -- 直控审计
-approval_log (ts, approval_id, permission_rule, judged_by, decision)   -- v0.9：权限系统判定（A44）
+approval_log (ts, approval_id, obj, decision, judged_by, field_manager, resource_version, reason_ref)
+             -- v0.46：审批判定独立账（v0.9 权限系统判定 A44 声明收编落地——permission_rule 列并入
+             -- field_manager（判定来源面）与 reason_ref（判定理由引用），A44 权限系统落地后随行具体化）。
+             -- decision ∈ {granted, rejected}（闭合集，扩展走迁移行不重写语义）；
+             -- obj="kind/scope/name"（与 apply_log.obj 同构）；judged_by=判定主体（permission.md §3
+             -- 请求级主体 ID 口径，全空=anonymous）；approval_id=判定流水键（现口径
+             -- "draft:<kind>/<scope>/<name>"——同键覆盖=最新判定；A44 落地后承审批 dedup 键）。
+             -- 现落地面=console 审批屏两判定：批准=fromDraft apply（fieldManager=console:approve）非
+             -- dry-run 成功→granted 行（resource_version=落库后 rv；noop 幂等重入照落，rv=面上现值
+             -- ——判定发生了，只是零变更可落）；驳回=DELETE 弃稿成功→rejected 行（resource_version=0
+             -- ——弃稿零文档面动作，判定仍落账）。apply_log 双账并存不互斥（apply_log=落库流水，
+             -- approval_log=审批判定流水——审计问"谁批了什么何时决"不再靠 field_manager 字符串考古）。
+             -- 账面非权威：落账失败不翻转写路径结果（stderr 注记，DB 可重建）；不参与 §3 对账不变量。
 escalate_log (ts, from_workflow, reason, chain_depth)
 draft        (kind, scope, name, content, field_manager, reason_ref, base_rv, created_at, updated_at)
              -- PRIMARY KEY (kind, scope, name)；v0.10：草稿缓存持久化面（apply.md §1 编辑与
@@ -53,6 +65,7 @@ draft        (kind, scope, name, content, field_manager, reason_ref, base_rv, cr
 ## 4. 查询入口
 
 - console 信息流层直接读 ops DB（事件/状态变迁/审批泳道）。
+- v0.46 读面落点：`GET /v1/approvals`（审批判定账面查询——decision/obj 精确过滤+rv 降序+limit 收敛防拖库；face 缺席=503 装配防御面，ops DB 恒装配；旧构建路由未注册经兜底 handler 405=代际判别器）。应用史=`GET /v1/history/{kind}/{name}`（v0.38 apply_log 读面）。
 - MetricsInfo 不入 ops DB（数据在 TSDB；DB 只记"查询发生过"级别不记结果——保持 DB 轻）。
 
 ## 5. 可行性

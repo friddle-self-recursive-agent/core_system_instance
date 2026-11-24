@@ -298,7 +298,8 @@ Apply 流（确认弹窗）：
 
 - 列表=挂载 role 命中的 ApprovalNeeded 待审项；详情=**完整 diff 预览（不可折叠跳过）**+ 批准/驳回（均=Apply，approval_log 留痕）。
 - 批量：同 rule 同组的低危项可批量批；高危档（undo:none / 权限系统高危拦截）单条必审。
-- 数据来源：待审区=草稿缓存+ApprovalNeeded 事件；判定记录=approval_log。
+- 数据来源：待审区=草稿缓存+ApprovalNeeded 事件；判定记录=approval_log（v0.46 独立账落地）。
+- **已决账面区块（v0.46）**：屏尾增「已决账面」行表=`GET /v1/approvals` 现读不缓存（decision chip granted/rejected+obj+judged_by+rv+时刻；批准/驳回即决即见）——判定不再只留 apply_log 字符串考古，驳回（弃稿零文档面动作）亦有行在册；读面缺席=区块诚实降级注记（零 console error）。
 
 ## 详情页矩阵（全对象互跳）
 
