@@ -178,7 +178,16 @@ Workflow spec（新入库/变更）
 
 验收与验证流程全文（机械/语义/回归三层、报告模板、设计偏离回写）见 [acceptance.md](acceptance.md)。
 
-## 11. 可行性
+## 11. 执行模型：节点=session/agent，默认绑定 ConnectorOps（apply 即实现）
+
+- **节点执行单元**：global workflow 节点=session；service 内部 workflow 节点=session；跨 service（外部）=agent 调 agent。
+- **默认绑定**：每 workflow 缺省绑定同名 ConnectorOps（`<name>` → `<name>` ConnectorOps；`spec.connector` 可覆写）。
+- **apply 即实现**：workflow apply（创建/变更）→ apply-workflow agent 写入/更新该 ConnectorOps 实现（骨架+节点接线）；运行时不做代码即兴。
+- **调用链**：`docs（workflow spec）→ connectDef（scheme/ConnectorOps 对象）→ connectOps 代码`。
+- **流转**：引擎相位机只负责相位推进/刹车/记账；绑定的 ConnectorOps 按声明序列流转节点——Service 调用节点（ops）、Agent 节点（唤醒/派子任务）、其他 ConnectorOps（嵌套调用）。
+- **判别器**：apply 一条 workflow → 同名 ConnectorOps 实现出现且含节点流转骨架；改 spec 再 apply → 实现更新（diff 可查）；未绑定/未实现 → 决策面 `execution=unbound` 可见。
+
+## 12. 可行性
 
 | 风险 | 等级 | 说明 | 缓解 |
 |---|---|---|---|
