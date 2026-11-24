@@ -92,6 +92,6 @@ Session/Doc/TaskScheme 的**历史检索**设计：tag 元数据 + 简单排序�
 
 - **心跳**：会话推进点（相位推进/工具调用完成/产物落盘任一）落 ops（session_heartbeat 行：session/相位/最后动作/ts），watchdog 读最大 ts；
 - **watchdog**：装配层定时器（阈值可配，缺省 10m）超时合成 `SessionStalled`（复用合成死信机制；过阶段门 + dedup，同 session 同窗至多一条）；
-- **自愈固定顺序**：先注入固定 prompt「继续」（保留上下文，不重启）→ 恢复记 `SessionHealed`；仍无心跳 → 诊断（最后工具调用/日志/等待对象/权限面）→ 权限类产 `ApprovalNeeded` 向上提交；人工类按 bind 默认通道上报（缺省 email，dedup 窗口内至多一封）；长任务类产 `LongTaskRunning`（任务名/已运行/阶段/决策点），结束回收；
+- **自愈固定顺序**：先注入固定 prompt「继续」（保留上下文，不重启）→ 恢复记 `SessionHealed`；仍无心跳 → 诊断（最后工具调用/日志/等待对象/权限面）→ 权限类产 `ApprovalNeeded` 向上提交；人工类按 bind 用户已配置通道上报（未配置=不 notify 仅页面展示，notification.md 规则 6；外发 dedup 窗口内至多一封）；长任务类产 `LongTaskRunning`（任务名/已运行/阶段/决策点），结束回收；
 - **分工**：外部巡检只做确认与兜底，不代替系统判定；同会话连续自愈无效达阈值（缺省 2）→ 停手升级；
 - **判据**：注入停滞 → `SessionStalled` 在账且注入「继续」后恢复；权限阻塞 → `ApprovalNeeded` + 送达；人工 → bind 邮件（dedup 窗口内至多一封）；长任务 → `LongTaskRunning` 且无停滞误报。

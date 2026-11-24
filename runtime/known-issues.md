@@ -105,7 +105,7 @@ session 生命周期（agent-session.md）只有创建/恢复/结束，缺**活�
    watchdog 判定 SuspectedStall 后，不立即重启会话，先向该会话注入固定提示词 `继续`（continue）——保留上下文让其自行恢复。恢复成功 → `SessionHealed` 事件（含停滞时长、最后心跳点）。
 2. **仍未恢复 → 诊断卡因**（采集现场：最后工具调用/最后日志/等待对象/权限面）：
    - **需要权限** → **向上提交**：产 `ApprovalNeeded`（或对应 Escalate）事件，走权限审批链 + 通知，不自行绕过；
-   - **需要人工介入** → **bind 用户报告**：按会话 bind 用户的默认通知通道上报（bind 默认 notify=email → 走邮件）；
+   - **需要人工介入** → **bind 用户报告**：按会话 bind 用户已配置的通知通道上报；未配置任何通道=不 notify，仅页面展示（notification.md 规则 6）；
    - **长任务** → 见第 3 条，不算停滞。
 3. **长任务必须显式汇报**
    声明为长任务（或单步运行超阈值但有进展心跳）时，产 `LongTaskRunning` 事件：任务名/已运行时长/当前阶段/预计与**决策点**；有进展=有心跳，不进入 SuspectedStall。长任务结束后回收该事件状态。
@@ -115,5 +115,5 @@ session 生命周期（agent-session.md）只有创建/恢复/结束，缺**活�
 判据补充：
 - 注入「继续」后恢复 → 会话续跑且 `SessionHealed` 在账；
 - 权限阻塞场景 → `ApprovalNeeded` 出现且通知送达；
-- 人工介入场景 → bind 用户收到邮件（dedup 窗口内至多一封）；
+- 人工介入场景 → bind 用户已配置 email 时收到邮件（dedup 窗口内至多一封）；未配置通道时页面可见且零外发；
 - 长任务场景 → `LongTaskRunning` 有账且无 SuspectedStall 误报。
