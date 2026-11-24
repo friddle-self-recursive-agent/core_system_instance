@@ -283,6 +283,23 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 - L47-06 回归：go build/test/lint 绿+npm test 绿+loop-46 基线探针（路径替换版）全绿（approval_log 双账/已决账面判据不回退）。
 - L47-07 复原：探针声明面残留 apply 原文清场（docsRoot 权威=git，rv 乐观锁复原——探针零残留）。
 
+### 1.19 对账轮增量：docsRoot 存量对象净入 lint 面（2026-11-26，loop-48 轮——标准对账选点）
+
+**缺口根因（R-5，loop-47 缺口清单首选候选=deviations ③ 独立发现）**：spec 准入 checker（workservice `scheme.ValidateDoc`，core_design scheme.md 规则 6「R-TYPE 有规则即有 checker」）**应用点单一=apply 引擎准入第三步——只挡写入口**。docsRoot 存量对象零校验放行：读面 `globObjects` 对不可解析文档静默跳过（存量坏对象在 List 读面不可见）；存量形态违规对象（loop-47 实证 notify `connector.scheme.params` 字符串形态）读面放行、一编辑即 400 且按原文无法复原——「读面宽松/写面严格」双严格度不一致=存量面准入缺口。伴生缺口（loop-46 缺口 ③ 的同步 lint 选项）：docsRoot `core/scheme.yaml` 与声明权威 core_design `core/scheme.yaml` 双源系（cored `--scheme` 载入 core_design 仓，docsRoot 副本=消费方镜像）——镜像漂移零检出。
+
+**收口方向（净入 lint 面：给 checker 补存量面应用点，零新写路径零旁路）**：
+1. workservice v0.48（`internal/repository.LintGitDocs` + `cmd/cored-lint` 薄壳，lint 纯只读：零 ops DB 零 HTTP 零写面）：docsRoot 全 `*.yaml`/`*.yml` 文件系统通配（不经 List 读面——静默丢弃面正是被补的缺口），逐文件五闸与写路径同清单：①路径注册=storage 模板通配命中恰一 kind（零命中=野对象；多命中=歧义）②可解析（splitDoc+metaOf——读面静默丢弃面补检出）③身份一致（metadata.name/scope vs 文件名与路径派生 scope；nameSeg 命名规则=写面 concretePath 同闸）④spec 准入（`scheme.ValidateDoc`=apply 引擎准入第三步同闸门）⑤凭据来源形态（checkCredentialSource=Provider 写面同闸）；外加 scheme 镜像漂移闸（docsRoot `core/scheme.yaml` vs `--scheme` 载入源字节比对）。输出逐文件 OK/VIOLATION 行+计数（`--json` 机读）；退出码 0=绿 / 1=违规 / 2=用法错。
+2. core_design `lint/docsroot-admission.sh` wrapper（R-TYPE-2 双向可追溯：checker 头注释回指 scheme.md 规则 6；规则 6 checker 条目回指本 checker）。
+3. core-docs 内容轮：lint 对现存 docsRoot 全绿（notify params 已随 loop-47 随行规范化；本轮 lint 检出新违规→core-docs 规范化 commit）。
+
+**L48 验收线（探针编号 L48-*；探针=acceptance/loop-48.md）**：
+- L48-01 checker 落地活体：cored-lint 对生产 docsRoot 退出码 0 ∧ 逐文件 OK 行在册 ∧ files 计数与 docsRoot `*.yaml` 文件数机械一致（查询代替日志）。
+- L48-02 检出力单测（「无 checker 的 lint 规则=未生效」收口的可证伪面）：五闸逐类坏对象 fixture（野路径/不可解析/scope 漂移/spec 形态违规/凭据内嵌）逐类检出 ∧ 合规对象零误报 ∧ 违规时退出码 1。
+- L48-03 双闸门判定一致：临时副本 docsRoot 注入 params 字符串形态坏对象 → lint 检出 spec 违规 ∧ 同对象经 cored `POST /v1/apply dryRun`（零副作用预检）被写面拒（双严格度劈叉收口的机械反证面）。
+- L48-04 scheme 镜像漂移闸：生产 docsRoot 镜像与载入源字节一致=绿；漂移 fixture（单测/临时副本改一字节）=检出。
+- L48-05 回归：go build/test/lint 六仓绿 + npm test 绿 + loop-47 基线探针（路径替换版）全绿（热重绑/审批账面/指标真实样本表判据不回退）+ L42-02f face fetch 段。
+- L48-06 零残留：lint 纯只读——docsRoot git 状态探针前后零变化（core-docs commit 仅内容轮规范化，非探针残留）。
+
 ## 3. 逐页建议（现状 → 功能 → UI）
 ### 3.1 会话主页（dsh hero「探索未至之境」）
 - **现状**：纯 dsh hero：工作区选择 + 空输入框；无任何 core 信息。
@@ -346,6 +363,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 R-2 | metrics 数据面装配开启 + 阈值声明面最小样本源【已完成 2026-11-25（loop-45，§1.16）：三 profile 锚 `--metrics-source` 装配开启（carrier 随载体重启轮换代）+docsRoot notify 对象 observation.metrics 最小声明（桥点火演示口径）+metricsrc.BindWorkservice involved 三段同构（kind/scope/name 惯例——console 事件链两段死链修正）+采样器窗口半开对齐 E7 纪律；cored-bridge v0.31 stale 余量注记修正；探针=acceptance/loop-45.md】 | `/v1/metrics` 真实样本+MetricThreshold 落 run 三段 involved 可导航（细化=L45-01…07） |
 | 对账轮 R-3 | approval_log 审批判定独立账【实现拓扑与细化验收=§1.17（loop-46）：opslog approval_log 表+读写面（schema v0.46 修订——v0.9 A44 声明收编落地）+apiserver 两写钩子（批准 granted/驳回 rejected——驳回零留痕缺口收口）+`GET /v1/approvals` 读面+console 审批屏「已决账面」现读区块】 | 批准/驳回判定独立账面可查（细化=L46-01…07） |
 | 对账轮 R-4 | metrics 阈值声明面 apply 事件驱动热重绑【实现拓扑与细化验收=§1.18（loop-47）：桥契约重构（样本流桥级单通道+Source=纯绑定声明——重绑 O(1) 零通道抖动）+`Bridge.Rebind` 绑定表整体替换（零绑定=合法等待态，no-source 终态退场）+`StartRebind`（DocApplied×WorkService 过滤+积压合并+失败保旧表自愈）】 | 阈值声明 apply 落库即生效免重启（细化=L47-01…07） |
+| 对账轮 R-5 | docsRoot 存量对象净入 lint 面【实现拓扑与细化验收=§1.19（loop-48）：checker 存量面应用点=workservice `cmd/cored-lint`（五闸=路径注册/可解析/身份一致/spec 准入/凭据来源，写路径同清单）+scheme 镜像漂移闸（双源系对账收口）+core_design lint/docsroot-admission.sh wrapper（R-TYPE-2 双向可追溯）】 | 存量坏对象可检出且与写面判定一致（细化=L48-01…06） |
 
 ## 5. 执行红线（对 loop 的约束）
 
