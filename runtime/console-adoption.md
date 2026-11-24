@@ -300,6 +300,24 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 - L48-05 回归：go build/test/lint 六仓绿 + npm test 绿 + loop-47 基线探针（路径替换版）全绿（热重绑/审批账面/指标真实样本表判据不回退）+ L42-02f face fetch 段。
 - L48-06 零残留：lint 纯只读——docsRoot git 状态探针前后零变化（core-docs commit 仅内容轮规范化，非探针残留）。
 
+### 1.20 对账轮增量：Role/Group 文档面对象 + 权限矩阵 Role 列激活（2026-11-24，loop-49 轮——标准对账选点）
+
+**缺口根因（R-6，loop-46 缺口 ② 顺延）**：docsRoot 零 Role/Group 对象——授权面装载快照 `roles=0 groups=0`（cored-bridge.md §2 写面开关行：装载即权威快照——文档面零在册=授权面对象面空转，权限只靠 `DefaultAdmin` 字面量与进程级本地信任兜底）；console 权限面 Role/Group 卡=诚实空态注记（§1.14 L43-04「角色面=declared 余量」）；`ApprovalNeeded` 权限拒绝产源（v0.21）自实现以来 involved 引用的 Role/Group=测试 fixture 形态——生产 docsRoot 无实体可溯（事件链 `involved→文档` 末端死链）。scheme.yaml 声明面在位（Role/Group 行注册 storage `global/roles|groups/<name>.yaml`）——纯内容轮+UI 激活轮，零 Go 改动。
+
+**收口方向**：
+1. core-docs 内容轮：`global/roles/admin.yaml`（`builtinSet: [global/admin]` 声明的文档面载体——permissions 全域条目 + `on: [agent/core-headless]` 对象挂载）+ `global/groups/core-operators.yaml`（group 只绑 role，permission.md 规则 3 禁权限字段）。净入 lint 随行（files 基线 10→12）。
+2. console 权限面 Role 列激活：live 层小对象现读清单扩 Role/Group（docContent 同批）；permissions 屏增「Role 授权矩阵」区块（行=Role，列=on 挂载对象/权限域条目/绑定 group 反查——spec 现读全可点溯源；零对象时保留既有诚实空态注记）。
+3. 装载/热装载/ApprovalNeeded 产源/写面闸门=既有（v0.10 热装载、v0.21 产源）——本轮不触 workservice 代码，cored 恒代（deploy=plugin 层 + 文档库内容轮经 cored 启动装载生效）。
+
+**L49 验收线（探针编号 L49-*；探针=acceptance/loop-49.md）**：
+- L49-01 净入 lint 随行：cored-lint 对生产 docsRoot 退出码 0 ∧ `files=12 findings=0 mirror=ok`（files 计数与 docsRoot `*.yaml` 文件数机械一致，基线随新对象 +2）。
+- L49-02 授权面活体（stderr 锚不可查询面——用判定行为证装载）：restart 装载后受限主体 `dryRun` 断言 `role/admin` 写 global 域对象 → admit 过（200，零写面）；同请求匿名主体 → 403 denied——「断言须对上文档面装载对象才产生权限」的机械证明。
+- L49-03 ApprovalNeeded involved 实体化：受限主体**真写**（非 dryRun）在册 Role 对象 → 403 ∧ `/v1/triggers` 出现 `type=ApprovalNeeded ∧ source=permission` 留痕 ∧ event `involved=Role/global/admin`（docsRoot 在册实体——事件链末端可溯）∧ `/v1/notifications/deliveries` 增 `origin=route ∧ type=ApprovalNeeded` 条目 ∧ event_log `source='permission'` 行落库；反证面=同主体写非人审档 kind（Agent）→ 403 零事件。窗口去重口径：dedupKey=`permission:<obj>` 窗口内聚合——探针以「归档窗内 ≥1 行在册」判，不判增量（重复探针零新行=去重合法）。
+- L49-04 console 权限面激活：permissions 屏 Role/Group 卡非空态（Role=1 Group=1 行）∧ 「Role 授权矩阵」区块 spec 现读（on 挂载→agent 链接、权限域条目 scope+actions、绑定 group 反查→role 链接全可点）∧ `#/role/admin` 编辑器路由活体（四 tab 壳+正文现读）。
+- L49-05 回归：六仓 build/test/lint 绿 + npm test 绿 + loop-48 基线只读回归段（L46/L45/L43 判据不回退）+ L42-02f face fetch 段。
+- L49-06 零残留：positive 探针走 dryRun（零写面）+ denied 真写零落库——docsRoot git 状态探针前后零变化（内容轮 commit 非探针残留）；ops 账面新增行仅 denied 审计行与事件归档（探针合法产物，计入账面基线）。
+- L49-07 cored 恒判别：本轮 cored 零改动——exe sha 与 carrier-pre 定格一致（同代判别面；deploy=plugin dist 重载 + 两 web 重启触发文档库重装载）。
+
 ## 3. 逐页建议（现状 → 功能 → UI）
 ### 3.1 会话主页（dsh hero「探索未至之境」）
 - **现状**：纯 dsh hero：工作区选择 + 空输入框；无任何 core 信息。
@@ -364,6 +382,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 R-3 | approval_log 审批判定独立账【实现拓扑与细化验收=§1.17（loop-46）：opslog approval_log 表+读写面（schema v0.46 修订——v0.9 A44 声明收编落地）+apiserver 两写钩子（批准 granted/驳回 rejected——驳回零留痕缺口收口）+`GET /v1/approvals` 读面+console 审批屏「已决账面」现读区块】 | 批准/驳回判定独立账面可查（细化=L46-01…07） |
 | 对账轮 R-4 | metrics 阈值声明面 apply 事件驱动热重绑【实现拓扑与细化验收=§1.18（loop-47）：桥契约重构（样本流桥级单通道+Source=纯绑定声明——重绑 O(1) 零通道抖动）+`Bridge.Rebind` 绑定表整体替换（零绑定=合法等待态，no-source 终态退场）+`StartRebind`（DocApplied×WorkService 过滤+积压合并+失败保旧表自愈）】 | 阈值声明 apply 落库即生效免重启（细化=L47-01…07） |
 | 对账轮 R-5 | docsRoot 存量对象净入 lint 面【实现拓扑与细化验收=§1.19（loop-48）：checker 存量面应用点=workservice `cmd/cored-lint`（五闸=路径注册/可解析/身份一致/spec 准入/凭据来源，写路径同清单）+scheme 镜像漂移闸（双源系对账收口）+core_design lint/docsroot-admission.sh wrapper（R-TYPE-2 双向可追溯）】 | 存量坏对象可检出且与写面判定一致（细化=L48-01…06） |
+| 对账轮 R-6 | Role/Group 文档面对象 + 权限矩阵 Role 列激活【实现拓扑与细化验收=§1.20（loop-49）：core-docs 内容轮（global/roles/admin + global/groups/core-operators——声明面在位的纯数据轮）+console live 小对象现读扩 Role/Group+permissions 屏「Role 授权矩阵」spec 现读区块；零 Go 改动=装载/热装载/ApprovalNeeded 产源皆既有】 | docsRoot Role/Group 对象净入授权面+involved 实体化+UI 矩阵激活（细化=L49-01…07） |
 
 ## 5. 执行红线（对 loop 的约束）
 
