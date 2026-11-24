@@ -132,6 +132,8 @@ Workflow 引擎 = core 内的一段**确定性代码**（状态机 + 触发器 +
   ↓ Report    Status 追平 + DriftReport/SessionLog 归档 + Event(DriftFixed)
 ```
 
+**override 默认验收报告标准**=acceptance.md §8：里程碑标题 `[<scope>] <里程碑>（loop-<seq>）` + 机械证据指针 + 页面截图（内置 Skill acceptance-screenshot/chromium-headless 由 agent 在验收节点调用）。
+
 **每一步都可调整**：步骤=声明的相位与 TaskScheme 引用，调整=改 spec/模板参数后 Apply（如"prod 必须人批"收紧 Gate、"preview 自动"放宽 Execute）；整条可用 spec.enabled 一键停用。
 
 ## 8. Workflow 落地 = 专用 agent（apply-workflow）

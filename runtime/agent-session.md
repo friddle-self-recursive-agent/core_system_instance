@@ -37,6 +37,8 @@ systems/<s>/instances/<i>/docs/
 
 Agent 会话的工具上下文 = Provider.llmPrompt（出厂说明书）+ **Skill**（工具使用处的缓存：注入提示+成功调用示例）。Session 成功调用后自动沉淀 Skill（阈值见 open-questions）；下次同类任务按需注入，不必重学。规则：**Skill 是缓存不是真相**——与 Provider 契约冲突即失效；provider 版本变更默认作废；示例脱敏。console 资源树把 Skill 列为一类节点。
 
+
+**内置验收 Skill（acceptance-screenshot）**：Provider=`browser-headless`（provider.md 示例，本地工具型）、工具=`chromium-headless`；产出=页面截图 PNG（落 acceptance/shots/loop-<seq>-*.png，gitignore 永不提交）。workflow 验收节点通过 agent 调用该 skill 取证——首次成功调用自动沉淀（注入提示+成功命令示例），Provider 版本变更即失效。截图失败=报告标 unverified，不许手绘替代。
 ## 5. 检索与简单 RAG（tag + 分页 + 迭代查找）
 
 Session/Doc/TaskScheme 的**历史检索**设计：tag 元数据 + 简单排序检索，不上向量库。

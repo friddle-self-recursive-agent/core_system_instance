@@ -65,3 +65,15 @@ next: <下一轮建议>
 - 外部通道一律本地桩：SMTP → 本机 sink 进程（断言收到报文而非真实投递）；HTTP 外部依赖 → 本机 stub；真实链路 E2E 仅在显式开关下执行（`CORE_MAIL_E2E=1` 等），且不计入回归基线。
 - 默认 `go test`/探针运行的**外发连接数必须为 0**（可机读断言：strace/ss 采样或桩计数）。
 - 探针模板逐轮继承，因此该要求对**新轮继承的基线同样生效**：发现继承基线含真实外发时，修复基线而不是照跑。
+
+## 8. 验收报告标准（workflow override 默认，含页面截图）
+
+里程碑型验收报告统一格式（例：`[core-system] console v2 全收口 E0–E7（loop-43）`）：
+
+- **标题**：`[<scope>] <里程碑一句话>（loop-<seq>）`——人一眼知道"哪个系统、成了什么、哪轮"；
+- **结论段**：结论 + 关键证据指针（探针脚本/日志/查询面路径）；不写"应该/大概"，只写机械证据；
+- **页面截图**（UI/交互/渲染类验收**必须**）：简单几张即可（主屏 + 关键流 1-2 张），由内置 Skill `acceptance-screenshot`（Provider=`browser-headless`，工具=`chromium-headless`）在验收节点经 agent 调用产出；截图存 `acceptance/shots/loop-<seq>-*.png`（gitignore，R-PUB-3 永不入公开仓）；截图失败=该项标 unverified，不得用文字替代；
+- **偏差与余量**：deviations 区逐条"现象→处置"；declared-deferred 余量清单显式列出；
+- **产物与提交**：代码/文档提交号、验收产物路径。
+
+workflow override 的默认验收报告标准=本节：dev-delivery override 尾节点（notify-report）产出的报告必须满足以上格式与截图要求。
