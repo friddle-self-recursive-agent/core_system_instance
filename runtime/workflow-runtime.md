@@ -187,6 +187,20 @@ Workflow spec（新入库/变更）
 - **流转**：引擎相位机只负责相位推进/刹车/记账；绑定的 ConnectorOps 按声明序列流转节点——Service 调用节点（ops）、Agent 节点（唤醒/派子任务）、其他 ConnectorOps（嵌套调用）。
 - **判别器**：apply 一条 workflow → 同名 ConnectorOps 实现出现且含节点流转骨架；改 spec 再 apply → 实现更新（diff 可查）；未绑定/未实现 → 决策面 `execution=unbound` 可见。
 
+### 11.1 落地形态（2026-11-26，R-7 轮——机械面/agent 面二分）
+
+「apply 即实现」拆成两步，各自可机械验收：
+
+| 步 | 执行体 | 产物 | 验收判据 |
+|---|---|---|---|
+| 骨架+节点接线 | **cored 绑定物化器**（`--allow-apply` 写面开启时装配；DocApplied×Workflow 订阅 + 装配期存量枚举初值——metrics 阈值桥 v0.47 同款范式） | 同名（或 `spec.connector` 覆写）ConnectorOps 对象：`spec.workservice=workflow-engine` + `spec.workflow=<锚名>` + `spec.ops=[flow]` + `spec.flow.nodes`（节点名/标题/unit/op/connector/provider 投影——unit 声明缺省 session，跨服务=agent 调 agent 待节点声明 `unit: agent` 表达） | apply 后 `GET /v1/objects/ConnectorOps/<名>` 200 且 flow.nodes=生效相位投影；改 spec 再 apply → 对象 rv+1（`/v1/history` diff 可查）；幂等重入=noop 零提交 |
+| 实现代码（connectOps） | **apply-workflow agent**（连 developer-system 闭环，§8） | 实现仓 OpsConnector 代码+WorkService 六面体补全 | declared-deferred（需要 developer-system 拉起；运行时不做代码即兴——红线不变） |
+
+- **所有面语义**：物化器只写 `labels[core/origin]=workflow-bind` 标注的对象（自己物化的骨架）——人/agent 已写的 ConnectorOps 实现零盲写；骨架翻转为实现=实现在该对象上继续演进（label 由实现侧改写）。
+- **绑定解析**：生效对象（override 优先）`spec.connector` → 归一化（`connector-ops/<name>` 前缀剥离）；未声明=同名。解析结果入聚合面 `execution` 投影：`{state: bound|unbound, connector, connectorScope, skeleton}`——unbound=绑定名解析成功而 ConnectorOps 对象缺席（缺口可见）；skeleton=true=对象仍为物化器骨架（origin=workflow-bind），实现代码未落。
+- **宿主 WorkService**：`workflow-engine`（global/workservices/，content round）——flow ConnectorOps 的实现落点声明（impl ref=workservice 仓 workflow 包，即 cored 引擎自身=骨架执行面）；真实节点内容实现=apply-workflow agent 面。
+- **builtin 无文档 workflow**（core-workflow/default-task 等）：绑定=同名，无文档对象即无物化触发 → 决策面 unbound（缺口不静默——其实现=引擎内置态机，connectDef 缺席照实可见）。
+
 ## 12. 可行性
 
 | 风险 | 等级 | 说明 | 缓解 |

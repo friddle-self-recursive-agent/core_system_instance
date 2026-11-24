@@ -318,7 +318,28 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 - L49-06 零残留：positive 探针走 dryRun（零写面）+ denied 真写零落库——docsRoot git 状态探针前后零变化（内容轮 commit 非探针残留）；ops 账面新增行仅 denied 审计行与事件归档（探针合法产物，计入账面基线）。
 - L49-07 cored 恒判别：本轮 cored 零改动——exe sha 与 carrier-pre 定格一致（同代判别面；deploy=plugin dist 重载 + 两 web 重启触发文档库重装载）。
 
-## 3. 逐页建议（现状 → 功能 → UI）
+### 1.21 对账轮增量：workflow 执行模型绑定面——execution 判别器 + apply 即实现骨架物化（2026-11-26，loop-50 轮——标准对账选点 R-7）
+
+**缺口根因（R-7，loop-49 缺口清单首选，人裁决 core_design@4375031+instance@05d3bb0 §11）**：workflow 执行模型声明面已落（Workflow `spec.connector: ?ref`、concepts/workflow.md §1.3、connector.md 规则 6）——实现面零落点：①workflow 对象 apply 后无任何绑定面动作（同名 ConnectorOps 缺席，docsRoot 六 ConnectorOps 与 workflow 锚零关联）；②决策面无 `execution` 投影（`/v1/workflows` 聚合行无绑定状态——绑定缺口不可见，违反 connector.md 规则 6「缺口不静默」）；③console workflows 屏无执行绑定呈现。
+
+**收口方向（机械面/agent 面二分——workflow-runtime.md §11.1 落地形态）**：
+1. workservice v0.49（`internal/flowbind` 新包）：**绑定物化器**——①`Resolve`（生效对象 spec.connector 归一化/缺省同名 + 生效相位 → flow.nodes 节点骨架投影：name/title/unit（声明缺省 session）/op/connector/provider）②`Skeleton`（确定性 ConnectorOps 对象内容：workservice=workflow-engine + workflow=<锚名> + ops=[flow] + flow.nodes + labels[core/origin]=workflow-bind）③`Materializer`（装配期存量枚举初值 + DocApplied×Workflow 订阅热路径——metrics 阈值桥 v0.47 同款范式；物化走 apply.Engine 同一三步闸门 fieldManager=workflow:bind；幂等=canonical 比对 noop 零提交；spec 变更→rv+1 diff 可查；**所有面**：只写 origin=workflow-bind 标注对象，人/agent 实现零盲写；失败=保旧面+stderr 告警不打死写路径）。
+2. 聚合面 execution 投影（`/v1/workflows` 行集增 `execution` 键）：`{state: bound|unbound, connector, connectorScope, skeleton}`——绑定解析=生效对象 spec.connector 覆写/缺省同名；对象缺席=unbound（缺口可见）；origin=workflow-bind=skeleton=true（实现代码未落）。
+3. 声明面随行（core_design scheme.yaml + docsRoot 镜像同步）：ConnectorOps spec 增 `flow: "?{nodes: []{name, title: ?, unit: session|agent, op: ?, connector: ?, provider: ?}}"`（R-TYPE 有规则即有 checker——checker 同闸吃下）+ docsRoot `global/workservices/workflow-engine/`（flow ConnectorOps 宿主 WorkService，impl ref=workservice 仓 workflow 包=骨架执行面）。
+4. console：workflows 列表「执行」列 + wf 详情头 execution chip（bound→ConnectorOps 编辑器深链；unbound→warn chip 缺口提示；skeleton→mute chip）——决策面 execution=unbound 可见的 UI 落点。
+
+**L50 验收线（探针编号 L50-\*；探针=acceptance/loop-50.md）**：
+- L50-01 apply 即实现（核心判据）：apply 探针 workflow（global/flow-probe）→ 同名 ConnectorOps 出现（`GET /v1/objects/ConnectorOps/flow-probe?scope=global` 200 ∧ spec.flow.nodes=生效相位投影 ∧ labels[core/origin]=workflow-bind ∧ spec.workservice=workflow-engine）∧ 聚合面该锚 `execution.state=bound`。
+- L50-02 改 spec 再 apply → 实现更新：spec 增一相位再 apply → ConnectorOps rv+1 ∧ flow.nodes 计数+1 ∧ `/v1/history/ConnectorOps/flow-probe?scope=global` apply_log 行在册（diff 可查）∧ 幂等重入（同内容三 apply）→ noop 零 rv 前进。
+- L50-03 未绑定缺口可见：builtin 注册表锚（core-workflow——无文档对象无物化）聚合行 `execution.state=unbound` ∧ console workflows 屏 warn chip（headless）——决策面 unbound 可见（缺口不静默）。
+- L50-04 所有面：人写 ConnectorOps（先于物化落对象，origin≠workflow-bind）→ 对应 workflow apply → 该对象零盲写（rv 不动、内容零变化）∧ 聚合行 state=bound ∧ skeleton=false。
+- L50-05 存量枚举初值：新 cored 装配启动 → dev-delivery（override 生效锚）同名 ConnectorOps 骨架物化在册（systems/self-recursive-core/connector-ops/）∧ 聚合行 bound——apply 事件缺席的存量文档同达绑定面。
+- L50-06 载荷代际：新代 `/v1/workflows` 行含 `execution` 键 ∧ carrier-pre 旧代载荷无该键（代际判别器）；stderr 装配锚 `workflow 绑定=on(n)` 在册。
+- L50-07 console 决策面（headless）：workflows 屏「执行」列 chips（bound 可点→ConnectorOps 编辑器屏渲染 flow 骨架）∧ wf 详情头 chip ∧ 零 console error 零 4xx；截图 ≥2 张（acceptance/shots/loop-50-*.png）。
+- L50-08 回归：六仓 go build/test/lint 绿 + npm test 绿 + loop-49 基线判据只读段（L49-02 dryRun 三面/L49-03 involved 实体化/L43-02aR 真实样本表/L46 已决账面）不回退 + L42-02f face fetch 段 + cored-lint `files=14 findings=0 mirror=ok`（12→+workflow-engine+dev-delivery 骨架）。
+- L50-09 零残留：探针对象（flow-probe 两件）git rm 清场 → 聚合面行消失 ∧ docsRoot git 状态=内容轮 commit 非探针残留 ∧ ops 账面新增行仅探针 apply 审计行（合法产物）。
+
+
 ### 3.1 会话主页（dsh hero「探索未至之境」）
 - **现状**：纯 dsh hero：工作区选择 + 空输入框；无任何 core 信息。
 - **功能建议**：hero 之上注册 Welcome 大屏 slot（v2 屏幕 0：业务健康度大数字、dev-delivery 阶段条、Service 简卡行、业务视角重要事件、快捷入口）；「选择工作区」语义映射为「选择要查看/对话的系统 scope」，下拉里并排列出系统清单（来自 cored 读面）。
@@ -383,6 +404,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 R-4 | metrics 阈值声明面 apply 事件驱动热重绑【实现拓扑与细化验收=§1.18（loop-47）：桥契约重构（样本流桥级单通道+Source=纯绑定声明——重绑 O(1) 零通道抖动）+`Bridge.Rebind` 绑定表整体替换（零绑定=合法等待态，no-source 终态退场）+`StartRebind`（DocApplied×WorkService 过滤+积压合并+失败保旧表自愈）】 | 阈值声明 apply 落库即生效免重启（细化=L47-01…07） |
 | 对账轮 R-5 | docsRoot 存量对象净入 lint 面【实现拓扑与细化验收=§1.19（loop-48）：checker 存量面应用点=workservice `cmd/cored-lint`（五闸=路径注册/可解析/身份一致/spec 准入/凭据来源，写路径同清单）+scheme 镜像漂移闸（双源系对账收口）+core_design lint/docsroot-admission.sh wrapper（R-TYPE-2 双向可追溯）】 | 存量坏对象可检出且与写面判定一致（细化=L48-01…06） |
 | 对账轮 R-6 | Role/Group 文档面对象 + 权限矩阵 Role 列激活【实现拓扑与细化验收=§1.20（loop-49）：core-docs 内容轮（global/roles/admin + global/groups/core-operators——声明面在位的纯数据轮）+console live 小对象现读扩 Role/Group+permissions 屏「Role 授权矩阵」spec 现读区块；零 Go 改动=装载/热装载/ApprovalNeeded 产源皆既有】 | docsRoot Role/Group 对象净入授权面+involved 实体化+UI 矩阵激活（细化=L49-01…07） |
+| 对账轮 R-7 | workflow 执行模型绑定面：execution 判别器 + apply 即实现骨架物化【实现拓扑与细化验收=§1.21（loop-50）：workservice v0.49 `internal/flowbind`（绑定物化器=装配期枚举+DocApplied×Workflow 热路径，走 apply 闸门 fieldManager=workflow:bind，origin=workflow-bind 所有面）+聚合面 execution 投影+scheme.yaml ConnectorOps flow 声明+docsRoot workflow-engine 宿主 WorkService+console workflows 屏执行 chip】 | apply 即同名 ConnectorOps 骨架出现且 diff 可查+决策面 execution=unbound 可见（细化=L50-01…09） |
 
 ## 5. 执行红线（对 loop 的约束）
 
