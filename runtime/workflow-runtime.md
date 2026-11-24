@@ -212,6 +212,10 @@ Workflow spec（新入库/变更）
 - **观测面非账本**：受理投影=进程内环（有界，重启归零=幂等重入不重复派单的语义锚）；持久态=骨架对象本体（聚合面 `execution.skeleton=true`）+ apply_log 审计（fieldManager=workflow:bind）——投影丢失不致实现缺口静默。
 - **余量（declared-deferred）**：会话真实拉起与 ask 批准动作面（ApprovalNeeded→人批→spawn）、watch-only 自监控闭环（§8）、developer-system 代码化调用——随 agent-session 域落地轮扩。
 
+### 11.3 派单第二来源：Proposal 批准派单（2026-11-26，能力 B 轮——concepts/proposal.md）
+
+apply-workflow 锚的派单投影自 v0.51 起有**第二触发源**：Proposal（需求提案，core_design concepts/proposal.md——console 提需求→审批→派工的一等对象）对象以 `spec.status=approved` 落库 → 一条派单受理投影（同 face `GET /v1/agents/dispatches`，行 `kind=proposal`——v0.50 骨架派单行补 `kind=workflow` 投影，新载荷键=代际判别器）。与骨架派单的分工：骨架派单=「骨架→实现代码」的交棒（步 1→步 2）；Proposal 派单=「需求→执行体」的交棒（批准后 agent 产出=文档草稿（docsRoot 对象）或部署侧任务文件，落点声明=spec.landing 产物指针）。载荷带 proposal 名/目标（title/summary）/验收标准（acceptance）/priority/proposer——执行体输入随行（agent 面余量=真实拉起后消费）；审批链复用（ApprovalNeeded 提交分流自产 + ApprovalGranted/Rejected 判定事件 + approval_log 账）与状态机词汇见 proposal.md §4/§5。**红线不变**：派单受理≠拉起；Proposal 不 enable 任何 workflow、不自动执行代码。
+
 ## 12. 可行性
 
 | 风险 | 等级 | 说明 | 缓解 |
