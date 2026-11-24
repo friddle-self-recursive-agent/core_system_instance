@@ -228,6 +228,7 @@
 - L45-04 run 同拍落点：`/v1/workflows/runs` 行集含 `eventId` 命中 L45-03 事件 id 的 run（owner 对账锚 core-workflow）；console 事件详情 involved 链 `involvedRoute` 三段可点（`doc/WorkService/global/notify`——两段死链不回归）。
 - L45-05 窗口半开对齐：EventCountsSince 单测——相邻窗端点零重叠（半开 `(since, now]`）∧ 首拍全量口径不变。
 - L45-06 回归：go build/test/lint 六仓绿 + npm test 绿 + loop-44 探针基线（probe-e44/e44-ui-verify 路径替换版）全绿；`/v1/objects/WorkService/notify?scope=global` 200（L44-01 不回退，正文含 observation 声明）。
+- L45-07 判据升级（数据面装配的随行件，模式同 loop-44 E6R-UI-28）：**L43-02a「指标面空投影诚实空态」升级为「指标面真实样本表」**（数据面装配开启→events.\* 行在册=装配开启的反证判据；旧空态退场）；**metrics 屏即席查询改跨窗口全量**（Query 面声明语义：窗口标签=采样器部署知识客户端不复制——window=1h 硬编码在数据面装配后 404 化且 4xx 记 console error 违零 error 硬线，E6R-UI-30/31 实证）。
 
 console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互模式与信息结构，不锁组件 API）：
 
