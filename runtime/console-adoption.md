@@ -381,6 +381,29 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 - Workspace 出现按 Service 的 project，新会话归组正确；Ungrouped 折叠/隐藏；
 - 独立页路由仍可达（保留）；截图走 acceptance-screenshot（Chromium headless），报告按 §8。
 
+### 1.24 用户裁决增量：能力 B——需求提交流（2026-11-24 裁决「B 优先，A 次之」，loop-52 轮）
+
+**缺口根因（用户裁决 2026-11-24）**：用户要在 agent-core 界面上**直接提交需求**（像在对话里提要求一样）——需求先成为一等对象、走审批、自动落地为文档草稿/派工任务。现状对账：①需求无对象形态（只能进对话或文档散记——不入库、无状态机、不可对账）；②审批链已立（v0.46 approval_log 独立账+`console:approve` 约定串+审批族事件）但只服务「草稿代改代审」，无需求级判定面；③派单面已立（v0.50 `GET /v1/agents/dispatches`）但触发源只有 workflow 骨架物化一种；④console 无需求提案屏。
+
+**收口方向（按现有架构最小落点；概念文档=core_design concepts/proposal.md）**：
+1. 声明面：`kind: Proposal` 注册（core_design/core/scheme.yaml——storage `global/proposals/<name>.yaml | systems/<s>/proposals/<name>.yaml`；spec `title/summary/acceptance[]/impact/priority/proposer/status`+可选 `landing` 产物指针；status 闭合集 `draft|submitted|approved|rejected|landed`）。
+2. 数据面：cored 读面 `GET /v1/proposals`（列表/详情/状态过滤）；写面零新端点（Proposal 走既有 apply 管线 spec 准入 checker——枚举闭合集闸门）；审批分流=部署侧 `--proposal-auto-approve=<priority csv>`（缺省空=全人审，宁慢勿越）；高危提交引擎自产 `ApprovalNeeded`（event.md 规则 15，source=core，dedupKey=`proposal:<obj>`，route `notification/*`）。
+3. 审批链复用：批准=草稿（status=approved）→ `fromDraft` Apply `fieldManager=console:approve`（granted 行+`ApprovalGranted` 事件 source=human）；驳回=草稿（status=rejected）→ `fromDraft` Apply `fieldManager=console:reject`（**v0.51 对称扩展**：rejected 行 rv=落库后版本+`ApprovalRejected` 事件）。
+4. 派单面（第二触发源）：Proposal status=approved 落库 → flowbind 派单面 `kind=proposal` 行（agent=apply-workflow，载荷带 proposal 名/目标/验收/priority/proposer，eventId=DocApplied 回执同源；**受理≠拉起**照旧诚实投影；rejected 不派单）。
+5. console：屏幕「需求提案」（`#/proposals` 列表+提交表单；`#/proposal/:scope/:name` 详情=六要素+状态+派单行+产物指针+批准/驳回动作）——提交=草稿→Apply 全流程（fieldManager=console:propose）。
+6. 落地产物：本轮打通到「派单受理+产物指针」（spec.landing 声明）；产物真实落盘=apply-workflow agent 真实拉起段（declared-deferred，照旧）。
+
+**L52 验收线（探针编号 L52-\*；探针=acceptance/loop-52.md）**：
+- L52-01 界面提交→对象在库：提交一条需求（表单→草稿→fromDraft Apply）→ `GET /v1/proposals` 该提案行在册（rv=1 ∧ status=submitted）∧ docsRoot `global/proposals/<name>.yaml` 落盘（git 权威）。
+- L52-02 批准→派单同源：批准（fromDraft Apply console:approve）→ status=approved ∧ `GET /v1/agents/dispatches` 出现对应行（`kind=proposal ∧ agent=apply-workflow ∧ autoLevel=ask ∧ action=approved ∧ rv=落库 rv ∧ eventId=DocApplied 回执同源`）∧ approval_log granted 行在账。
+- L52-03 驳回→无派单：另一提案驳回（fromDraft Apply console:reject）→ status=rejected ∧ approval_log rejected 行在账 ∧ 派单面零该提案行。
+- L52-04 分流可配：`--proposal-auto-approve` 缺省=提交即产 ApprovalNeeded（source=core，involved=Proposal 锚）；命中清单的 priority（探针专用实例）→ 提交即自动 approved+granted 行（fieldManager=proposal:auto）+派单照常（stderr 装配锚在册）。
+- L52-05 读面代际：新代 `GET /v1/proposals`=200 ∧ 载荷形状 `{count, proposals}` ∧ 状态过滤生效；旧代 405（代际判别器）。
+- L52-06 console 屏活体（headless）：`#/proposals` 列表/表单/详情真数据（列表行=真实提案名 ∧ 详情六要素+派单行+产物指针）∧ 批准/驳回动作闭环（状态 chip 翻转）∧ 零 console error；截图 ≥2 张（列表+详情，acceptance/shots/loop-52-*.png）。
+- L52-07 红线：提案对象不 enable 任何 workflow（dispatch 投影≠拉起——run 面/触发接线零变化）∧ R-PUB lint 全绿（提案内容含占位符纪律）∧ 探针零外发。
+- L52-08 回归：六仓 go build/test/lint 绿 + npm test 绿 + loop-51 基线判据只读段（派单面 workflow 行/幂等不派单/所有面不派单）不回退 + cored-lint 全绿（探针对象清场后 files 基线复原）。
+- L52-09 零残留：探针 Proposal 对象 git rm 清场 → 读面行消失 ∧ docsRoot git 洁性。
+
 ### 3.1 会话主页（dsh hero「探索未至之境」）
 - **现状**：纯 dsh hero：工作区选择 + 空输入框；无任何 core 信息。
 - **功能建议**：hero 之上注册 Welcome 大屏 slot（v2 屏幕 0：业务健康度大数字、dev-delivery 阶段条、Service 简卡行、业务视角重要事件、快捷入口）；「选择工作区」语义映射为「选择要查看/对话的系统 scope」，下拉里并排列出系统清单（来自 cored 读面）。
@@ -447,6 +470,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 R-6 | Role/Group 文档面对象 + 权限矩阵 Role 列激活【实现拓扑与细化验收=§1.20（loop-49）：core-docs 内容轮（global/roles/admin + global/groups/core-operators——声明面在位的纯数据轮）+console live 小对象现读扩 Role/Group+permissions 屏「Role 授权矩阵」spec 现读区块；零 Go 改动=装载/热装载/ApprovalNeeded 产源皆既有】 | docsRoot Role/Group 对象净入授权面+involved 实体化+UI 矩阵激活（细化=L49-01…07） |
 | 对账轮 R-7 | workflow 执行模型绑定面：execution 判别器 + apply 即实现骨架物化【实现拓扑与细化验收=§1.21（loop-50）：workservice v0.49 `internal/flowbind`（绑定物化器=装配期枚举+DocApplied×Workflow 热路径，走 apply 闸门 fieldManager=workflow:bind，origin=workflow-bind 所有面）+聚合面 execution 投影+scheme.yaml ConnectorOps flow 声明+docsRoot workflow-engine 宿主 WorkService+console workflows 屏执行 chip】 | apply 即同名 ConnectorOps 骨架出现且 diff 可查+决策面 execution=unbound 可见（细化=L50-01…09） |
 | 对账轮 R-8 | apply-workflow agent 派单面：骨架物化即派单受理投影【实现拓扑与细化验收=§1.22（loop-51）：workservice v0.50 flowbind `dispatch.go`（DispatchLog 环=wake 同构——created/updated 即派单，noop/skipped 不派单，autoLevel=ask 数据面）+`GET /v1/agents/dispatches` 读面+console wf 详情骨架态派单行；受理≠拉起——真实拉起=dsh 会话挂载 declared-deferred】 | 骨架物化即 apply-workflow 派单受理投影可查且幂等/所有面/元数据变更零噪音（细化=L51-01…09） |
+| 用户裁决 能力 B | 需求提交流：console 提交需求 → Proposal 对象 → 审批 → 自动落文档/派工【实现拓扑与细化验收=§1.24（loop-52）：workservice v0.51 `internal/proposal`（分流 watcher=DocApplied×Proposal 订阅——approved 即 apply-workflow 派单 kind=proposal 行/auto-approve 引擎自写 fieldManager=proposal:auto/高危提交 ApprovalNeeded 自产 source=core）+`GET /v1/proposals` 读面+apiserver `console:reject` 对称扩展（rejected 行+ApprovalRejected 事件）+core_design kind:Proposal+concepts/proposal.md+console「需求提案」屏（表单/列表/详情/批准/驳回）】 | 界面提交→Proposal 在库（rv=1 submitted）∧批准→approved+派单投影+eventId 同源∧驳回→rejected+无派单∧分流可配（细化=L52-01…09） |
 
 ## 5. 执行红线（对 loop 的约束）
 
