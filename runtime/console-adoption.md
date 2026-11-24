@@ -339,6 +339,27 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 - L50-08 回归：六仓 go build/test/lint 绿 + npm test 绿 + loop-49 基线判据只读段（L49-02 dryRun 三面/L49-03 involved 实体化/L43-02aR 真实样本表/L46 已决账面）不回退 + L42-02f face fetch 段 + cored-lint `files=14 findings=0 mirror=ok`（12→+workflow-engine+dev-delivery 骨架）。
 - L50-09 零残留：探针对象（flow-probe 两件）git rm 清场 → 聚合面行消失 ∧ docsRoot git 状态=内容轮 commit 非探针残留 ∧ ops 账面新增行仅探针 apply 审计行（合法产物）。
 
+### 1.22 对账轮增量：apply-workflow agent 派单面——骨架物化即派单受理投影（2026-11-26，loop-51 轮——标准对账选点 R-8）
+
+**缺口根因（R-8，loop-50 缺口清单首选）**：§11.1 落地形态二分已落（骨架+节点接线=cored 机械面收口）而**两步之间的接口面零落点**——骨架物化（=「该版本实现未落」的机械签名）后无任何 apply-workflow agent 派单动作（§8 拉起形态：dsh 会话挂载/触发接线/AUTOLEVEL 三者对账余量）；workflow-runtime.md §11.1 步 2「实现代码=apply-workflow agent 面」declared-deferred 前无接口，骨架→agent 的交棒不可见不可查。
+
+**收口方向（拉起形态首段——workflow-runtime.md §11.2）**：
+1. workservice v0.50（flowbind `dispatch.go`）：**派单受理投影**——物化器一次真实物化动作（`created|updated`）即记一条对 `apply-workflow` 锚（builtin 专用 agent，§8）的派单受理（`DispatchLog` 环=workflow.WakeLog 同构；`noop`/`skipped` 不派单——无新实现可做零噪音）；`autoLevel: ask` 数据面在册（§8 默认；批准/拉起动作面随真实拉起段落地）；sink 装配层注入（nil=静默——headless 载体零影响）。
+2. 聚合面读口（`GET /v1/agents/dispatches`，恒开）：`{count, accepted, dropped, dispatches:[{seq, agent, status, autoLevel, action, workflow, scope, connector, rv, eventId, at}]}`——rv=骨架落库后版本（实现侧 diff 基线）、eventId=DocApplied 回执（来源链可回指）；face 缺席=503；旧构建 405=代际判别器。
+3. console：wf 详情配置 tab 骨架态（execution.skeleton=true）增「派单（apply-workflow）」行——受理投影现读（×n 计数+最近 action/rv/autoLevel；进程内环重启归零=缺席如实标注，实现未落持久态=execution.skeleton 兜底）。
+4. 诚实边界（声明面随行）：**派单受理 ≠ agent 会话已拉起**（wake 面同构）——真实拉起=dsh 会话挂载/agent-session 域 deferred；观测面非账本（持久态=骨架对象+apply_log 审计）。
+
+**L51 验收线（探针编号 L51-\*；探针=acceptance/loop-51.md）**：
+- L51-01 骨架物化即派单（核心判据）：apply 探针 workflow（global/flow-probe）→ `GET /v1/agents/dispatches` 出现该锚受理行（`agent=apply-workflow ∧ status=accepted ∧ autoLevel=ask ∧ action=created ∧ connector=flow-probe ∧ rv=骨架落库 rv ∧ eventId=DocApplied 回执同源`）。
+- L51-02 实现更新再派单：spec 增相位再 apply → 第二条受理行（`action=updated ∧ rv=2`）∧ 骨架 rv 同步（两投影同源）。
+- L51-03 幂等不派单：同内容重 apply（noop）→ 受理计数不前进（无新实现可做——零噪音）。
+- L51-04 所有面不派单：人写 ConnectorOps（origin≠workflow-bind）→ 对应 workflow apply → 物化器 skipped → 受理计数不前进（零盲写语义随行）。
+- L51-05 元数据变更有别于骨架变更：workflow metadata.tags apply（spec 相位零变化）→ 骨架 noop → 零新派单（派单只随节点接线变化——spec 变更≠骨架变更的判别面）。
+- L51-06 载荷代际：新代 `/v1/agents/dispatches`=200 ∧ carrier-pre 旧代同端点 405（代际判别器）；stderr 装配锚 `workflow 派单=on` 在册（判据走 /proc cmdline+exe sha+HTTP 三重机械面）。
+- L51-07 console 决策面（headless）：wf 详情配置 tab 派单行现读（`apply-workflow ×n` chip ∧ autoLevel=ask ∧ 受理≠拉起注记）∧ 零 console error；截图 ≥1 张（acceptance/shots/loop-51-*.png）。
+- L51-08 回归：六仓 go build/test/lint 绿 + npm test 绿 + loop-50 基线判据只读段（L50-01…05 execution 投影/L49-02 dryRun 三面/L43-02aR 真实样本表/L46 已决账面）不回退 + L42-02f face fetch 段 + cored-lint `files=14 findings=0 mirror=ok`（本轮零 docsRoot 对象新增——基线不动）。
+- L51-09 零残留：探针对象 git rm 清场（flow-probe 两件+probe-owned 两件）→ 聚合面行消失 ∧ docsRoot git 洁性（内容轮 commit 非探针残留）。
+
 
 ### 3.1 会话主页（dsh hero「探索未至之境」）
 - **现状**：纯 dsh hero：工作区选择 + 空输入框；无任何 core 信息。
@@ -405,6 +426,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 R-5 | docsRoot 存量对象净入 lint 面【实现拓扑与细化验收=§1.19（loop-48）：checker 存量面应用点=workservice `cmd/cored-lint`（五闸=路径注册/可解析/身份一致/spec 准入/凭据来源，写路径同清单）+scheme 镜像漂移闸（双源系对账收口）+core_design lint/docsroot-admission.sh wrapper（R-TYPE-2 双向可追溯）】 | 存量坏对象可检出且与写面判定一致（细化=L48-01…06） |
 | 对账轮 R-6 | Role/Group 文档面对象 + 权限矩阵 Role 列激活【实现拓扑与细化验收=§1.20（loop-49）：core-docs 内容轮（global/roles/admin + global/groups/core-operators——声明面在位的纯数据轮）+console live 小对象现读扩 Role/Group+permissions 屏「Role 授权矩阵」spec 现读区块；零 Go 改动=装载/热装载/ApprovalNeeded 产源皆既有】 | docsRoot Role/Group 对象净入授权面+involved 实体化+UI 矩阵激活（细化=L49-01…07） |
 | 对账轮 R-7 | workflow 执行模型绑定面：execution 判别器 + apply 即实现骨架物化【实现拓扑与细化验收=§1.21（loop-50）：workservice v0.49 `internal/flowbind`（绑定物化器=装配期枚举+DocApplied×Workflow 热路径，走 apply 闸门 fieldManager=workflow:bind，origin=workflow-bind 所有面）+聚合面 execution 投影+scheme.yaml ConnectorOps flow 声明+docsRoot workflow-engine 宿主 WorkService+console workflows 屏执行 chip】 | apply 即同名 ConnectorOps 骨架出现且 diff 可查+决策面 execution=unbound 可见（细化=L50-01…09） |
+| 对账轮 R-8 | apply-workflow agent 派单面：骨架物化即派单受理投影【实现拓扑与细化验收=§1.22（loop-51）：workservice v0.50 flowbind `dispatch.go`（DispatchLog 环=wake 同构——created/updated 即派单，noop/skipped 不派单，autoLevel=ask 数据面）+`GET /v1/agents/dispatches` 读面+console wf 详情骨架态派单行；受理≠拉起——真实拉起=dsh 会话挂载 declared-deferred】 | 骨架物化即 apply-workflow 派单受理投影可查且幂等/所有面/元数据变更零噪音（细化=L51-01…09） |
 
 ## 5. 执行红线（对 loop 的约束）
 

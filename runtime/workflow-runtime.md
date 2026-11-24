@@ -201,6 +201,16 @@ Workflow spec（新入库/变更）
 - **宿主 WorkService**：`workflow-engine`（global/workservices/，content round）——flow ConnectorOps 的实现落点声明（impl ref=workservice 仓 workflow 包，即 cored 引擎自身=骨架执行面）；真实节点内容实现=apply-workflow agent 面。
 - **builtin 无文档 workflow**（core-workflow/default-task 等）：绑定=同名，无文档对象即无物化触发 → 决策面 unbound（缺口不静默——其实现=引擎内置态机，connectDef 缺席照实可见）。
 
+### 11.2 apply-workflow agent 拉起形态（2026-11-26，R-8 轮——派单受理投影首段）
+
+§11.1 两步之间的**接口面**：骨架（步 1）→ 实现代码（步 2）怎么交棒。首段=机械派单面：
+
+- **触发接线**：物化器一次真实物化动作（`created|updated`——骨架新建/更新，即「该版本实现未落」的机械签名）→ 记一条对 `apply-workflow` 锚的**派单受理投影**：`GET /v1/agents/dispatches`（`{count, accepted, dropped, dispatches:[{seq, agent, status, autoLevel, action, workflow, scope, connector, rv, eventId, at}]}`）——rv=骨架落库后版本（实现侧 diff 基线）、eventId=DocApplied 回执（来源链可回指 event_log/apply_log）。`noop`（幂等重入零差异）/`skipped`（非本物化器所有面）**不派单**——无新实现可做，不制造噪音。
+- **诚实投影（wake 面同构）**：**派单受理 ≠ agent 会话已拉起**——真实拉起=dsh 会话挂载（cross-agent.md §5.7 #2/#3：preset 基座+setup 注入；agent-session.md §3 子 agent 进程），declared-deferred。受理投影只证明「骨架→agent 派单接口面已接线」。
+- **AUTOLEVEL=ask（§8 默认）**：投影行 `autoLevel: ask` 数据面在册（级别管"问不问"——ask 批准/拉起动作面随真实拉起段落地；准入与 AUTOLEVEL 正交，agent-session.md §2）。
+- **观测面非账本**：受理投影=进程内环（有界，重启归零=幂等重入不重复派单的语义锚）；持久态=骨架对象本体（聚合面 `execution.skeleton=true`）+ apply_log 审计（fieldManager=workflow:bind）——投影丢失不致实现缺口静默。
+- **余量（declared-deferred）**：会话真实拉起与 ask 批准动作面（ApprovalNeeded→人批→spawn）、watch-only 自监控闭环（§8）、developer-system 代码化调用——随 agent-session 域落地轮扩。
+
 ## 12. 可行性
 
 | 风险 | 等级 | 说明 | 缓解 |
@@ -209,5 +219,5 @@ Workflow spec（新入库/变更）
 | 编辑器表单覆盖不全 | ⚠️ 低 | spec 字段多 | 表单+YAML 双模式（表单覆盖常用字段，全量走 YAML 编辑） |
 | 导入渲染失真 | ⚠️ 中 | 外部编排语义≠声明式相位 | 导入预览=dry-run 展示渲染结果；导入件标 origin=import，首期观察模式（mode: observe）跑一段时间再放开 act |
 | 第三方编辑权限面 | ⚠️ 中 | 谁能改谁系统的 workflow | scope 写权限+权限系统裁剪（P7）；builtin workflow 修改=高敏项 |
-| apply-workflow 自举深度 | ⚠️ 有条件 | 落地 agent 也要能跑 | 它自身跑在 builtin default-task 上；首版只支持"注册现有 connector + 生成 watch 接线"，代码生成走 developer-system 人工确认 |
+| apply-workflow 自举深度 | ⚠️ 有条件 | 落地 agent 也要能跑 | 它自身跑在 builtin default-task 上；首版只支持"注册现有 connector + 生成 watch 接线"，代码生成走 developer-system 人工确认；**拉起形态首段（§11.2）=派单受理投影先行**——接口面机械可验，会话拉起 deferred |
 | 展示数据双源 | ✅ 低 | — | 全部来自 Scheme+ops DB（console-ui.md 硬性约定） |
