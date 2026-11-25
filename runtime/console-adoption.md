@@ -712,6 +712,24 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 
 **实现余量（下轮顺延候选）**：object 触发声明面（spec.triggers 订阅集合——随 connector watch 声明面扩展顺延）；watch-only 自监控闭环/developer-system 代码化调用（workflow-runtime.md §11.2 余量行——红线 a 域，只随 agent-session 域落地轮评估）；draft-only 稿 Apply 创建通路活体（§1.36 余量——随编辑器域轮活体化）。
 
+### 1.38 对账轮增量：E6 四源积压词形单点复核——族构成声明单点收口 + draft-only 稿 Apply 创建通路活体评估（域内判据集实施）（2026-11-26，loop-65 轮——§1.36/§1.37 后现势复核，编辑器域顺延首候选）
+
+**核验选点（对账——点火队列顺序执行）**：①积压族「四源积压」词形与 §1.37 后现势复核：`backlogCount()` 族总数单点（§1.36 收口）四消费点（审批 badge/updateCounters、palette 积压行、Welcome 卡值+note、聚合面板族构成行）现势=计数同源在位（同一 `approvalBacklog()` 族总数，无双源回潮）；漂移在**文字词形维度**——族构成词形三处字面量散用（Welcome note「四源积压（草稿/归档/提案/派单）」/palette「族总数四源」/聚合面板「族=草稿待审（DocReview）…」），任一处改族构成（如增第五源）须三处同步=双源漂移温床。②draft-only 稿 Apply 创建通路活体评估（§1.36 余量——编辑器域顺延首候选）：通路语义已锚（降级基座+dock enabled 活体 loop-63 实证），Apply 动作活体=真落库动作（once-only）——评估域内可行性并实施最小活体判据集。
+
+**实现拓扑（零 Go 改动——plugin 客户端面单仓收口）**：
+- ①族构成词形单点：`backlogFamilyNote()` 单点声明（short=`草稿/归档/提案/派单` ∧ long=`族=草稿待审（DocReview）`）——Welcome note/palette/聚合面板三消费点改单点拼装，渲染词形逐字节恒等（纯映射重构零语义变更）；族构成变更从此单点随行。
+- ②draft-only 创建通路最小活体判据集（专用探针锚域内，零副作用域）：A 段=缺席窗诚实（锚无稿 404∧无面 404）→ 落稿（baseResourceVersion=0 创建稿，drafts POST `{"action":"staged"}` 词形）→ dry-run 三检查（apply 闸门既有面判定零改动：admit ①scheme②权限+缺席对象 dry-run 回执 `RV:0 Action:"dry-run"` 将创建哨兵——apply.go 既有词形，非本轮新增）∧ 同参幂等回放 → 零副作用反证（drafts 锚行恰 1 ∧ 对象面仍 404 ∧ apply_log 锚行=0）；B 段（UI）=faceAbsent 窗 rev chip「面缺席（在册稿基座——Apply=创建通路）」∧ 草稿 tab dock enabled ∧ dry-run 弹窗三检查 ✓（lock 行=「r0 == 面上现值（可落）」哨兵词形）∧ 确认键解锁（预检过才 enabled）∧ 零确认收尾（弃稿 DELETE → drafts 锚行=0 ∧ 对象面恒 404）。真落库终末点（「确认 Apply」一次点击）=once-only 真实动作，本轮零点——判据集在案 declared 登记，执行另轮决策。
+
+**L65 验收线（探针=acceptance/loop-65.md；单测=inbox.test.ts L65 段 1 锚）**：
+- L65-01 四消费点同源活体：Welcome 卡值=__CC.approvalCount ∧ note=拼装词形 ∧ palette 行同值同词形 ∧ 聚合面板族构成实数和=族总数=badge（1+11+1+1=14 活体）。
+- L65-02 词形单点锚定：backlogFamilyNote() 在册 ∧ 三消费点单点拼装（正则锚）∧ 短/长词形字面量唯一 ∧ 渲染面零散用（回潮即红）。
+- L65-03 dry-run 创建哨兵活体：锚域内 action=dry-run ∧ rv=0 ∧ 幂等回放同回执 ∧ apply_log 零判定行。
+- L65-04 draft-only 窗 UI 活体：rev chip 降级基座词形 ∧ dock enabled ∧ 弹窗三检查 r0 哨兵词形 ∧ 零确认零落库 ∧ 弃稿回基线（drafts=0 ∧ 对象面 404）∧ 零 pageerror ∧ 截图。
+
+**队列 3 余量对账（零改动判定）**：object 触发声明面（spec.triggers 不入 dispatch 订阅集合——grep 实证 flowbind 零词形命中，随 connector watch 声明面扩展顺延）；watch-only 自监控闭环/developer-system 代码化调用（红线 a 域，spawn wired 恒 false 零改动）；E5a 冷会话空窗（宿主读面现势零变化——§1.37 评估段维持 declared）。submodule pin=b5d5610=workservice HEAD 自然满足。
+
+**实现余量（下轮顺延候选）**：draft-only 稿 Apply 创建通路**真落库执行拍**（判据集已锚 §1.38——专用锚域内 once-only：落稿→dry-run→确认→rv=1→DocApplied→账本留痕→弃稿验证清稿词形→锚留账收尾，随编辑器域轮）；object 触发声明面（随 connector watch 声明面扩展顺延）；watch-only 自监控闭环/developer-system 代码化调用（红线 a 域）；E5a 冷会话空窗（declared 维持）。
+
 ## 4. 落地顺序（一轮一增量，映射 loop 起点）
 
 | 增量 | 内容 | 验收 |
@@ -745,6 +763,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 §1.35 | E5b chat-backfill 结构化合并收口 + E6 审批积压族扩与收件箱族内落点分化【实现拓扑与细化验收=§1.35（loop-62）：零 Go 改动 plugin 客户端面——`mergeCurrentSession` 结构化合并纯映射三分支（键级重写/块内追加/文末追加，零盲写=块外字节恒等，同参回放=幂等 noop，预读缺席=诚实降级）+`approvalBacklog()` 积压族三源单一真相（ApprovalNeeded 归档∪submitted 提案∪派单 pending）+`inboxOpOf` 族内落点分化（dispatch 行→wf 配置 tab 批准动作面）】 | 结构化合并活体（已有 status 块 Agent 回填 rv 前进∧其余字段零盲写）∧同值幂等 noop∧积压族三源聚合+构成词形∧收件箱 dispatch 行落点 wf 配置∧UI 截图（细化=L62-01…04） |
 | 对账轮 §1.36 | E6 泳道族源分化核验收口：积压族四源分解+族总数单点+DocReview 行真操作面补缺【实现拓扑与细化验收=§1.36（loop-63）：零 Go 改动 plugin 客户端面——`approvalBacklog()` 四源分解单一真相（草稿待审∪ApprovalNeeded 归档∪submitted 提案∪派单 pending——drafts∪归档两子源自 pendingApprovals 分化）+`backlogCount()` 族总数单点（badge/updateCounters/palette/Welcome 卡同一函数——提案/派单两源计数缺席收口）+在册稿窗降级草稿基座（screenEditor 在册守卫+hydrateEditor face 404 不拒单——新对象首稿 DocReview 行真操作面，「对象不在册」死面收口）】 | 草稿在册活体（四源分解词形∧DocReview 行 link=编辑器屏深链非审批屏）∧草稿行真操作面（编辑器+apply dock enabled）∧族总数单点（approvalCount=四源和∧badge 同值）∧零副作用收尾（弃稿回基线∧无稿窗归零诚实）∧UI 截图（细化=L63-01…04） |
 | 对账轮 §1.37 | E5b chat-backfill 结构化合并余量词形收口：缩进自适应（混合缩进容忍）+ E5a 冷会话空窗余量评估【实现拓扑与细化验收=§1.37（loop-64）：零 Go 改动 plugin 客户端面——缩进基准自适应（ind=首个空格缩进行观测，追加键组=基准×2 族谱对齐）+tab 防御闸收窄（整篇拒绝→手术区限定面：仅 status 块/currentSession 子块 tab=拒绝，手术区外 tab 放行）+currentSession 子块成员=纯列宽模型（任意更深列=成员区）+重写键组缩进=成员缩进观测（族谱对齐；多态/嵌套续行=保守拒绝；空子块回退基准）+纯映射语义零变更（零盲写/幂等 noop/三分支不变）；E5a 冷会话空窗=评估维持 declared（诚实降级口径+宿主历史回放读面缺席≠fork 事由）】 | 混合缩进文档回填活体（生产词形 ok=true∧块外字节恒等∧手术区外 tab 保留）∧缩进族谱对齐（4 空格文档 8sp 重写/4sp 追加∧cs 键分家 6sp 族谱内回填）∧真缺席恒拒绝（无 metadata.name/手术区 tab）∧同值幂等 noop∧既有 2 空格锚零回归∧UI 截图（细化=L64-01…04） |
+| 对账轮 §1.38 | E6 四源积压词形单点复核：族构成声明单点收口+draft-only 稿 Apply 创建通路活体评估（域内判据集实施）【实现拓扑与细化验收=§1.38（loop-65）：零 Go 改动 plugin 客户端面——`backlogFamilyNote()` 族构成词形单点声明（short∧long）三消费点（Welcome note/palette/聚合面板）单点拼装（backlogCount 计数单点 §1.36 既有零回潮——文字词形散用漂移温床收口）+draft-only 创建通路最小活体判据集（A 段 API=缺席窗诚实+落稿 baseRV=0 创建稿+dry-run 三检查创建哨兵 rv=0+幂等回放+零副作用反证 apply_log=0；B 段 UI=faceAbsent 降级基座词形+dock enabled+弹窗三检查 r0 哨兵词形+零确认+弃稿回基线）；真落库 once-only 执行拍=declared 判据集在案（零副作用纪律——本轮零点）】 | 四消费点同源活体（卡值=badge=族构成实数和）∧词形单点锚定（回潮即红）∧dry-run 创建哨兵（action=dry-run∧rv=0∧幂等∧apply_log=0）∧draft-only 窗 UI（chip 词形∧dock enabled∧r0 哨兵词形∧零确认零落库∧弃稿回基线）∧零 pageerror∧UI 截图（细化=L65-01…04） |
 ## 5. 执行红线（对 loop 的约束）
 
 1. **不改文档面语义**：console 是观测/操作面，一切写操作（启停/编辑/批准/重跑）=Apply 走既有写路径；发现设计不合理→改文档先于改代码（acceptance 纪律）。
