@@ -222,6 +222,25 @@ Workflow spec（新入库/变更）
 
 apply-workflow 锚的派单投影自 v0.51 起有**第二触发源**：Proposal（需求提案，core_design concepts/proposal.md——console 提需求→审批→派工的一等对象）对象以 `spec.status=approved` 落库 → 一条派单受理投影（同 face `GET /v1/agents/dispatches`，行 `kind=proposal`——v0.50 骨架派单行补 `kind=workflow` 投影，新载荷键=代际判别器）。与骨架派单的分工：骨架派单=「骨架→实现代码」的交棒（步 1→步 2）；Proposal 派单=「需求→执行体」的交棒（批准后 agent 产出=文档草稿（docsRoot 对象）或部署侧任务文件，落点声明=spec.landing 产物指针）。载荷带 proposal 名/目标（title/summary）/验收标准（acceptance）/priority/proposer——执行体输入随行（agent 面余量=真实拉起后消费）；审批链复用（ApprovalNeeded 提交分流自产 + ApprovalGranted/Rejected 判定事件 + approval_log 账）与状态机词汇见 proposal.md §4/§5。**红线不变**：派单受理≠拉起；Proposal 不 enable 任何 workflow、不自动执行代码。
 
+### 11.5 ask 批准动作面（2026-11-26，loop-58 轮 R-10——ApprovalNeeded→人批→spawn 投影第一段）
+
+§11.2 余量行「autoLevel=ask 的派单默认挂批准——批准/拉起动作面随真实拉起段落地」的第一段（**批准动作面投影**；spawn 接线仍 deferred）：
+
+- **审批同步器**（workservice v0.56 `flowbind/approval.go`）：派单受理（v0.50 sink.Dispatch）同拍记一条 **pending 批准投影**（`ApprovalRecord`：ApprovalID=matchingKeyOf——kind=workflow 派单→`ConnectorOps/<scope>/<connector>`、kind=proposal 派单→`Proposal/<scope>/<name>`，apply_log Obj 同键精确匹配零模糊）；autoLevel=ask 数据面随行。
+- **人批/驳回=Apply 判定（红线 1 机械落点）**：fieldManager=`workflow:approve`（批准）/`workflow:reject`(驳回) 的 ok 行落 apply_log → 同步器按 obj 匹配 → 投影**原地翻转** approved|rejected（judgedBy=subject、judgedAt=ts 随行）；denied/conflict 行不判定；无关溯源串零翻转零发明投影。零新写路径零旁路（判定=apply_log 行集匹配——既有账面）。
+- **读口**：`GET /v1/inbox`（v0.56——console-adoption.md §1.31 收件箱面）载荷 `approvals.records`（pending/approved/rejected 三态词形随行）∧ `watchdog={approvals, pending, approveIdle}`（approveIdle=批准投影无挂起待决——真实词形，零挂起≠停摆不冒充）；派单受理行（dispatches）新增 `approval` 键（state 词随行——拉起投影面第三段，新载荷键=代际判别器）。
+- **诚实投影**：**approved 派单投影 ≠ spawn 已拉起**——spawn 接线（ ApprovalNeeded 事件→人批→会话真实挂载）=agent-session 域 deferred（本面只证明「ask 的『问不问』动作面已接线」）；观测面非账本（持久态=apply_log 审计行+骨架对象+dispatches 受理行）。
+- **红线**：不 enable workflow、不自动执行代码、不新增自动任务——批准动作面只投影判定事实，真实执行仍 observe（红线 a）。
+
+### 11.6 自愈注入执行面（2026-11-26，loop-58 轮 R-10——SelfHeal 真实接线，agent-session.md §7 落点）
+
+watchdog 自愈第一动作（注入固定 prompt「继续」）的真实执行面（此前 nil=纯观测装配词形）：
+
+- **桥**（`sessionliveness.SelfHealBridge`：`Bounce(sessionID)/InjectWord()`）——cored 唯一依赖方向零宿主 import；dsh plugin 侧装配（`mountSelfHealBridge`：loopback HTTP listener `POST /selfheal/bounce` → `sessionController.prompt(mode=queue)` 注入「继续」，保留上下文不重启）；cored 装配段经 env `CORE_SYSTEM_SELFHEAL_ADDR` 回填；桥缺席=纯观测词形不变（healed-self 恢复判定照旧）。
+- **注入语义**：注入只对「已判停滞的会话」发固定 prompt（cored watchdog 判定面唯一触发源——桥零自主判定零定时器零队列，不新增任何自动任务/自动执行面）；注入受理=观测续租落行（`BeatSource`，last_action 带 inject 词形）**不触发 SessionHealed**——恢复判据=会话侧真实推进心跳（healed-by-beat 词形，attempts 清零）；注入失败=err 返回照实上报绝不静默（行态保持 suspected-stall，下一拍重试第一动作=重试不是跳步）。
+- **心跳防伪**：POST /v1/sessions/heartbeat 拒收 `source=watchdog`（判定面自续租禁入——agent-session.md §7 心跳面唯一口径）；会话侧回执（plugin 桥 phase=inject-continue，source=session）照常受理且非续租。
+- **细化验收线**=console-adoption.md §1.30（L58-01…07）。
+
 ## 12. 可行性
 
 | 风险 | 等级 | 说明 | 缓解 |

@@ -384,7 +384,39 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 - L57-11 代际判别器：新代聚合面行含 reconcile/executionFlow/executionDigest/executionHistory 四键 ∧ 派单行含 nodes 键；旧代（headless 载体或旧构建）无该键（载荷键出现/缺席=代际词形分立）。
 
 
-### 1.23 用户裁决（2026-11-24）：console 原生整合 + Workspace 按 Service（第一波）
+### 1.30 对账轮增量：agent-session 域 SelfHeal 注入执行面真实接线 + 派单 ask 批准动作面（2026-11-26，loop-58 轮——标准对账选点 R-10）
+
+**缺口根因（R-10，loop-56 declared 顺延项 KI-003 余量 + workflow-runtime.md §11.2/§11.3 余量行）**：①watchdog 自愈第一动作=「注入固定 prompt『继续』」在 cored 侧只有 `Watchdog.SelfHeal` 装配口（nil=纯观测装配——healed-self 词形），真实执行面零落点（agent 会话推进点在 dsh 宿主 sessionController 面，cored 不可直达）；②派单面 autoLevel=ask 数据面在册而 ask 的「问不问」动作面（ApprovalNeeded→人批）缺席——批准/驳回判定无投影无账面可查；③watchdog 自身动作的活性观测心跳可经 POST /v1/sessions/heartbeat 伪冒（判定面自续租死循环口未闭）。
+
+**收口方向（三件联动——零新自动执行面，红线 a 红线 1 全程不破）**：
+1. workservice v0.56（`internal/sessionliveness` 扩展）：**SelfHealBridge 接口**（`Bounce(sessionID)/InjectWord()`——cored 唯一依赖方向，零宿主 import）+ `Watchdog.SetSelfHealBridge` 装配（桥接管 SelfHeal 面成为第一动作执行面：`--self-heal-word` 缺省「继续」单点声明）+ `BeatSource`（watchdog 侧动作观测续租落行——不触发 SessionHealed，恢复判据=会话侧真实推进心跳）；装配段经 env `CORE_SYSTEM_SELFHEAL_ADDR`（宿主 loopback HTTP 面）回填桥；桥缺席=纯观测词形不变。**心跳防伪**：POST /v1/sessions/heartbeat 拒收 `source=watchdog`（判定面自续租禁入——心跳面唯一口径）。
+2. dsh plugin（`mountSelfHealBridge`）：**注入桥宿主侧**——loopback HTTP listener（`POST /selfheal/bounce`）→ `sessionController.prompt(mode=queue, 固定词)` 注入「继续」（保留上下文不重启）；注入受理→既有心跳通路回执活性观测（phase=inject-continue，source=session——非续租）；防御面=prompt 面缺席 503 绝不冒充/注入词不被远端改写/失败 502（cored 照实上报绝不静默，下一拍重试第一动作）。**红线**：注入只对「已判停滞的会话」发固定 prompt——零自主判定零定时器零队列。
+3. workservice v0.56（`internal/flowbind/approval.go`）：**派单 ask 批准动作面**——`ApprovalRecord/ApprovalLog/SyncApprovals`（DispatchLog.Dispatch 同拍挂 pending 批准投影 autoLevel=ask；人批/驳回=Apply 判定（fieldManager=workflow:approve|workflow:reject 的 ok 行）按 obj=matchingKeyOf 精确匹配 → 原地翻转 approved|rejected（judgedBy/ts 随行））；**零新写路径零旁路**（判定=apply_log 行集匹配）；dispatches 派单行新增 `approval` 键（state 词随行——拉起投影面第三段）。
+
+**L58 验收线（SelfHeal 段+批准动作面段；探针编号 L58-\*；探针=acceptance/loop-58.md）**：
+- L58-01 桥接线（核心判据）：注入停滞→watchdog 第一动作=桥 Bounce→宿主 sessionController.prompt(mode=queue) 注入固定词「继续」∧注入受理落观测续租行（last_action 带 inject 词形）∧**不触发 SessionHealed**（恢复判据=会话侧真实推进心跳）∧恢复后 healed-by-beat 词形在账（attempts 清零）。
+- L58-02 失败绝不静默：桥 Bounce 失败→行态保持 suspected-stall（attempts=0）∧下一拍重试第一动作=重试不是跳步（重试消耗判别桩 failN 计数）∧第三拍成功注入。
+- L58-03 纯观测回归不破：无桥装配（env 未设）→ SelfHeal=nil 词形不变（判定事件在账、零注入、healed-self 恢复判定照旧）。
+- L58-04 心跳防伪：POST /v1/sessions/heartbeat 带 source=watchdog → 400 禁入（判定面自续租死循环口闭合）；session 来源照常受理。
+- L58-05 批准动作面（核心判据）：派单受理→批准投影 pending 行（autoLevel=ask）∧`GET /v1/inbox` approvals.records 含该行；Apply workflow:approve ok 行 → 投影原地翻转 approved（judgedBy/ts 随行）∧挂起计数归零∧approveIdle=true（零挂起≠停摆真实词形）；驳回=workflow:reject → rejected；无关 fieldManager/denied 行零翻转零发明。
+- L58-06 单测：sessionliveness 桥四测（接线/失败重试/纯观测回归/BeatSource 不 heal）+ flowbind 批准面四测（挂起/翻转/键三段/收件箱四类）-race 绿 + apiserver inbox face 三测（投影/缺席 503/watchdog 拒收）。
+- L58-07 红线：注入零新增自动任务/自动执行面（桥零自主判定零定时器——单测判别桩计数=watchdog 唯一触发源）；approved 派单投影≠spawn 已拉起（spawn 接线=agent-session 域 declared-deferred）；探针零外发。
+
+### 1.31 对账轮增量：console 通知中心收件箱（2026-11-26，loop-58 轮——§1.25 页面兜底首段落地）
+
+**缺口根因（§1.25 判据落点）**：「待你处理」收件箱四类汇总（NeedsHuman/ApprovalNeeded/Proposal 待批/文档待审）零落点——审批屏只覆盖草稿∪ApprovalNeeded 归档两类、提案屏只覆盖 Proposal 一类、事件流无接管分类视图；未配置通知通道=仅页面展示（notification.md 规则 6）无页面可展。
+
+**收口方向（读面机械自分类——console 零自建持久状态红线 2）**：
+1. workservice v0.56（`flowbind.BuildInbox` 纯函数 + `GET /v1/inbox` 读面）：四类判定分类=读面现读自组装——**NeedsHuman**（归档 NeedsHuman∧Escalate 行——acceptance.md §9 接管链）/ **ApprovalNeeded**（归档行+派单 ask 批准投影挂起行）/ **Proposal**（status=submitted 提案）/ **DocReview**（草稿缓存行——apply.md §6 代改代审的家）；行 `{class, kind, name, scope, digest, eventId, at, link}`（link=console 深链路由——页面兜底入口恒达操作面）；类序=人注意优先、同类 At 降序（投影确定性）；载荷 `{count, classes, items, approvals, watchdog}`（watchdog={approvals, pending, approveIdle}——真实词形零挂起≠停摆）。face 缺席=503；旧构建 405=代际判别器。
+2. console（v0.51 呈现新增一屏一卡一动作）：`#/inbox` 屏（四类 chips 过滤+条目行=深链操作面+空态显式「待你处理清单为空」+watchdog 观测面区块+接管与回链口径 disclosure）；总览屏「待你处理」metric 卡（计数+点击落收件箱）；palette「待你处理收件箱」动作；`inboxCount()` 读面缺席回落=草稿∪ApprovalNeeded 归档现读（不冒充零）。
+
+**L58-UI 验收线（收件箱段；探针编号 L58-UI-\*）**：
+- L58-UI-01 收件箱屏活体（headless）：`#/inbox` 渲染 ∧ 四类 chips 计数在册 ∧ 条目行深链 `data-act="go"` 在册（命中→对应操作面渲染）∧ 空态或实数行在册 ∧ watchdog 观测面区块在册（approveIdle 词形）。
+- L58-UI-02 总览 metric 卡：「待你处理」卡在册且计数与 `/v1/inbox` count 双读一致 ∧ 点击落 `#/inbox`。
+- L58-UI-03 深链操作面闭环：ApprovalNeeded 条目行 → 编辑器/审批屏渲染（`data-go` 落点活体）——条目可点达操作面（§1.25 判据）。
+- L58-UI-04 零 console error 零 4xx（收件箱屏+总览屏 headless 全程监听）；截图 ≥2 张（acceptance/shots/loop-58-*.png）。
+
+
 
 **保留**：现 console 独立页（proto/现有页面）**单独留着**，不改不拆（作为完整形态参照与独立入口）。
 
@@ -403,6 +435,10 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 - 样式抽查=与 dsh 原生项同 token（截图比对入报告）；
 - Workspace 出现按 Service 的 project，新会话归组正确；Ungrouped 折叠/隐藏；
 - 独立页路由仍可达（保留）；截图走 acceptance-screenshot（Chromium headless），报告按 §8。
+
+### 1.23 用户裁决（2026-11-24）：console 原生整合 + Workspace 按 Service（第一波）
+
+**（已完成 2026-11-24，loop-55 §1.28——本节原裁决全文并入 §1.28 落地记录；判据=主侧栏九项/原生 token/Service project 归组/独立页保留，细化=L55-01…12。本节标题保留为历史锚。）**
 
 ### 1.24 用户裁决增量：能力 B——需求提交流（2026-11-24 裁决「B 优先，A 次之」，loop-52 轮）
 
@@ -583,6 +619,8 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 用户裁决 能力 A | 设计文档在线编辑：console 屏幕 6 直接改 md → Apply → git commit【实现拓扑与细化验收=§1.26（loop-53）：workservice v0.52 `internal/docrepo`（受限文件面路线②——`--design-repo` 白名单+git HEAD 读面+三检查 403/400/409+权限域 core/design-docs+本地 commit 不 push）+`/v1/design-docs*` 面+plugin `/core-console/design-docs` 写路由+console 屏 6「设计文档」页签+`#/designdoc` 工作台（文件树/编辑器/diff/Apply）+审批屏 DesignDoc 稿；cored-bridge.md §2.4+scheme.yaml Role 词汇 core/*】 | 打开概念文档→编辑 Apply→目标仓新 commit+DocApplied 同源+审计在账∧409/403/400 判据三件∧UI 截图（细化=L53-01…08） |
 | 用户裁决 能力 D | 需求提案对话式录入 + R-UX-1 通用对话交互框架 + R-UX-2 scheme 驱动控件【实现拓扑与细化验收=§1.27（loop-54）：workservice v0.53 `internal/scheme/widgets.go`（8 类控件机读派生+`Scheme.Replace` 热刷新）+`internal/intake`（R-UX-1 六步对话引擎：自由描述多字段抽取/自动补充/缺失冲突询问/提交节点生成+三重 dry-run 字段级归因/会话版本留痕不入公共库）+`/v1/intake/*` 面+plugin `/core-console/intake` 写路由+console 通用对话录入组件与 scheme 控件渲染器（`#/proposals` 默认对话态+字段卡双向同步+预览确认+降级表单+对象编辑器 scheme 控件面板）】 | 零起点 ≤6 轮对话字段全绿∧只问缺失冲突项∧生成对象过三重 dry-run 且失败定位字段∧确认后 rv=1 submitted（高危产 ApprovalNeeded）∧控件=scheme 映射且改 scheme 自动反映∧降级表单可用∧UI 截图（细化=L54-01…07） |
 | 用户裁决 能力 C | console 原生整合 + Workspace 按 Service + §11 全量整改【实现拓扑与细化验收=§1.28（loop-55）：dsh Slots 主侧栏九项+壳去第二列 nav+宿主 token/字号/间距/数据呈现/交互全量整改；plugin `/core-console/service-projects` + `ctx.workspaces`/`ctx.sessions` 最小 Service→Workspace 映射；profile patch 锁定+目录权限；零 dsh 安装包改动】 | 九项/无第二列 nav/独立页 200∧原生 token∧Service project 与新会话归组∧旧会话可访问∧E1/E2 API 404+CLI 拒绝∧E3 不 fork∧截图与回归全绿（细化=L55-01…12） |
+| 对账轮 R-10 | agent-session 域 SelfHeal 注入执行面真实接线 + 派单 ask 批准动作面【实现拓扑与细化验收=§1.30（loop-58）：workservice v0.56 sessionliveness SelfHealBridge 接口+SetSelfHealBridge 装配（env CORE_SYSTEM_SELFHEAL_ADDR 回填——dsh 宿主 loopback listener→sessionController.prompt mode=queue 注入固定词「继续」）+BeatSource 观测续租（不触发 SessionHealed）+心跳防伪（HTTP 面拒收 source=watchdog）+flowbind approval.go（DispatchLog 同拍挂 pending 批准投影→Apply workflow:approve\|reject ok 行原地翻转 approved\|rejected）+派单行 approval 键；spawn 接线=declared-deferred，approved 派单投影≠拉起】 | 注入停滞→prompt 注入「继续」（healed-by-beat 词形）∧失败重试不静默∧纯观测回归不破∧心跳防伪 400∧批准投影翻转可查（细化=L58-01…07） |
+| 对账轮 §1.25 | console 通知中心收件箱（四类汇总页面兜底）【实现拓扑与细化验收=§1.31（loop-58）：workservice v0.56 `flowbind.BuildInbox`+`GET /v1/inbox`（NeedsHuman∧Escalate/ApprovalNeeded+批准挂起/Proposal submitted/DocReview 草稿四类机械自分类——行 link=console 深链路由，watchdog={approvals,pending,approveIdle} 真实词形）+console `#/inbox` 屏（四类 chips/条目深链/空态显式/watchdog 观测面）+总览 metric 卡+palette 动作+inboxCount 回落口径】 | 四类待办计数可查∧条目可点达操作面∧无通道=页面兜底可见∧空态显式（细化=L58-UI-01…04） |
 
 ## 5. 执行红线（对 loop 的约束）
 
