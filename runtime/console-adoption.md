@@ -730,6 +730,19 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 
 **实现余量（下轮顺延候选）**：draft-only 稿 Apply 创建通路**真落库执行拍**（判据集已锚 §1.38——专用锚域内 once-only：落稿→dry-run→确认→rv=1→DocApplied→账本留痕→弃稿验证清稿词形→锚留账收尾，随编辑器域轮）；object 触发声明面（随 connector watch 声明面扩展顺延）；watch-only 自监控闭环/developer-system 代码化调用（红线 a 域）；E5a 冷会话空窗（declared 维持）。
 
+### 1.39 对账轮增量：draft-only 稿 Apply 创建通路真落库执行拍（§1.38 余量首候选——判据集在案 once-only 执行）（2026-11-26，loop-66 轮——§1.38 余量注记第一候选执行，编辑器域判据集闭环）
+
+**核验选点（对账——点火队列顺序执行）**：§1.38 declared 登记「draft-only 稿 Apply 创建通路**真落库执行拍**」（判据集已锚——专用锚域内 once-only：落稿→dry-run→确认→rv=1→DocApplied→账本留痕→幂等复跑→锚留账收尾）本轮执行。通路=既有面零新代码（client 编辑器 apply dock 通路+宿主 `/core-console/apply|drafts` 既有路由+cored 既有 apply 写面——零 Go 改动零 plugin 改动，执行拍=判据集在既有实现上的活体走通）。专用探针锚 `l66-apply-probe`（kind=Agent scope=global；真落库锚对象不删=判别面语义注记域，点火队列明示授权）。
+
+**执行拍实录（L66 验收线=探针 acceptance/loop-66.md；判据三段）**：
+- 创建拍（API，e66-prep.mjs）：缺席窗诚实（无稿 404∧无面 404）→ 落稿 baseRV=0（`{"action":"staged","baseResourceVersion":0}`）→ dry-run 三检查（`action=dry-run ∧ rv=0` 创建哨兵∧幂等回放）→ 确认 Apply 真落库（fromDraft 非 dry-run 同载荷）→ `action=create ∧ rv=1` ∧ 回执 `event.type=DocApplied ∧ dedupKey=apply:<obj>:1`（eventId 同源）→ 落库四件对账（object 200 rv=1 ∧ apply_log 判定行 `r1 ok console:editor:agent/<锚>` ∧ event_log DocApplied 锚行=1）→ 稿清（rule 6：draft 404∧清单锚行=0）→ 幂等复跑拍（同正文二次落稿再真落库→`action=noop ∧ rv 恒=1` ∧ noop 行在账∧noop 亦清稿∧DocApplied 恒零新增）→ 无稿 apply=404 ErrNoDraft（`draft: 草稿不存在`）。
+- UI 拍（e66-ui-verify.mjs）：编辑器活体（创建后窗 rev chip=r1∧「在册」badge）→ 手动编辑程序化落稿（chip「● 未 Apply（草稿 N 处变更）」∧ dock「Apply（N 处变更）」enabled）→ dock 弹窗三检查 ✓（lock 行=「r1 == 面上现值（可落）」**更新哨兵词形**）→ **确认键真点**（once-only）→ toast「已落库 r2（Revision+1）」。
+- 终态复核（e66-final.mjs）：面 rv=2 恒 ∧ 稿清归零 → noop 复跑拍（对现面正文）→ `action=noop ∧ rv 恒=2` → 账本终态 apply_log 锚行=4（`noop:r2|ok:r2|noop:r1|ok:r1`——rv 降序∧同 rv 时刻降序=QueryApplies 既有机械序）∧ DocApplied 锚行=2（create+update；noop 恒零事件——防自我唤醒活体）→ UI 读活体（rev chip=r2 ∧ dock「Apply（无变更）」disabled=**noop 结构守卫词形** ∧ 历史 tab noop 顶行）。
+
+**结构发现（判据词形校准两件——后续轮判据词形权威）**：①落库正文=稿正文∪`resourceVersion: N` 反写行（仓库写路径 rv 反写规范词形；缩进恒 2sp 与 loop-64 结构发现一致）——内容恒等判据落点=稿正文∪rv 反写行，非逐字节全等。②**UI 确认通路拍语义=dock 差异武装 ⇒ 只产 update**：编辑器手动编辑产生真实差异≠面上正文，确认键真点=rv 前进（Revision+1 toast）；**UI 侧 noop 结构不可达**（「Apply（无变更）」disabled+ACTIONS['doc-apply'] 空稿守卫「空草稿——无操作」零旁路=人点屏障面）——noop 词形活体由 API 复跑拍承载；§1.38 判据「noop 恒值或 ErrNoDraft 404 词形」两分支均活体在账（noop×2+ErrNoDraft×2）。
+
+**队列余量对账（零改动判定）**：object 触发声明面（grep 实证 spec.triggers 零词形命中 flowbind——随 connector watch 声明面扩展顺延）；watch-only 自监控闭环/developer-system 代码化调用（红线 a 域维持 declared）；E5a 冷会话空窗（宿主读面现势零变化——维持 declared）；submodule pin=b5d5610=workservice HEAD 自然满足。**§1.38 余量首候选摘除（执行拍完成）——编辑器域余量后延候选=rev-content diff 面（历史 tab「点行 diff 上一版」如实标注维持）/落库 rv 反写行 UI 呈现。
+
 ## 4. 落地顺序（一轮一增量，映射 loop 起点）
 
 | 增量 | 内容 | 验收 |
@@ -764,6 +777,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 §1.36 | E6 泳道族源分化核验收口：积压族四源分解+族总数单点+DocReview 行真操作面补缺【实现拓扑与细化验收=§1.36（loop-63）：零 Go 改动 plugin 客户端面——`approvalBacklog()` 四源分解单一真相（草稿待审∪ApprovalNeeded 归档∪submitted 提案∪派单 pending——drafts∪归档两子源自 pendingApprovals 分化）+`backlogCount()` 族总数单点（badge/updateCounters/palette/Welcome 卡同一函数——提案/派单两源计数缺席收口）+在册稿窗降级草稿基座（screenEditor 在册守卫+hydrateEditor face 404 不拒单——新对象首稿 DocReview 行真操作面，「对象不在册」死面收口）】 | 草稿在册活体（四源分解词形∧DocReview 行 link=编辑器屏深链非审批屏）∧草稿行真操作面（编辑器+apply dock enabled）∧族总数单点（approvalCount=四源和∧badge 同值）∧零副作用收尾（弃稿回基线∧无稿窗归零诚实）∧UI 截图（细化=L63-01…04） |
 | 对账轮 §1.37 | E5b chat-backfill 结构化合并余量词形收口：缩进自适应（混合缩进容忍）+ E5a 冷会话空窗余量评估【实现拓扑与细化验收=§1.37（loop-64）：零 Go 改动 plugin 客户端面——缩进基准自适应（ind=首个空格缩进行观测，追加键组=基准×2 族谱对齐）+tab 防御闸收窄（整篇拒绝→手术区限定面：仅 status 块/currentSession 子块 tab=拒绝，手术区外 tab 放行）+currentSession 子块成员=纯列宽模型（任意更深列=成员区）+重写键组缩进=成员缩进观测（族谱对齐；多态/嵌套续行=保守拒绝；空子块回退基准）+纯映射语义零变更（零盲写/幂等 noop/三分支不变）；E5a 冷会话空窗=评估维持 declared（诚实降级口径+宿主历史回放读面缺席≠fork 事由）】 | 混合缩进文档回填活体（生产词形 ok=true∧块外字节恒等∧手术区外 tab 保留）∧缩进族谱对齐（4 空格文档 8sp 重写/4sp 追加∧cs 键分家 6sp 族谱内回填）∧真缺席恒拒绝（无 metadata.name/手术区 tab）∧同值幂等 noop∧既有 2 空格锚零回归∧UI 截图（细化=L64-01…04） |
 | 对账轮 §1.38 | E6 四源积压词形单点复核：族构成声明单点收口+draft-only 稿 Apply 创建通路活体评估（域内判据集实施）【实现拓扑与细化验收=§1.38（loop-65）：零 Go 改动 plugin 客户端面——`backlogFamilyNote()` 族构成词形单点声明（short∧long）三消费点（Welcome note/palette/聚合面板）单点拼装（backlogCount 计数单点 §1.36 既有零回潮——文字词形散用漂移温床收口）+draft-only 创建通路最小活体判据集（A 段 API=缺席窗诚实+落稿 baseRV=0 创建稿+dry-run 三检查创建哨兵 rv=0+幂等回放+零副作用反证 apply_log=0；B 段 UI=faceAbsent 降级基座词形+dock enabled+弹窗三检查 r0 哨兵词形+零确认+弃稿回基线）；真落库 once-only 执行拍=declared 判据集在案（零副作用纪律——本轮零点）】 | 四消费点同源活体（卡值=badge=族构成实数和）∧词形单点锚定（回潮即红）∧dry-run 创建哨兵（action=dry-run∧rv=0∧幂等∧apply_log=0）∧draft-only 窗 UI（chip 词形∧dock enabled∧r0 哨兵词形∧零确认零落库∧弃稿回基线）∧零 pageerror∧UI 截图（细化=L65-01…04） |
+| 对账轮 §1.39 | draft-only 稿 Apply 创建通路真落库执行拍（§1.38 余量首候选——判据集在案 once-only 执行）【实现拓扑与细化验收=§1.39（loop-66）：既有面执行拍零新代码（client 编辑器 apply dock+宿主 apply/drafts 路由+cored apply 写面——零 Go 改动零 plugin 改动）；专用锚 l66-apply-probe 域内三段=创建拍（缺席诚实→落稿 baseRV=0→dry-run rv=0 哨兵→**create rv=1**→DocApplied eventId 同源→apply_log r1 ok 判定行→稿清 rule 6→noop 复跑拍→ErrNoDraft 404）+UI 拍（编辑器活体→手动编辑落稿→弹窗三检查 r1 更新哨兵→**确认键真点**→真落库 toast）+终态复核（rv=2 恒∧apply_log 4 行 noop:r2\|ok:r2\|noop:r1\|ok:r1∧DocApplied=2 恒∧UI noop 结构守卫词形）；判据词形校准两件=落库正文∪rv 反写行∧UI 确认通路=dock 差异武装只产 update（noop 结构不可达——API 复跑拍承载）】 | create 拍 rv=1∧apply_log 判定行（create∧rv=1∧console fieldManager）∧DocApplied 事件行∧稿清归零∧幂等复跑（noop 恒值+ErrNoDraft 双分支在账）∧UI 确认活体+真落库 toast∧锚留账收尾（rv=2 对象在册不删=判别面域）∧零 pageerror∧UI 截图（细化=§1.39 执行拍实录三段） |
 ## 5. 执行红线（对 loop 的约束）
 
 1. **不改文档面语义**：console 是观测/操作面，一切写操作（启停/编辑/批准/重跑）=Apply 走既有写路径；发现设计不合理→改文档先于改代码（acceptance 纪律）。
