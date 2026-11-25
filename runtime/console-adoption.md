@@ -434,6 +434,32 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 - L53-07 回归：六仓 go build/test/lint 绿 + npm test 绿 + loop-52 基线判据只读段（L52-01…05 提案面/派单面 kind=proposal 行）不回退 + cored-lint `files=14 findings=0 mirror=ok`（Role 条目编辑不改 files 基线）+ E4 对象编辑回归不掉（L39-04 全链路判据）。
 - L53-08 零残留：探针设计文档改动复原（原内容 apply 回 HEAD——git log 两枚探针 commit 为合法审计留痕，终态内容零漂移）∧ docsRoot git 状态=内容轮 commit 非探针残留 ∧ 探针草稿清场。
 
+### 1.27 用户裁决增量：能力 D——需求提案对话式录入 + R-UX-1 通用对话交互框架 + R-UX-2 scheme 驱动编辑控件（2026-11-24 裁决，loop-54 轮）
+
+**缺口根因（用户裁决 2026-11-24，proposal.md §4.5 / console-ui.md §12 / rule.md R-UX-1 & R-UX-2）**：
+1. 能力 B 已落地的提案录入是静态表单，用户裁决「改成对话。完整询问方式填完 scheme 的东西或者自动补充。然后对话完成后。提交节点让 LLM 自动生成相应的格式。然后确认后自动补全。这个界面跟傻子一样」；
+2. 按通用规则 **R-UX-1**，所有与人交互默认是对话（session 对话），表单仅为降级或精修入口；须实现**可复用的对话录入组件/流程**（Proposal 为首个接入面，Workflow/Role/ServiceDesc/对象编辑可直接复用），固定六步顺序：自由描述+自动上下文 → 自动补充 → 缺少询问（只问缺失/冲突项，带默认与示例） → 提交节点生成 spec 对象+三重 dry-run（失败定位到具体字段） → 确认 diff 后系统自动补全并 Apply → 降级表单（同一对象无双源）；
+3. 按通用规则 **R-UX-2**，一切录入/编辑面的字段集、类型、必填、枚举、默认值一律取自 `scheme`（单一真相，UI 不硬编码）；控件按八类机读映射（枚举→selector 禁手输、字符串→input、长文本→textarea、数组→列表编辑器、ref→对象选择器显示 name+rv、bool→switch、map→键值编辑器、数字→number input 带 min/max）；校验双保险（控件级即时校验 + 提交前 spec 准入 dry-run 定位到字段）；Scheme 本体可经对象编辑/设计文档编辑修改（过同一权限/R-PUB lint/Scheme 准入链），修改后 `cored` 内存热刷新、UI 自动反映（零硬编码残留）。
+
+**收口方向**：
+1. workservice v0.53：
+   - `internal/scheme/widgets.go`：从 `Kind.Spec`/`Kind.Fields` 实时派生 `[]FieldDescriptor`（8 类 `widget` 映射、`required`、`enum` 闭合集、`default`、`min/max`、`refKind`、嵌套 `elem`/`fields`）；`Scheme` 加读写锁与 `Replace` 原子热刷新；`apply.Engine` 与 `design_docs` 对 `Scheme` 变更强制执行 `scheme.Load` 结构准入 + R-PUB-1 lint 并在落库后热刷新内存 `Scheme`。
+   - `internal/intake` 新包 + `internal/apiserver/intake_face.go`：通用 R-UX-1 对话录入与三重 dry-run 引擎（支持 `Proposal` 及任意注册 `Kind`）——`POST /v1/intake/turn`（自由描述多字段抽取、上下文与缺省自动补充、缺失/冲突字段计算、带默认值与示例的追问生成、字段卡双向同步）、`POST /v1/intake/generate`（系统补缺省、生成标准 YAML `rv=0`、逐字段 R-PUB-1 lint 含 secret 引用式前缀检查 + `scheme.ValidateDoc` spec 准入含 `ref` 存在性校验 + `apply.Engine` 权限预览与审批分流预示，违规精确归因到 `fieldErrors:[{field, rule, message}]`）、`GET /v1/intake/sessions*`（会话与生成版本留痕，对话原文不入公共库）。
+2. plugin 宿主：`/core-console/intake`（`POST /turn`、`POST /generate`）写路由（connection 栅栏 fail-closed + 宿主注入 `applySubject`；服务端可选会话/Provider 钩子，零浏览器直连模型，探针零外发）。
+3. console 前端（`console-live.js` + `console-app.js` + `console.css`）：
+   - R-UX-2 通用 scheme 控件渲染器 `renderSchemeWidgets`（`selector`/`input`/`textarea`/`list`/`ref`/`switch`/`map`/`number`/`object` 全覆盖 + 控件级即时校验）；
+   - R-UX-1 通用对话录入组件（左 2/3 对话区 + 右 1/3 实时字段卡 + 预览确认弹窗/区 + 一键切换降级表单，共享同一字段态产同一对象）；
+   - `#/proposals` 需求提案屏默认进入对话模式（保留「直接填表」降级表单及下方提案列表/详情/批准/驳回全链路）；屏幕 6 对象编辑器接入 R-UX-2 scheme 驱动结构化控件与 R-UX-1 对话辅助面板。
+
+**L54 验收线（探针编号 L54-\*；探针=acceptance/loop-54.md）**：
+- L54-01 读面代际与 R-UX-2 控件映射：新代 `GET /v1/intake/sessions` 200 ∧ 旧代 405（代际判别器）；`GET /v1/scheme/kinds` 返回 18 kind 的 `widgets` 描述符，抽查 `Proposal`/`Workflow`/`ServiceDesc`/`Provider`/`ConnectorOps`/`WorkService` 覆盖全部 8 类控件（`selector`/`input`/`textarea`/`list`/`ref`/`switch`/`map`/`number`）。
+- L54-02 R-UX-1 对话录入与自动补充：零起点会话自动补充 `proposer=console-operator`、`priority=low`、`landing.target=doc`；只问缺失/冲突字段（不重复问已推断项）；支持一段话自由描述抽取多字段（标题/目标/验收标准/影响面/优先级）与分轮带默认值/示例询问；≤6 轮对话字段全绿（`ready=true`）。
+- L54-03 提交节点生成与 dry-run 字段级错误定位：`POST /v1/intake/generate` 在字段含 R-PUB 违规（真实 IP/部署路径）、非法枚举（`priority=urgent`）、缺失必填项或明文 secret 时返回 `ok=false` 且 `fieldErrors` 精确定位到具体字段名（`impact`/`priority`/`title` 等）；修正后 dry-run 三检查全绿（`ok=true`）并给出 YAML 与 `reasonRef=intake:<sessionId>:v<genVersion>`。
+- L54-04 确认后自动补全与 Apply 入库：确认 diff 后经草稿→Apply 入库（`Proposal` `rv=1`、`status=submitted`、`proposer` 系统补全）；高危提案自产 `ApprovalNeeded` 事件在册；审计账 `apply_log` `reasonRef` 回指对话 `sessionId` 与 `genVersion`，且 docsRoot 零对话原文残留。
+- L54-05 Scheme 本体可编辑与 UI 自动反映（R-UX-2）：经 Apply 修改 `Scheme`（如为 `Proposal.spec` 临时新增枚举项或可选字段；非法 Scheme 或 R-PUB 违规被 400 拦截）→ `GET /v1/scheme/kinds/Proposal` 与 UI 字段卡/表单立即自动反映新控件/新枚举（零硬编码）；复原 `Scheme` 后字节与基线一致。
+- L54-06 UI 活体（headless）与降级表单：`#/proposals` 默认展现对话态（左对话区+右 scheme 驱动字段卡，枚举为 `<select>` 无法手输非法值，列表编辑器可增删）→ 对话抽取+预览确认态（YAML diff + dry-run 三 ✓）→ 提交入库 `rv=1`；切换「直接填表」降级表单提交第二条提案同样入库 `rv=1`（无双源，表单回归不掉）；截图 ≥2 张（对话态 `loop-54-proposal-chat.png` / 预览确认态 `loop-54-proposal-preview.png` / scheme 控件态）。
+- L54-07 回归与零残留：六仓 `go build/test/lint` 绿 + `npm test` 绿 + loop-53/52/51 基线不回退 + 探针提案与草稿清场后 `cored-lint` `files=14 findings=0 mirror=ok` + 探针零外发（KI-001）。
+
 
 ### 3.1 会话主页（dsh hero「探索未至之境」）
 - **现状**：纯 dsh hero：工作区选择 + 空输入框；无任何 core 信息。
@@ -503,6 +529,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 R-8 | apply-workflow agent 派单面：骨架物化即派单受理投影【实现拓扑与细化验收=§1.22（loop-51）：workservice v0.50 flowbind `dispatch.go`（DispatchLog 环=wake 同构——created/updated 即派单，noop/skipped 不派单，autoLevel=ask 数据面）+`GET /v1/agents/dispatches` 读面+console wf 详情骨架态派单行；受理≠拉起——真实拉起=dsh 会话挂载 declared-deferred】 | 骨架物化即 apply-workflow 派单受理投影可查且幂等/所有面/元数据变更零噪音（细化=L51-01…09） |
 | 用户裁决 能力 B | 需求提交流：console 提交需求 → Proposal 对象 → 审批 → 自动落文档/派工【实现拓扑与细化验收=§1.24（loop-52）：workservice v0.51 `internal/proposal`（分流 watcher=DocApplied×Proposal 订阅——approved 即 apply-workflow 派单 kind=proposal 行/auto-approve 引擎自写 fieldManager=proposal:auto/高危提交 ApprovalNeeded 自产 source=core）+`GET /v1/proposals` 读面+apiserver `console:reject` 对称扩展（rejected 行+ApprovalRejected 事件）+core_design kind:Proposal+concepts/proposal.md+console「需求提案」屏（表单/列表/详情/批准/驳回）】 | 界面提交→Proposal 在库（rv=1 submitted）∧批准→approved+派单投影+eventId 同源∧驳回→rejected+无派单∧分流可配（细化=L52-01…09） |
 | 用户裁决 能力 A | 设计文档在线编辑：console 屏幕 6 直接改 md → Apply → git commit【实现拓扑与细化验收=§1.26（loop-53）：workservice v0.52 `internal/docrepo`（受限文件面路线②——`--design-repo` 白名单+git HEAD 读面+三检查 403/400/409+权限域 core/design-docs+本地 commit 不 push）+`/v1/design-docs*` 面+plugin `/core-console/design-docs` 写路由+console 屏 6「设计文档」页签+`#/designdoc` 工作台（文件树/编辑器/diff/Apply）+审批屏 DesignDoc 稿；cored-bridge.md §2.4+scheme.yaml Role 词汇 core/*】 | 打开概念文档→编辑 Apply→目标仓新 commit+DocApplied 同源+审计在账∧409/403/400 判据三件∧UI 截图（细化=L53-01…08） |
+| 用户裁决 能力 D | 需求提案对话式录入 + R-UX-1 通用对话交互框架 + R-UX-2 scheme 驱动控件【实现拓扑与细化验收=§1.27（loop-54）：workservice v0.53 `internal/scheme/widgets.go`（8 类控件机读派生+`Scheme.Replace` 热刷新）+`internal/intake`（R-UX-1 六步对话引擎：自由描述多字段抽取/自动补充/缺失冲突询问/提交节点生成+三重 dry-run 字段级归因/会话版本留痕不入公共库）+`/v1/intake/*` 面+plugin `/core-console/intake` 写路由+console 通用对话录入组件与 scheme 控件渲染器（`#/proposals` 默认对话态+字段卡双向同步+预览确认+降级表单+对象编辑器 scheme 控件面板）】 | 零起点 ≤6 轮对话字段全绿∧只问缺失冲突项∧生成对象过三重 dry-run 且失败定位字段∧确认后 rv=1 submitted（高危产 ApprovalNeeded）∧控件=scheme 映射且改 scheme 自动反映∧降级表单可用∧UI 截图（细化=L54-01…07） |
 
 ## 5. 执行红线（对 loop 的约束）
 

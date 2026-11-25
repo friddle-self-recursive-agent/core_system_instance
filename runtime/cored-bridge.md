@@ -166,6 +166,24 @@
 - **旧构建**（路由未注册）经兜底 handler **405=代际判别器**（与 runs/deliveries 面同口径）。
 - **plugin 宿主路由**：写通路唯一入口=`/core-console/design-docs`（POST exact 段=apply 主体宿主注入同 §3 applySubject；POST `/draft`=落稿；DELETE `/draft/{repo}/{path...}`=弃稿；栅栏 fail-closed 与 apply 路由同款）——读面走既有只读代理 `/core-console/api/v1/*`（GET `/v1/` 前缀已放行），宿主零旁路零新读路径。
 
+### 2.5 对话式录入与 scheme 驱动控件面（v0.53 能力 D + R-UX-1/R-UX-2）
+
+用户裁决（2026-11-24：concepts/proposal.md §4.5、console-ui.md §12、core_design/rule.md R-UX-1/R-UX-2）：
+1. **R-UX-2 scheme 驱动控件投影**：`GET /v1/scheme/kinds` 与 `GET /v1/scheme/kinds/{kind}` 返回的每个 `Kind` 附带机读字段控件描述符 `widgets: []FieldDescriptor`（从 `Kind.Spec`/`Kind.Fields` 实时派生，单一真相零硬编码）。控件映射：`a|b|c` 枚举→`selector`（下拉/分段，禁手输）；单行字符串→`input`；长文本→`textarea`；数组 `[]X`→`list`（逐项增删，行内递归 `elem`）；`ref`→`ref`（对象选择器，按 kind/scope 枚举显示 `name + r<rv>`）；`bool`→`switch`；`map`→`map`（键值编辑器）；`int|number`→`number`（带 `min/max`）；嵌套 `{...}`→`object`（递归 `fields`）。当 `Scheme/builtin/default`（对象 apply）或 `core_design/core/scheme.yaml`（设计文档 apply）经准入与 R-PUB-1 lint 校验落库后，`cored` 内存 `Scheme` 原子热刷新（`sch.Replace`），UI 重新读取即自动反映新字段/新枚举/新类型。
+2. **R-UX-1 通用对话录入与准入预检面（Proposal 为首个接入面，全部注册 kind 可复用）**：
+   - 固定六步顺序：①自由描述+自动上下文（当前主体/系统 scope/在册对象预填）→ ②自动补充（`proposer`=当前主体、`priority` 缺省 `low`、`landing.target` 缺省 `doc`、scheme `(=...)` 缺省值）→ ③缺少询问（**只问缺失/不明确/冲突字段**，不重复盘问已推断项；每问必带默认值与示例，支持跳过采用默认；支持一段话自由描述多字段抽取与字段卡双向同步）→ ④提交节点生成 spec 对象（`rv=0`）+ 三重 dry-run（R-PUB-1 lint 含 secret 引用式前缀检查 + `scheme.ValidateDoc` spec 准入与 `ref` 存在性校验 + `apply.Engine` 权限准入预览与审批分流预示），**失败精确归因定位到具体字段 `fieldErrors:[{field, rule, message}]`** → ⑤确认 diff 后系统自动补全缺省字段（`proposer`/`status=submitted`/审计时间戳与会话版本 `reasonRef=intake:<sessionId>:v<genVersion>`），经既有草稿→Apply 唯一写路径入库（高危自产 `ApprovalNeeded`）→ ⑥降级表单（LLM 不可用或用户显式切换「直接填表」时回退 scheme 驱动表单，与对话共享同一字段态、产同一对象、无双源）。
+   - **审计与脱敏红线**：对话→对象过程留痕于内存/ops 会话账（`sessionId`/`kind`/`turns`/`genVersion`/`lastDryRunOk`/`appliedRV`），对象经 Apply 入库才算数；**对话原文绝不落 docsRoot 公共库（R-PUB）**；浏览器不直连模型，凭据只走服务端。
+
+| 端点 | 载荷/语义 |
+|---|---|
+| `GET /v1/scheme/kinds` / `GET /v1/scheme/kinds/{kind}` | 每个 `Kind` 含 `widgets: [{name, path, rawDecl, type, widget, required, enum?, default?, example?, label, autoFill?, min?, max?, refKind?, elem?, fields?}]`——实时由当前 `Scheme` 派生 |
+| `GET /v1/intake/sessions` | 对话录入会话审计留痕清单（恒开；旧代 405=代际判别器）：`{count, sessions:[{sessionId, kind, scope, name, proposer, turns, genVersion, ready, lastDryRunOk, reasonRef, updatedAt}]}`（不含对话原文，防入公共库） |
+| `GET /v1/intake/sessions/{id}` | 单会话状态与当前字段卡快照（未命中 404） |
+| `POST /v1/intake/turn` | 对话推进与双向同步（写面门控 `--allow-apply`，未开启 405）：输入 `{sessionId?, kind, scope?, name?, message?, skipCurrent?, fields?, subject?}` → 执行 R-UX-1 步骤 1–3（自由描述多字段抽取 + 上下文自动补充 + 缺失/冲突计算 + 下一问生成带默认/示例），返回 `{sessionId, kind, scope, name, turns, ready, askingField, reply, extracted, fieldStates, missingFields, conflictFields, widgets}` |
+| `POST /v1/intake/generate` | 提交节点对象生成与三重 dry-run 预检（写面门控）：输入 `{sessionId?, kind, scope?, name?, fields, subject?}` → 系统补缺省 + 生成标准 YAML（`rv=0`）+ 逐字段 R-PUB-1 lint（含 secret 引用式校验）+ `scheme.ValidateDoc` spec 准入（含 `ref` 存在性校验）+ `apply.Engine` dry-run 权限与审批分流预览；返回 `{ok, sessionId, genVersion, kind, scope, name, yaml, baseResourceVersion, checks:{rpubLint, specAdmission, permission}, fieldErrors:[{field, rule, message}], autoCompleted, triagePreview, reasonRef}` |
+
+- **plugin 宿主路由**：`/core-console/intake`（`POST /core-console/intake/turn` 与 `POST /core-console/intake/generate`——connection 鉴权栅栏 fail-closed + 剥除客户端 `subject` 注入宿主 `applySubject`；服务端可选挂载会话/Provider 生成钩子，零浏览器直连模型，探针/离线零外发）。读面 `GET /v1/intake/sessions*` 走既有 `/core-console/api/v1/*` 只读代理。
+
 
 
 ## 3. plugin↔cored 桥契约（dsh plugin 侧）
