@@ -241,6 +241,16 @@ watchdog 自愈第一动作（注入固定 prompt「继续」）的真实执行�
 - **心跳防伪**：POST /v1/sessions/heartbeat 拒收 `source=watchdog`（判定面自续租禁入——agent-session.md §7 心跳面唯一口径）；会话侧回执（plugin 桥 phase=inject-continue，source=session）照常受理且非续租。
 - **细化验收线**=console-adoption.md §1.30（L58-01…07）。
 
+### 11.7 spawn 接线声明投影（2026-11-26，loop-59 轮 R-10 续段——拉起投影面末段；真实拉起仍 deferred）
+
+§11.5 余量行「approved 派单投影≠spawn 已拉起（spawn 接线=agent-session 域 declared-deferred）」的**声明面段**（§11.2 余量行第三段收口；受红线 a 约束——本段只补「接线声明」词形，零拉起执行器零自动触发）：
+
+- **单一真相=approved 批准投影行**（人批=Apply 判定——`workflow:approve` ok/noop 行 apply_log 账本事实；`flowbind.ApprovalSpawnDeclaration` 纯函数零新写面零旁路）：approved 行 → 声明 `{declared: true, wired: false, target: "apply-workflow", approvalId, rv, eventId}`——rv/判定词随判定行（v0.57 起 Sync 翻转随行写 rv=批准 Apply 落库后版本）、eventId 判定行不复制派单载荷（声明面零拉起事实）；pending/rejected 行/批准投影面缺席 → **零值声明 `{declared: false, wired: false}` 键恒在**（诚实缺席词形不冒充已接线）。
+- **读口**：`GET /v1/agents/dispatches` 派单行新增 `spawn` 键（**新载荷键=代际判别器**）；声明与派单行同拍以 `approvalId`=matchingKeyOf 同键关联（approved 派单投影的拉起目标锚随行——拉起输入面（§11.2 nodes+§11.4 提案载荷）已齐，接线声明=最后一词形段）。
+- **诚实投影（红线 a 机械锚）**：`wired` 恒 false=真实拉起接线 deferred——真实拉起=dsh 会话挂载（agent-session.md §3），本面零拉起执行器零定时器零自动触发；`wired=true 而无执行面`=静默缺口，本面禁此词形（接线缺席=缺口可见不静默）。
+- **判定权威=apply_log 行**：进程内投影环（批准投影）重启归零后，`workflow:approve` 判定行在账即可重放声明（apply_log 账本事实投影单点真相——重启后重物化同拍挂 pending、判定行重扫即再现声明）；真实拉起段落地时改写 `wired` 的唯一入口=agent-session 域接线实现轮（本面无写路径）。
+- **红线**：不 enable workflow、不自动执行代码、不新增自动任务——声明面只投影「已批准的接线意图」，真实执行仍 observe。
+
 ## 12. 可行性
 
 | 风险 | 等级 | 说明 | 缓解 |

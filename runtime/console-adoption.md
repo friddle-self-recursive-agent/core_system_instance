@@ -416,6 +416,26 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 - L58-UI-03 深链操作面闭环：ApprovalNeeded 条目行 → 编辑器/审批屏渲染（`data-go` 落点活体）——条目可点达操作面（§1.25 判据）。
 - L58-UI-04 零 console error 零 4xx（收件箱屏+总览屏 headless 全程监听）；截图 ≥2 张（acceptance/shots/loop-58-*.png）。
 
+### 1.32 对账轮增量：收件箱四类深链操作面活体判定 + 事件回链闭环 + spawn 接线声明投影（2026-11-26，loop-59 轮——§1.31 闭环加固 + workflow-runtime.md §11.5 余量第二段）
+
+**缺口根因（L58-UI-10 判据遗留 + §11.5 余量第二段）**：①收件箱四类条目的深链此前只有「类级」判定窗（L58-UI-10 在「无 ApprovalNeeded/DocReview 条目」窗为跳过词形）——四类各自的**操作面落点活体判定**缺席；②「完成操作后事件回链可查」未判据化——收件箱计数条目是否在下一次装载反映操作结果（回链闭环）零探针锚；③派单 ask 批准投影挂起行**只进计数（classes.ApprovalNeeded）不进行集（items）**—— ApprovalNeeded chip=计数 N 而 items=0 行的「幽灵计数」缺口词形（计数可点达性违背 §1.25「计数与深链」同规则）；④approved 派单投影的 spawn 接线只有「≠已拉起」否定词形——接线声明面（wired 词形）缺席（workflow-runtime.md §11.5 余量第二段）。
+
+**收口方向（读面投影+呈现落点+声明面三件——零新写路径，红线 a/红线 2 全程不破）**：
+1. workservice v0.57（`flowbind` 批准投影行集升格）：**ApprovalNeeded 类挂起行进行集**——派单 ask 批准投影 pending 行以 `InboxRow{class: ApprovalNeeded, kind: dispatch, name: <connector|proposal>, scope, digest: "派单待批（<workflow|proposal> · <锚> · autoLevel=ask）", eventId, at, link}` 投影进 BuildInbox items（行集与计数同源不翻倍——`/v1/inbox` handler 对 `classes.ApprovalNeeded` 与 pending 的加法投影摘除，BuildInbox 直接消费挂起行）；**spawn 接线声明投影**（`ApprovalSpawnDeclaration` 纯函数）——approved 批准投影行 → `{declared: true, wired: false, target: "apply-workflow", approvalId, rv, eventId}`；`GET /v1/agents/dispatches` 派单行新增 `spawn` 键（键恒在=代际判别器；pending/rejected 行/投影面缺席=`{declared:false, wired:false}` 零值诚实词形）；判定权威=apply_log 行（`workflow:approve` ok/noop 行 Sync 翻转随行写 rv=批准 Apply 落库后版本；投影环重启归零后判定行重放=声明再现——账本事实投影单点真相）；**wired 恒 false=真实拉起 deferred 的机械锚**（红线 a：零拉起执行器零自动触发；`wired=true 而无执行面`=静默缺口禁入词形）。
+2. console（v0.52 呈现三件——零新组件）：**类内 op 深链落点升格**——收件箱条目行随 class 消费类内 op 落点：NeedsHuman→事件详情回链（`#/event/:id`）∧Escalate→wf 锚链（`#/wf/:name`）；ApprovalNeeded→编辑器（`#/doc/:kind/:scope/:name`）∪审批屏（`#/approvals`）；Proposal→`#/proposal/:scope/:name` 详情批准/驳回动作；DocReview→审批屏 diff 卡（`#/approvals`）∪编辑器；**ApprovalNeeded 派单待批行**（v0.57 新行集）落点=派单投影所在 wf 详情配置 tab（`#/wf/<workflow>`——批准动作=Apply `workflow:approve` 判定链路，行 title 标注）；**轻刷新回链判据**——approval 翻转/提案批准/文档落库完成后 `/v1/inbox` 下一次 15s 轮询装载（live.load 全量）反映（挂起行消失/计数降位/状态词翻转）——`#/inbox` 屏挂载即 ensure()、数据老化窗内重入即现读（不缓存不冒充）。
+3. 判据（机读，探针编号 L59-\*；细化验收线随行）：headless 四类各自命中→落点屏渲染断言（`data-cc-screen`/屏头词形）∧ `spawn` 键代际判别器（新代在册∧wired=false 词形诚实∧旧代键缺席）∧ 回链判据=操作完成后 inbox 下一次装载反映（count/classes 降位 ∧ 挂起行消失）∧ 零 console error 零 4xx ∧ 截图 ≥3 张（acceptance/shots/loop-59-\*.png）。
+
+**L59 验收线（探针=acceptance/loop-59.md）**：
+- L59-01 spawn 接线声明投影（核心判据）：探针 workflow（self-recursive-core/l59-spawn-probe）apply → 骨架物化即派单受理（pending）∧ 派单行 `spawn={declared:false, wired:false}` 零值键在册；Apply `workflow:approve`（noop ok 行）→ 投影原地翻转 approved ∧ `spawn={declared:true, wired:false, target:"apply-workflow", approvalId 同键, rv=批准落库后版本}` 声明词形在册。
+- L59-02 spawn 判定权威=apply_log 行：判定=Apply 判定行匹配（零新写路径）；投影环重启归零后（服务重启实测）重物化同拍挂 pending、`workflow:approve` 判定行重扫即再现声明（账本事实投影单点真相——重启不致声明静默缺口）。
+- L59-03 红线 a 机械锚：`wired` 恒 false 词形（单测 TestApprovalSpawnDeclaration 锚定 pending/rejected/零值三词形）∧ 零新增自动任务/自动执行面（声明面零拉起执行器零定时器——approved≠拉起）∧ eventId 判定行不复制派单载荷（声明面零拉起事实词形）。
+- L59-04 spawn 代际判别器：派单行 `spawn` 键恒在（零值=诚实缺席）；face 缺席=503；旧构建 405。
+- L59-UI-01 收件箱四类深链操作面活体（headless，类级闭环收口——L58-UI-10 跳过词形废除）：四类各自命中条目→落点屏渲染断言全绿（NeedsHuman→事件详情回链/ApprovalNeeded→编辑器∪审批屏/Proposal→提案详情批准/驳回动作/DocReview→审批屏 diff 卡∪编辑器）；类内 op 落点与 `link` 键单一真相（console 不改写 cored 深链——`data-go`=link 原值）。
+- L59-UI-02 ApprovalNeeded 挂起行进行集（幽灵计数缺口收口）：派单 ask 批准投影挂起 → `/v1/inbox` items 出现 `class=ApprovalNeeded ∧ kind=dispatch` 行（digest=派单待批（<锚> · autoLevel=ask））∧ `classes.ApprovalNeeded` 计数=归档行+挂起行（**计数=行数**——加法投影摘除后同源不翻倍）∧ 条目行可点达操作面。
+- L59-UI-03 事件回链闭环：批准动作完成（workflow:approve 判定落账）→ inbox 下一次装载（live.load 轻刷新）反映——挂起行消失 ∧ `classes.ApprovalNeeded`/`count` 降位 ∧ `watchdog.approveIdle=true` 真实词形（零挂起≠停摆）。
+- L59-UI-04 零 console error 零 4xx（inbox 屏+落点屏全程监听）；截图 ≥3 张（inbox 类过滤+落点屏+spawn 声明面，acceptance/shots/loop-59-*.png）。
+- L59-05 回归：六仓 go build/test/lint 绿（并发包 -race 绿）+ npm test 绿 + loop-58 基线（SelfHeal 注入面 e2e 心跳防伪/批准投影翻转）不回退 + cored-lint mirror 闸 ok（docsRoot 探针清场后 files=14 findings=0 mirror=ok）。
+
 
 
 **保留**：现 console 独立页（proto/现有页面）**单独留着**，不改不拆（作为完整形态参照与独立入口）。
@@ -621,6 +641,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 用户裁决 能力 C | console 原生整合 + Workspace 按 Service + §11 全量整改【实现拓扑与细化验收=§1.28（loop-55）：dsh Slots 主侧栏九项+壳去第二列 nav+宿主 token/字号/间距/数据呈现/交互全量整改；plugin `/core-console/service-projects` + `ctx.workspaces`/`ctx.sessions` 最小 Service→Workspace 映射；profile patch 锁定+目录权限；零 dsh 安装包改动】 | 九项/无第二列 nav/独立页 200∧原生 token∧Service project 与新会话归组∧旧会话可访问∧E1/E2 API 404+CLI 拒绝∧E3 不 fork∧截图与回归全绿（细化=L55-01…12） |
 | 对账轮 R-10 | agent-session 域 SelfHeal 注入执行面真实接线 + 派单 ask 批准动作面【实现拓扑与细化验收=§1.30（loop-58）：workservice v0.56 sessionliveness SelfHealBridge 接口+SetSelfHealBridge 装配（env CORE_SYSTEM_SELFHEAL_ADDR 回填——dsh 宿主 loopback listener→sessionController.prompt mode=queue 注入固定词「继续」）+BeatSource 观测续租（不触发 SessionHealed）+心跳防伪（HTTP 面拒收 source=watchdog）+flowbind approval.go（DispatchLog 同拍挂 pending 批准投影→Apply workflow:approve\|reject ok 行原地翻转 approved\|rejected）+派单行 approval 键；spawn 接线=declared-deferred，approved 派单投影≠拉起】 | 注入停滞→prompt 注入「继续」（healed-by-beat 词形）∧失败重试不静默∧纯观测回归不破∧心跳防伪 400∧批准投影翻转可查（细化=L58-01…07） |
 | 对账轮 §1.25 | console 通知中心收件箱（四类汇总页面兜底）【实现拓扑与细化验收=§1.31（loop-58）：workservice v0.56 `flowbind.BuildInbox`+`GET /v1/inbox`（NeedsHuman∧Escalate/ApprovalNeeded+批准挂起/Proposal submitted/DocReview 草稿四类机械自分类——行 link=console 深链路由，watchdog={approvals,pending,approveIdle} 真实词形）+console `#/inbox` 屏（四类 chips/条目深链/空态显式/watchdog 观测面）+总览 metric 卡+palette 动作+inboxCount 回落口径】 | 四类待办计数可查∧条目可点达操作面∧无通道=页面兜底可见∧空态显式（细化=L58-UI-01…04） |
+| 对账轮 §1.32 | 收件箱四类深链操作面活体判定+事件回链闭环+spawn 接线声明投影【实现拓扑与细化验收=§1.32（loop-59）：workservice v0.57 批准投影行集升格（ApprovalNeeded 挂起行进行集——计数=行数同源不翻倍+`ApprovalSpawnDeclaration` 纯函数——派单行 `spawn` 键 `{declared,wired:false,target,approvalId,rv,eventId}` 判定权威=apply_log 行）+console 类内 op 落点消费与轻刷新回链判据；真实拉起仍 deferred（红线 a——wired 恒 false 机械锚）】 | 四类各自落点屏渲染活体∧挂起行进行集（幽灵计数收口）∧操作完成 inbox 下次装载反映∧spawn 声明词形 wired=false∧截图（细化=L59-01…05+L59-UI-01…04） |
 
 ## 5. 执行红线（对 loop 的约束）
 
