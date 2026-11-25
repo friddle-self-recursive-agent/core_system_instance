@@ -638,6 +638,24 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 
 
 
+### 1.34 对账轮增量：needsHuman Escalate 行 digest 尾随空串收口 + 触发路径 spec.enabled 实时 honoring（2026-11-26，loop-61 轮——§1.25 展示面余量收口 + §1.10 L78 E3 余量段收口）
+
+**缺口根因（对账选点——§4 表全行已收口后的余量清单顺延）**：
+- ①队列 1（loop-59/60 顺延）：`flowbind.BuildInbox` 事件行 digest=`e.Type + " · " + e.Involved` 字面量拼装——involved 缺席（空/纯空白）=「Escalate · 」尾随分隔符悬空（页面可读性余量；watchdog Escalate involved=Session 锚恒在册，缺席词形=人工注入/其他产源事件行）。
+- ②队列 2 选点（§1.10 L78 E3 余量段明文「触发接线检查 spec.enabled=下一段」——loop-38 起最久 declared 顺延）：启停=Apply 闭环止于对象面+审计面——触发路径（dispatch 命中→StartRun 落 run）不检查 spec.enabled，enabled=false 的锚照落 run（workflow.md §1「关闭即该规则不再触发、不再消耗」语义在引擎面缺席）。
+- ③队列 3 评估：插件仓 `core_system` submodule pin 停 v0.53（46d7041）——README 自declared 约定=「submodule 每次指向最新（不锁死旧版）」，pin 停已违背仓内自declared 契约 → 判定须统一，bump 至 workservice HEAD（v0.62 代）随行提交。
+
+**实现拓扑（v0.58b+v0.62：workservice@32c5d87+@b5d5610）**：
+- 队列 1：`inboxDigestOf` 单点拼装 helper——involved 缺席=降级词形「`<Type> · （involved 缺席）`」，在册=既有词形不变；NeedsHuman/Escalate/ApprovalNeeded 三处事件行同款随行（零字面量散用）；纯展示面零判定语义（EventID 深链/类归属/机读判据全不变）。
+- 队列 2：`internal/workflow/enabled.go`——`EnabledResolver`/`EnabledFunc` 判定面+`EnabledOf` 生效值纯映射（precedence=系统层 override 优先字典序首个→global 本体→零对象=缺省启用——与 `/v1/workflows` 聚合面 `effectiveObject` 同口径零双源漂移；未声明/不可解析=缺省启用 scheme.yaml `(=true)` 同源；判定缺席 ok=false=放行缺口可见不静默拦）；`RunOptions.EnabledRules`（Specs/Brakes 同款可选能力——缺省 nil=零闸既有行为面零翻转）+`StartRun` 受理路径闸判（enabled=false 锚=触发留痕仍在、run 不落、`disabled` 计数可见；判定在锁外解析面文件 IO 不持 r.mu——刹车生效值同拍面；在途 run 迁移判定零改动——ResumeSignal/Advance 不受开关作用，已完成轮次与回归记录保留）+`RunState.Disabled` 新载荷键（代际判别器）+`GET /v1/workflows/runs` disabled 键随行+装配层 `workflowEnabledResolver` 注入（`workflowDocObjects` 装配侧查找单点与 `workflowDocLookup` 共用——零缓存 apply 落库即生效热装载跟随）。
+
+**L61 验收线（探针=acceptance/loop-61.md；UI 段 e61-ui 3/3 green）**：
+- L61-01 digest 降级词形：Escalate involved='' 注入 → `/v1/inbox` 行 digest=`Escalate · （involved 缺席）` ∧ 无尾随分隔符悬空 ∧ `link=#/event/<eventId>` 深链不变 ∧ 类归属不变；历史空 involved 行同拍投影自愈；单测锚定 involved 有/无/纯空白三词形（回潮即红）。
+- L61-02 enabled 闸三拍活体：precedence 放行拍（global:false ∧ override:true → 注入×3 全落 run ∧ disabled=0）→ 闸拦拍（override 翻 false → 注入×3 全拦 ∧ disabled 0→3 ∧ anchorRuns 恒值 ∧ started+1=flip 自身对账 run 如实入账）→ 复位放行拍（override 翻 true → anchorRuns+1 ∧ disabled 恒值——零缓存热装载 apply 落库即生效）；单测=拦/放行/判定缺席/precedence 四态+在途 run 迁移判定零改动。
+- L61-03 UI 活体：收件箱屏降级词形行在册 ∧ 尾随分隔符行=0 ∧ involved 在册词形零回归；wf 聚合面 effective.enabled（override 生效词形）× runs disabled × anchorRuns 三面同源；截图 2 张（loop-61-inbox-digest/wf-enabled-agg.png）。
+
+**实现余量（下轮顺延候选）**：object 触发声明（spec.triggers）不入 dispatch 订阅集合（订阅=scheme.dispatch 推导既有口径——对象级触发声明面随 connector watch 声明面扩展顺延）；E5b chat-backfill 已有 status 块结构化合并（§1.11 补注④ declared 在位）；E6 泳道 approval 积压族扩 DocReview/Proposal 类（§1.13 declared 注记原样）。宿主 `/core-console/api` 代理不转发 POST（注入探针直打 cored loopback——loop-51 套路，探针纪律注记随行）。
+
 ## 4. 落地顺序（一轮一增量，映射 loop 起点）
 
 | 增量 | 内容 | 验收 |
@@ -667,6 +685,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 §1.25 | console 通知中心收件箱（四类汇总页面兜底）【实现拓扑与细化验收=§1.31（loop-58）：workservice v0.56 `flowbind.BuildInbox`+`GET /v1/inbox`（NeedsHuman∧Escalate/ApprovalNeeded+批准挂起/Proposal submitted/DocReview 草稿四类机械自分类——行 link=console 深链路由，watchdog={approvals,pending,approveIdle} 真实词形）+console `#/inbox` 屏（四类 chips/条目深链/空态显式/watchdog 观测面）+总览 metric 卡+palette 动作+inboxCount 回落口径】 | 四类待办计数可查∧条目可点达操作面∧无通道=页面兜底可见∧空态显式（细化=L58-UI-01…04） |
 | 对账轮 §1.32 | 收件箱四类深链操作面活体判定+事件回链闭环+spawn 接线声明投影【实现拓扑与细化验收=§1.32（loop-59）：workservice v0.57 批准投影行集升格（ApprovalNeeded 挂起行进行集——计数=行数同源不翻倍+`ApprovalSpawnDeclaration` 纯函数——派单行 `spawn` 键 `{declared,wired:false,target,approvalId,rv,eventId}` 判定权威=apply_log 行）+console 类内 op 落点消费与轻刷新回链判据；真实拉起仍 deferred（红线 a——wired 恒 false 机械锚）】 | 四类各自落点屏渲染活体∧挂起行进行集（幽灵计数收口）∧操作完成 inbox 下次装载反映∧spawn 声明词形 wired=false∧截图（细化=L59-01…05+L59-UI-01…04） |
 | 对账轮 §1.33 | 派单批准动作面 console 动作化+判定源族收口【实现拓扑与细化验收=§1.33（loop-60）：workservice v0.58 动作面 console 动作化（`disp-approve\|disp-reject`=Apply 判定通路+同拍判定行在账+挂起行已判过滤）+v0.58a 判定源族收口（`DecisionJudgmentFamilies` 族表=workflow:\*+console:\* 两族——GAP-Q60-2 活体实证缺口收口）+plugin 动作判定 Apply 原文随行（content='' 活体 400 收口）】 | dry-run 零副作用∧动作拍判定行在账∧同拍投影翻转+spawn 声明（wired=false）∧回链闭环拍即生效∧驳回对称∧proposal 全链收口词形∧UI 截图（细化=L60-01…06） |
+| 对账轮 §1.34 | needsHuman Escalate 行 digest 尾随空串收口+触发路径 spec.enabled 实时 honoring【实现拓扑与细化验收=§1.34（loop-61）：workservice v0.58b `inboxDigestOf` 单点拼装（involved 缺席=降级词形「（involved 缺席）」——纯展示面零判定语义）+v0.62 `EnabledRules` 规则开关判定面（`EnabledOf` precedence=系统层 override→global 本体→零对象缺省启用，聚合面 effectiveObject 同口径）+StartRun 受理路径闸判（run 不落 disabled 计数可见）+装配层 resolver 注入（零缓存热装载）】 | digest 降级词形∧eventId 深链不变∧历史行投影自愈∧enabled 闸三拍活体（precedence 放行/闸拦/复位放行）∧disabled 新载荷键∧在途 run 零改动∧UI 截图（细化=L61-01…03） |
 ## 5. 执行红线（对 loop 的约束）
 
 1. **不改文档面语义**：console 是观测/操作面，一切写操作（启停/编辑/批准/重跑）=Apply 走既有写路径；发现设计不合理→改文档先于改代码（acceptance 纪律）。
