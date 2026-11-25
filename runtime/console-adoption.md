@@ -673,7 +673,24 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 - L62-03 积压族活体：事件流聚合面板「审批积压」=三源和（族构成词形标注在册）；单测锚定三源消费词形（回潮即红）。
 - L62-04 UI 活体：chat 屏新建会话 toast=「已回填」族词形（余量词形摘除）∧ 事件流聚合面板积压族行在册（三源构成词形）∧ 收件箱 ApprovalNeeded dispatch 行落点=wf 详情配置 tab 活体（点行落地 `#/wf/<锚>` ∧ 配置 tab 激活 ∧ 批准/驳回动作行在册——动作本体不点=探针零判定副作用）；截图 4 张（loop-62-chat-backfill/backlog-family/inbox-dispatch/wf-config-actions.png）。
 
-**实现余量（下轮顺延候选）**：object 触发声明面（spec.triggers 订阅集合——随 connector watch 声明面扩展顺延）；watch-only 自监控闭环/developer-system 代码化调用（workflow-runtime.md §11.2 余量行——红线 a 域，只随 agent-session 域落地轮评估）；E6 泳道族 DocReview 归档类行（本轮积压族已收 Proposal+派单两源，DocReview=草稿缓存行与 ApprovalNeeded 归档行已共屏审批——聚合面板族口径维持三源，DocReview 行深链已走类内落点）。
+**实现余量（下轮顺延候选）**：object 触发声明面（spec.triggers 订阅集合——随 connector watch 声明面扩展顺延）；watch-only 自监控闭环/developer-system 代码化调用（workflow-runtime.md §11.2 余量行——红线 a 域，只随 agent-session 域落地轮评估）；E6 泳道族 DocReview 归档类行（本轮积压族已收 Proposal+派单两源，DocReview=草稿缓存行与 ApprovalNeeded 归档行已共屏审批——聚合面板族口径维持三源，DocReview 行深链已走类内落点——**loop-63 核验收口，见 §1.36**）。
+
+### 1.36 对账轮增量：E6 泳道族源分化核验收口——积压族四源分解+族总数单点+DocReview 行真操作面补缺（2026-11-26，loop-63 轮——§1.35 余量注记第一候选核验）
+
+**核验选点（对账——§1.35 余量注记顺延，点火队列顺序执行）**：E6 积压族三源（ApprovalNeeded 归档∪submitted 提案∪派单 pending）收口后，DocReview 类（草稿缓存行）与族的关系待核验——聚合面板族构成词形与草稿行实际操作面在「草稿在册」活体窗的词形一致性。对账结论：**族实为四源，词形只标三源**——`approvalBacklog()` 的归档项实为 `pendingApprovals()`（草稿∪归档两子源，§1.13 待审区口径）整集计入，`st.drafts` 草稿子源已入族但族构成词形未分化标注；顶部常驻入口（审批 badge/updateCounters/palette/Welcome「待审批」卡）只数 `pendingApprovals()`——提案与派单两源计数缺席，与聚合面板族总数双源漂移。**探针活体新缺口（acceptance 纪律「缺陷即修」）**：新对象首稿（草稿先于文档面落库——发现路径全走 DocReview 类）在编辑器屏落「对象不在册」死面——screenEditor 在册守卫只认文档面 ref，`hydrateEditor` face GET 404 即整链 reject；DocReview 行 cored link=`#/doc/…`（inboxDocLinkOf 编辑器屏深链）在该窗=真死链。
+
+**实现拓扑（零 Go 改动——plugin 客户端面单仓收口）**：
+- ①族源分化：`approvalBacklog()` 四源分解单一真相——`drafts=st.drafts.length`（DocReview 收件箱类同源读面）+`archive=pendingApprovals() filter kind==='event'`（归档子源单出——drafts∪归档两子源分化，§1.13 待审区口径零变更）+submitted+dispatchPending 既有两源；聚合面板族构成词形四源标注（「族=草稿待审（DocReview）N ∪ ApprovalNeeded 归档 N ∪ 提案 submitted N ∪ 派单待批 N」+落点「审批屏∪编辑器/提案详情/wf 配置」）。
+- ②族总数单点：`backlogCount()=approvalBacklog().total` 单点函数——顶部常驻入口（审批 badge=updateCounters/__CC.approvalCount、palette 积压行、Welcome「待审批」卡值+note「四源积压」词形）全部换线同一函数（原先只数两子源=提案/派单计数缺席收口）。
+- ③DocReview 行真操作面补缺（两段）：screenEditor 在册守卫增**在册稿窗降级草稿基座**（`!ref && draftRowOf(kind,scope,name)`→渲染编辑器壳——draft-only 工作副本；非稿缺席=既有不在册词形零变更，URL 手输名不冒充创建窗）；`hydrateEditor` face GET 404 在册稿窗=**不拒单降级基座**（face 缺席词形入信封 `{status:404,content:''}`——`faceAbsent` 会话态+rev chip「面缺席（在册稿基座——Apply=创建通路）」词形；E4 乐观锁/dry-run 三检查/dock 词形零变更——baseRV=稿 baseResourceVersion，draft-only 稿 Apply 落库=创建通路语义）；审批屏 header 注记「已批 N 稿不出现」（已批稿=草稿缓存清空——缺口可见性词形）；inboxOpOf DocReview 行 tag=「审批屏（草稿行深链=编辑器屏双落点）」、收件箱屏 dh-sub 与 INBOX_CLASS_META why 词形随行（cored link 原值不改写——红线 2）。
+
+**L63 验收线（探针=acceptance/loop-63.md；UI 段 e63-ui green）**：
+- L63-01 草稿在册活体：探针稿（fieldManager=`probe:loop-63`，对象=WorkService/global/l63-docreview-probe）经 `/core-console/drafts` 落稿 → 聚合面板「族=草稿待审（DocReview）1 ∪ …」四源分解词形在册 ∧ 收件箱 DocReview 行在册 ∧ cored link=`#/doc/WorkService/global/<锚>` 原值（非 `#/approvals`——核验点）。
+- L63-02 草稿行真操作面：点行落地编辑器屏（非「对象不在册」死面）∧ 工作副本载稿 ∧ 草稿 tab apply dock enabled ∧「Apply（1 处变更）」词形（动作本体不点=探针零副作用）。
+- L63-03 族总数单点：`__CC.approvalCount`=四源和（聚合面板分解四项算术和逐值对账）∧ badge 同值 ∧ Welcome 卡 note「四源积压」词形（旧「需要你处理」词形摘除）。
+- L63-04 探针零副作用+归零诚实窗：DELETE 弃稿 → 草稿子源回基线（API 双读+事件屏词形双判）∧ DocReview 行消失 ∧ 无稿窗 `drafts=0` 归零诚实（badge=族总数不含草稿源）；锚对象零 apply 零事件（apply_log 零新增行）；UI 全程零 pageerror。
+
+**实现余量（下轮顺延候选）**：object 触发声明面（spec.triggers 订阅集合——随 connector watch 声明面扩展顺延）；watch-only 自监控闭环/developer-system 代码化调用（workflow-runtime.md §11.2 余量行——红线 a 域，只随 agent-session 域落地轮评估）；E5a 冷会话空窗余量（§1.11 补注② declared 在位）；draft-only 稿 Apply 创建通路活体（本轮探针动作零点=零副作用纪律，通路语义已锚——随编辑器域轮活体化）。
 
 ## 4. 落地顺序（一轮一增量，映射 loop 起点）
 
@@ -706,6 +723,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 §1.33 | 派单批准动作面 console 动作化+判定源族收口【实现拓扑与细化验收=§1.33（loop-60）：workservice v0.58 动作面 console 动作化（`disp-approve\|disp-reject`=Apply 判定通路+同拍判定行在账+挂起行已判过滤）+v0.58a 判定源族收口（`DecisionJudgmentFamilies` 族表=workflow:\*+console:\* 两族——GAP-Q60-2 活体实证缺口收口）+plugin 动作判定 Apply 原文随行（content='' 活体 400 收口）】 | dry-run 零副作用∧动作拍判定行在账∧同拍投影翻转+spawn 声明（wired=false）∧回链闭环拍即生效∧驳回对称∧proposal 全链收口词形∧UI 截图（细化=L60-01…06） |
 | 对账轮 §1.34 | needsHuman Escalate 行 digest 尾随空串收口+触发路径 spec.enabled 实时 honoring【实现拓扑与细化验收=§1.34（loop-61）：workservice v0.58b `inboxDigestOf` 单点拼装（involved 缺席=降级词形「（involved 缺席）」——纯展示面零判定语义）+v0.62 `EnabledRules` 规则开关判定面（`EnabledOf` precedence=系统层 override→global 本体→零对象缺省启用，聚合面 effectiveObject 同口径）+StartRun 受理路径闸判（run 不落 disabled 计数可见）+装配层 resolver 注入（零缓存热装载）】 | digest 降级词形∧eventId 深链不变∧历史行投影自愈∧enabled 闸三拍活体（precedence 放行/闸拦/复位放行）∧disabled 新载荷键∧在途 run 零改动∧UI 截图（细化=L61-01…03） |
 | 对账轮 §1.35 | E5b chat-backfill 结构化合并收口 + E6 审批积压族扩与收件箱族内落点分化【实现拓扑与细化验收=§1.35（loop-62）：零 Go 改动 plugin 客户端面——`mergeCurrentSession` 结构化合并纯映射三分支（键级重写/块内追加/文末追加，零盲写=块外字节恒等，同参回放=幂等 noop，预读缺席=诚实降级）+`approvalBacklog()` 积压族三源单一真相（ApprovalNeeded 归档∪submitted 提案∪派单 pending）+`inboxOpOf` 族内落点分化（dispatch 行→wf 配置 tab 批准动作面）】 | 结构化合并活体（已有 status 块 Agent 回填 rv 前进∧其余字段零盲写）∧同值幂等 noop∧积压族三源聚合+构成词形∧收件箱 dispatch 行落点 wf 配置∧UI 截图（细化=L62-01…04） |
+| 对账轮 §1.36 | E6 泳道族源分化核验收口：积压族四源分解+族总数单点+DocReview 行真操作面补缺【实现拓扑与细化验收=§1.36（loop-63）：零 Go 改动 plugin 客户端面——`approvalBacklog()` 四源分解单一真相（草稿待审∪ApprovalNeeded 归档∪submitted 提案∪派单 pending——drafts∪归档两子源自 pendingApprovals 分化）+`backlogCount()` 族总数单点（badge/updateCounters/palette/Welcome 卡同一函数——提案/派单两源计数缺席收口）+在册稿窗降级草稿基座（screenEditor 在册守卫+hydrateEditor face 404 不拒单——新对象首稿 DocReview 行真操作面，「对象不在册」死面收口）】 | 草稿在册活体（四源分解词形∧DocReview 行 link=编辑器屏深链非审批屏）∧草稿行真操作面（编辑器+apply dock enabled）∧族总数单点（approvalCount=四源和∧badge 同值）∧零副作用收尾（弃稿回基线∧无稿窗归零诚实）∧UI 截图（细化=L63-01…04） |
 ## 5. 执行红线（对 loop 的约束）
 
 1. **不改文档面语义**：console 是观测/操作面，一切写操作（启停/编辑/批准/重跑）=Apply 走既有写路径；发现设计不合理→改文档先于改代码（acceptance 纪律）。
