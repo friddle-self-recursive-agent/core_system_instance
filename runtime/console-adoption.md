@@ -461,6 +461,34 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 - L54-07 回归与零残留：六仓 `go build/test/lint` 绿 + `npm test` 绿 + loop-53/52/51 基线不回退 + 探针提案与草稿清场后 `cored-lint` `files=14 findings=0 mirror=ok` + 探针零外发（KI-001）。
 
 
+### 1.28 用户裁决增量：能力 C——console 原生整合 + Workspace 按 Service + §11 全量整改（2026-11-24 裁决，loop-55 轮）
+
+**缺口根因（loop-55 对账）**：①`client/entry.js` 只注册一个 `core-console` panel，宿主主侧栏无九项分组；②`console-shell.js` 仍有自有 `<aside>` + `<nav id="side-nav">`，形成第二列导航；③`console.css` 固定深色 hex、字号/间距/圆角自成一套，未继承 dsh token；④Welcome 与总览重复，会话屏重复宿主全局列表；⑤无 run 仍画灰点排、零实例仍画绿格、阶段用英文字母、时间用绝对切片、长说明压 tooltip；⑥Service 与 dsh Workspace 无映射，新会话 `create({})` 落未归组；⑦profile 未锁定，插件/自动化/设置入口仍在。
+
+**收口方向（最小机制，零 dsh 安装包改动）**：
+1. **宿主主侧栏九项**：`sidebar.panellist` + keyed `main` 成对注册 9 个入口——总览（Welcome 合并）/系统树/Workflows/文档/事件/审批/连接/会话/需求提案。`#/welcome` 与 `#/overview` 同屏；已交付「需求提案」补足九项，既不恢复重复 Welcome，也不删既有能力。dsh `panellist` 只支持平铺元数据，分组标题由首个入口的 Slot 图标贡献（`data-cc-sidebar-label`），九项仍使用宿主原生按钮/标签/hover/选中态；不做 DOM 包裹或替换 `ui-sidebar`。
+2. **内容区单栏**：console 壳移除自有侧栏与第二列 nav，只保留顶栏/内容/浮层；hash 路由全部保留，跨分组深链同步宿主 `selectPanel`，刷新可恢复。独立 `console-proto/index.html` 四文件永久保留、不改不拆。
+3. **Workspace=Service project（第一波）**：新增 plugin 路由 `GET|POST /core-console/service-projects`——GET 只投影 cored `ServiceDesc`（含 `agent://` 声明），POST 只为已声明 Service 准备本地目录；客户端经 `ctx.workspaces.create({path})` 注册 dsh Workspace（title=Service 名），新会话经 `ctx.sessions.create({workspaceId})` 绑定。旧会话不迁移、不归档、不删除；console 的「宿主全部会话」折叠为深链兼容入口，原生 Workspace 仍可访问旧数据。Service/Agent 归属真相=cored，Workspace/Session 归属真相=dsh store，两权威各管一面。
+4. **§11 视觉与数据呈现**：控制台 CSS 变量映射宿主 `--dsw-*` token；字号 11/13/15/20/28、间距 4/8/12/16/24、卡片 10px 圆角/1px neutral/16px 内边距；语义色 success/warn/danger/neutral；图标 16px；正文 72ch；长说明改 `<details>`。总览三卡同高同基线（InSync 系统数/待审批/24h 失败率）；无 run=「等待触发」且不画阶段条；零实例=「待接入」中性；事件两行制+筛选计数；相对时间+绝对时间/时区；数字千分位与百分比一位小数。
+5. **§11 交互**：搜索占位符统一中文，⌘K/Enter/Esc 快捷键真实可用；连接态收进 header 右侧，移除浮动徽标；标识符/面包屑可点且键盘可达；icon 按钮补 `aria-label`、焦点环可见；<1200px 主动收起宿主侧栏并提供抽屉按钮；15s 轻轮询与「更新于 x 分钟前」指示在册。
+6. **锁定模式（E1/E2）**：profile patch 按真实行 id 禁用 `plugin-manager`/`tool-plugin-manager`/`plugin-inventory`/`schedule`/`ui-schedule`/`settings-controller`/`entry-customization`；禁用行不注册 UI/Remote，精确 API 冷启动返回 404。保留 `workspace`/`workspace-controller`/`ui-workspace`/`session-controller`——它们是 Service project 与旧会话访问的必需面，禁用会级联删掉 `session/*` 与整个侧栏。CLI 侧 web profile 目录 root 属主+不可写，非 root `dsh plugin add` 在锁文件写入处 EACCES。
+7. **fork 评估（E3）**：本轮需求均可用 Slots、profile patch、文件权限表达，未触发 `dsh-fork.md` §2。真实可折叠父子分组、替换宿主导航模型、或在禁用 Workspace 后仍保留 `session/*` 才需要 fork；本轮不申请、不执行 fork。
+
+**L55 验收线（探针编号 L55-\*；探针=acceptance/loop-55.md）**：
+- L55-01 主侧栏「核心控制台」九项：Slots 注册 9 个 `main`/`sidebar.panellist` 对；DOM 见分组标题与九项标记；Welcome/总览无重复语义；需求提案为第九项。
+- L55-02 无第二列 nav：console 内容壳无 `#side-nav`/自有 sidebar；原生入口可点切屏；全部原 hash 深链可恢复；独立 proto `file://` 200。
+- L55-03 原生 token：抽查宿主入口与控制台正文 font-size/line-height/color/background/border-radius 同 token；卡片 padding=16、gap∈{8,12,16}、图标 16px；深浅色继承宿主。
+- L55-04 §11 A/B：总览首屏含审批入口；字号阶梯、4 基数间距、四类语义色、卡片统一、每屏主 CTA≤1、字体栈/tabular-nums/72ch/展开说明机读通过。
+- L55-05 §11 C：三卡同高同基线；无 run/实例/事件空态文案+下一步；零实例无绿满格；无 run 无阶段条；阶段中文全称+图标；事件两行+计数 chip；相对时间+绝对时区；数字格式一致。
+- L55-06 §11 D：中文搜索占位符与真实快捷键；连接态在 header 且无浮动徽标；标识符/面包屑互跳；焦点环/aria-label；<1200px 抽屉截图；轮询/最后更新时刻可见。
+- L55-07 Service project：`GET /core-console/service-projects` 返回 cored Service 投影；POST 准备目录；dsh Workspace 出现 title=Service 名；console 新建会话后 `workspace.sessionIds` 含新 SessionId；旧会话仍可访问；Ungrouped/宿主全部列表折叠。
+- L55-08 锁定 E1：profile 禁用行在 dump-config 中 `disabled=true`；侧栏无插件/自动化/设置入口；对应 `POST /api/pluginManager/*`、`/api/pluginInventory/*`、`/api/schedule/*`、`/api/settings/*` 返回 404（或热卸载 error envelope，本轮按冷启动 404 验收）。
+- L55-09 锁定 E2：web profile root 属主、目录不可写；非 root `dsh plugin --profile core-system add <fixture>` 失败且不触外网。
+- L55-10 fork E3：报告含逐项触发条件评估；结论=本轮不触发、不 fork；若验收发现必须改宿主行为，转 `NeedsHuman` 申请。
+- L55-11 回归与红线：E0–E7 + 能力 A/B/D 只读/交互基线不回退；零 console error；六仓 build/test/lint 绿；探针零外发；不 enable 任何 workflow。
+- L55-12 截图与报告：总览原生态、Service Workspace 归组、窄屏抽屉、锁定侧栏截图在 `acceptance/shots/loop-55-*.png`；报告含 deviations、提交号与「待人接管项」。
+
+
 ### 3.1 会话主页（dsh hero「探索未至之境」）
 - **现状**：纯 dsh hero：工作区选择 + 空输入框；无任何 core 信息。
 - **功能建议**：hero 之上注册 Welcome 大屏 slot（v2 屏幕 0：业务健康度大数字、dev-delivery 阶段条、Service 简卡行、业务视角重要事件、快捷入口）；「选择工作区」语义映射为「选择要查看/对话的系统 scope」，下拉里并排列出系统清单（来自 cored 读面）。
@@ -530,6 +558,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 用户裁决 能力 B | 需求提交流：console 提交需求 → Proposal 对象 → 审批 → 自动落文档/派工【实现拓扑与细化验收=§1.24（loop-52）：workservice v0.51 `internal/proposal`（分流 watcher=DocApplied×Proposal 订阅——approved 即 apply-workflow 派单 kind=proposal 行/auto-approve 引擎自写 fieldManager=proposal:auto/高危提交 ApprovalNeeded 自产 source=core）+`GET /v1/proposals` 读面+apiserver `console:reject` 对称扩展（rejected 行+ApprovalRejected 事件）+core_design kind:Proposal+concepts/proposal.md+console「需求提案」屏（表单/列表/详情/批准/驳回）】 | 界面提交→Proposal 在库（rv=1 submitted）∧批准→approved+派单投影+eventId 同源∧驳回→rejected+无派单∧分流可配（细化=L52-01…09） |
 | 用户裁决 能力 A | 设计文档在线编辑：console 屏幕 6 直接改 md → Apply → git commit【实现拓扑与细化验收=§1.26（loop-53）：workservice v0.52 `internal/docrepo`（受限文件面路线②——`--design-repo` 白名单+git HEAD 读面+三检查 403/400/409+权限域 core/design-docs+本地 commit 不 push）+`/v1/design-docs*` 面+plugin `/core-console/design-docs` 写路由+console 屏 6「设计文档」页签+`#/designdoc` 工作台（文件树/编辑器/diff/Apply）+审批屏 DesignDoc 稿；cored-bridge.md §2.4+scheme.yaml Role 词汇 core/*】 | 打开概念文档→编辑 Apply→目标仓新 commit+DocApplied 同源+审计在账∧409/403/400 判据三件∧UI 截图（细化=L53-01…08） |
 | 用户裁决 能力 D | 需求提案对话式录入 + R-UX-1 通用对话交互框架 + R-UX-2 scheme 驱动控件【实现拓扑与细化验收=§1.27（loop-54）：workservice v0.53 `internal/scheme/widgets.go`（8 类控件机读派生+`Scheme.Replace` 热刷新）+`internal/intake`（R-UX-1 六步对话引擎：自由描述多字段抽取/自动补充/缺失冲突询问/提交节点生成+三重 dry-run 字段级归因/会话版本留痕不入公共库）+`/v1/intake/*` 面+plugin `/core-console/intake` 写路由+console 通用对话录入组件与 scheme 控件渲染器（`#/proposals` 默认对话态+字段卡双向同步+预览确认+降级表单+对象编辑器 scheme 控件面板）】 | 零起点 ≤6 轮对话字段全绿∧只问缺失冲突项∧生成对象过三重 dry-run 且失败定位字段∧确认后 rv=1 submitted（高危产 ApprovalNeeded）∧控件=scheme 映射且改 scheme 自动反映∧降级表单可用∧UI 截图（细化=L54-01…07） |
+| 用户裁决 能力 C | console 原生整合 + Workspace 按 Service + §11 全量整改【实现拓扑与细化验收=§1.28（loop-55）：dsh Slots 主侧栏九项+壳去第二列 nav+宿主 token/字号/间距/数据呈现/交互全量整改；plugin `/core-console/service-projects` + `ctx.workspaces`/`ctx.sessions` 最小 Service→Workspace 映射；profile patch 锁定+目录权限；零 dsh 安装包改动】 | 九项/无第二列 nav/独立页 200∧原生 token∧Service project 与新会话归组∧旧会话可访问∧E1/E2 API 404+CLI 拒绝∧E3 不 fork∧截图与回归全绿（细化=L55-01…12） |
 
 ## 5. 执行红线（对 loop 的约束）
 
