@@ -111,7 +111,7 @@
 
 **E5a 屏面换装范围**：`#/chat/:agent` 全屏（左栏=会话清单归属两层+owner 反查；中栏=转录渲染[chat/trajectory 双视图]+输入条[queue/steer 模式开关]+**运行器四选 modal**（内嵌 dsh 可用；claude-code/opencode/gotty=在册禁用+why 诚实余量标注）；右栏=权限面 Agent 文档面真数据（connectorOps 挂载 refs/Provider/Ref/Role/autoLevel/op 声明集——mock token 字样摘除））；`#/session/:id` 真数据（session 事件页轨迹+归属反查）；ServiceInstance 详情页真数据（实例条目=ServiceDesc 正文现读、agentRefs chips 全可点、「在对话框调用该 Agent」跳转 `#/chat/:agent`=任务原文 #3 跳转链；conditions/metrics=引擎回写面，对象缺席=诚实空态）；`#/agent/:name` 保持编辑器屏（E4 文档与资源同规则——sessions 列表落 `#/chat/:agent` 左栏，同源不复制）。假动作摘除：pin/archive 按钮（session store 无客户端面）、仿 gotty 终端、personaReply 假流式回复。**ConnectorOps 卡判别器**：转录工具调用 op 名 ∈ agent 文档面声明集（spec.connectorOps[].ops × ConnectorOps 对象 spec.ops 并集）→ ConnectorOps 卡（op 名等宽+payload/result 展开+凭据值打码）；声明缺席=普通工具卡（不冒充协议挂载）。
 
-**E5a 实现补注（2026-11-24，探针活体实测沉淀）**：①cordis 客户端服务护栏=**回调式 `ctx.inject(['sessions'],…)` 软出现**（声明式 `exports.inject` 加 `sessions/remote` 名会让 cordis apply 停等=整面板缺席——E5 探针字节级二分实证：E4 字节活/E5 任意重建停等；`remote.session` 命名空间未声明即访问抛 without inject）——faces 一律回调注入，缺席宿主回调不启动=chat 屏 ready()=false 诚实降级。②转录活体源=**sessions.retain 持有的 `binding.eventSource` 事件窗**（retain 自带初始历史开窗+订阅即活体；热路径[create→prompt→回复]全链实证；**冷会话空窗=declared 余量**——console 面板上下文冷 retain 事件窗不回放全史，native 会话视图承载全史，console 深链历史=同源余量；loadOlder 显式补拉已接仍空窗，如实标注）。③对话/终端切换**恒在册**（proto 原型=仅终端态显示切换，chat 视图不可达终端 tab=可达性破缺，探针修正）。④身份回填：首回填（无 status 块）=rv 前进落库实证；**已有 status 块=结构化合并 E5b 余量**（不盲写覆盖，诚实 toast）。⑤探针入口 locator 须知：面板入口 title 随 pin 态改写（`core console` ↔ `Unpin core console from sidebar`），活体断言用 `[title*="core console" i]` 子串匹配。
+**E5a 实现补注（2026-11-24，探针活体实测沉淀）**：①cordis 客户端服务护栏=**回调式 `ctx.inject(['sessions'],…)` 软出现**（声明式 `exports.inject` 加 `sessions/remote` 名会让 cordis apply 停等=整面板缺席——E5 探针字节级二分实证：E4 字节活/E5 任意重建停等；`remote.session` 命名空间未声明即访问抛 without inject）——faces 一律回调注入，缺席宿主回调不启动=chat 屏 ready()=false 诚实降级。②转录活体源=**sessions.retain 持有的 `binding.eventSource` 事件窗**（retain 自带初始历史开窗+订阅即活体；热路径[create→prompt→回复]全链实证；**冷会话空窗=declared 余量**——console 面板上下文冷 retain 事件窗不回放全史，native 会话视图承载全史，console 深链历史=同源余量；loadOlder 显式补拉已接仍空窗，如实标注）。③对话/终端切换**恒在册**（proto 原型=仅终端态显示切换，chat 视图不可达终端 tab=可达性破缺，探针修正）。④身份回填：首回填（无 status 块）=rv 前进落库实证；已有 status 块=结构化合并（E5b 收口 §1.35；L64 缩进自适应=混合缩进容忍+缺席窗收窄 §1.37）。⑤探针入口 locator 须知：面板入口 title 随 pin 态改写（`core console` ↔ `Unpin core console from sidebar`），活体断言用 `[title*="core console" i]` 子串匹配。
 
 
 **E5a 细化验收线（§4 E5 行展开；探针编号 L40-\*；E5b 线=E5b 轮补入）**：
@@ -690,7 +690,27 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 - L63-03 族总数单点：`__CC.approvalCount`=四源和（聚合面板分解四项算术和逐值对账）∧ badge 同值 ∧ Welcome 卡 note「四源积压」词形（旧「需要你处理」词形摘除）。
 - L63-04 探针零副作用+归零诚实窗：DELETE 弃稿 → 草稿子源回基线（API 双读+事件屏词形双判）∧ DocReview 行消失 ∧ 无稿窗 `drafts=0` 归零诚实（badge=族总数不含草稿源）；锚对象零 apply 零事件（apply_log 零新增行）；UI 全程零 pageerror。
 
-**实现余量（下轮顺延候选）**：object 触发声明面（spec.triggers 订阅集合——随 connector watch 声明面扩展顺延）；watch-only 自监控闭环/developer-system 代码化调用（workflow-runtime.md §11.2 余量行——红线 a 域，只随 agent-session 域落地轮评估）；E5a 冷会话空窗余量（§1.11 补注② declared 在位）；draft-only 稿 Apply 创建通路活体（本轮探针动作零点=零副作用纪律，通路语义已锚——随编辑器域轮活体化）。
+**实现余量（下轮顺延候选）**：object 触发声明面（spec.triggers 订阅集合——随 connector watch 声明面扩展顺延）；watch-only 自监控闭环/developer-system 代码化调用（workflow-runtime.md §11.2 余量行——红线 a 域，只随 agent-session 域落地轮评估）；E5a 冷会话空窗余量（§1.11 补注② declared 在位——**loop-64 评估维持 declared，见 §1.37 评估段**）；draft-only 稿 Apply 创建通路活体（本轮探针动作零点=零副作用纪律，通路语义已锚——随编辑器域轮活体化）。
+
+### 1.37 对账轮增量：E5b chat-backfill 结构化合并余量词形收口——缩进自适应（混合缩进容忍）+ E5a 冷会话空窗余量评估（2026-11-26，loop-64 轮——§1.35 余量注记顺延第一候选）
+
+**核验选点（对账——§1.35 余量注记顺延，点火队列顺序执行）**：`mergeCurrentSession` 结构化合并（§1.35 收口）预读口径缺席窗=「无 metadata.name **或** 全文任一行 tab 缩进」——tab 防御为整篇拒绝闸。手编 docsRoot 实形态（生产 Agent 文档现样=core-headless agent.yaml：connectorOps list 内嵌行首 tab 缩进，锚定块=2 空格）在该窗被误判缺席→结构化合并降级不回填——身份回填在混合缩进文档上缺席，agent-comm 文档面 to 解析（status.currentSession.id 回填体）沿旧值漂移。同窗余量：锚定块缩进宽硬编码 2 空格单值——全 4 空格缩进文档（YAML 合法词形）的追加分支产出与文档词形不对齐的键列。
+
+**实现拓扑（零 Go 改动——plugin 客户端面单仓收口，纯映射语义零变更）**：
+- ①缩进基准自适应：`ind`（锚定基准）=首个空格缩进非空行观测（ind=2|4 自观测，不再硬编码 2 空格单值）——首块缩进宽=锚定基准；追加分支（无 status 块文末追加/块内追加）键组缩进=基准×2，与锚定块词形族谱对齐。
+- ②tab 防御闸收窄（缺席窗收窄）：整篇任一行 tab 拒绝 → **手术区限定面**（仅 status 块含 currentSession 子块的行首 tab=保守拒绝不盲写；文档其余部分（list 内嵌行等）tab 与本次手术零交=放行）。
+- ③currentSession 子块成员识别=**纯列宽模型**（cs 键列宽=ind，其下任意更深列=成员区；首个 ≤ind 列非空行=子块终止——缩进族谱任意键宽各自处理）；身份三键清洗=按相对深度（任意空格深的 id/startedAt/docsLoaded——旧值行缩进宽与锚定基准无关）；重写键组缩进=**成员缩进观测**（缩进族谱对齐：同层键须同列=合法 YAML 词形；族谱多态=成员键宽各行不一（嵌套续行/脚踩）→ 保守拒绝不盲写；空子块=回退锚定基准（既有「cs 键在册无值」词形行为零回归））。
+- ④纯映射语义零变更：零盲写=块外字节恒等；同参回放=幂等 noop；键级重写/块内追加/文末追加三分支不变；调用点通路零变更（fieldManager=`console:chat-backfill`、rv 乐观锁、apply.md rule 1 幂等回执词形不变——仅缺席 toast 注记词形随窗收窄）。
+
+**L64 验收线（探针=acceptance/loop-64.md；单测=chat.test.ts L64 段 4 锚）**：
+- L64-01 缺席窗收窄：混合缩进文档（生产词形=锚定块 2 空格+list 内嵌行首 tab）回填 ok=true ∧ 锚定块外字节恒等 ∧ 手术区外 tab 行原样保留（零盲写）。
+- L64-02 缩进族谱对齐：全 4 空格文档重写分支新键组=8sp ∧ 追加分支=4sp 键+8sp 三键（锚定基准×2）∧ cs 键缩进分家（6sp 成员）=族谱内回填。
+- L64-03 真缺席恒拒绝：无 metadata.name ∧ status 块或 currentSession 子块含 tab=ok=false 原文零改写（缺席窗下界不变）；族谱多态/嵌套续行=保守拒绝。
+- L64-04 活体+UI：core-headless（生产 Agent 文档现形态）回填 rv 前进 ∧ 零盲写 diff ∧ 同值幂等 noop ∧ 既有 L62 探针锚零回归（2 空格单值词形）∧ UI 判据走 Playwright+截图。
+
+**E5a 冷会话空窗余量评估（队列 2——零改动判定，§1.11 补注② declared 在位维持）**：评估结论=**维持 declared，零改动**。理由：①空窗词形=诚实降级既有口径（native 会话视图承载全史，console 深链历史如实标注同源余量；loadOlder 显式补拉已接仍空窗=UI 不冒充）——判据链无假面；②回填全史须 dsh session store 提供历史页回放读面——宿主读面（`ctx.remote.session.page`）现状=事件页游标（增量向前），历史回放面=宿主本体能力缺席，非 console 客户端可闭环（dsh-fork.md §2 触发条件未达：非「宿主能力已声明但插件不可达」——是宿主本体无该读面，不构成 fork 事由）；③成本/收益：冷会话全史回放仅影响「console 深链历史」单点展示（native 视图承载全史可用），改动须扩宿主协议面=跨域增量，不属 E5a 域。评估不改 declared 口径，不冒充收口。
+
+**实现余量（下轮顺延候选）**：object 触发声明面（spec.triggers 订阅集合——随 connector watch 声明面扩展顺延）；watch-only 自监控闭环/developer-system 代码化调用（workflow-runtime.md §11.2 余量行——红线 a 域，只随 agent-session 域落地轮评估）；draft-only 稿 Apply 创建通路活体（§1.36 余量——随编辑器域轮活体化）。
 
 ## 4. 落地顺序（一轮一增量，映射 loop 起点）
 
@@ -724,6 +744,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 §1.34 | needsHuman Escalate 行 digest 尾随空串收口+触发路径 spec.enabled 实时 honoring【实现拓扑与细化验收=§1.34（loop-61）：workservice v0.58b `inboxDigestOf` 单点拼装（involved 缺席=降级词形「（involved 缺席）」——纯展示面零判定语义）+v0.62 `EnabledRules` 规则开关判定面（`EnabledOf` precedence=系统层 override→global 本体→零对象缺省启用，聚合面 effectiveObject 同口径）+StartRun 受理路径闸判（run 不落 disabled 计数可见）+装配层 resolver 注入（零缓存热装载）】 | digest 降级词形∧eventId 深链不变∧历史行投影自愈∧enabled 闸三拍活体（precedence 放行/闸拦/复位放行）∧disabled 新载荷键∧在途 run 零改动∧UI 截图（细化=L61-01…03） |
 | 对账轮 §1.35 | E5b chat-backfill 结构化合并收口 + E6 审批积压族扩与收件箱族内落点分化【实现拓扑与细化验收=§1.35（loop-62）：零 Go 改动 plugin 客户端面——`mergeCurrentSession` 结构化合并纯映射三分支（键级重写/块内追加/文末追加，零盲写=块外字节恒等，同参回放=幂等 noop，预读缺席=诚实降级）+`approvalBacklog()` 积压族三源单一真相（ApprovalNeeded 归档∪submitted 提案∪派单 pending）+`inboxOpOf` 族内落点分化（dispatch 行→wf 配置 tab 批准动作面）】 | 结构化合并活体（已有 status 块 Agent 回填 rv 前进∧其余字段零盲写）∧同值幂等 noop∧积压族三源聚合+构成词形∧收件箱 dispatch 行落点 wf 配置∧UI 截图（细化=L62-01…04） |
 | 对账轮 §1.36 | E6 泳道族源分化核验收口：积压族四源分解+族总数单点+DocReview 行真操作面补缺【实现拓扑与细化验收=§1.36（loop-63）：零 Go 改动 plugin 客户端面——`approvalBacklog()` 四源分解单一真相（草稿待审∪ApprovalNeeded 归档∪submitted 提案∪派单 pending——drafts∪归档两子源自 pendingApprovals 分化）+`backlogCount()` 族总数单点（badge/updateCounters/palette/Welcome 卡同一函数——提案/派单两源计数缺席收口）+在册稿窗降级草稿基座（screenEditor 在册守卫+hydrateEditor face 404 不拒单——新对象首稿 DocReview 行真操作面，「对象不在册」死面收口）】 | 草稿在册活体（四源分解词形∧DocReview 行 link=编辑器屏深链非审批屏）∧草稿行真操作面（编辑器+apply dock enabled）∧族总数单点（approvalCount=四源和∧badge 同值）∧零副作用收尾（弃稿回基线∧无稿窗归零诚实）∧UI 截图（细化=L63-01…04） |
+| 对账轮 §1.37 | E5b chat-backfill 结构化合并余量词形收口：缩进自适应（混合缩进容忍）+ E5a 冷会话空窗余量评估【实现拓扑与细化验收=§1.37（loop-64）：零 Go 改动 plugin 客户端面——缩进基准自适应（ind=首个空格缩进行观测，追加键组=基准×2 族谱对齐）+tab 防御闸收窄（整篇拒绝→手术区限定面：仅 status 块/currentSession 子块 tab=拒绝，手术区外 tab 放行）+currentSession 子块成员=纯列宽模型（任意更深列=成员区）+重写键组缩进=成员缩进观测（族谱对齐；多态/嵌套续行=保守拒绝；空子块回退基准）+纯映射语义零变更（零盲写/幂等 noop/三分支不变）；E5a 冷会话空窗=评估维持 declared（诚实降级口径+宿主历史回放读面缺席≠fork 事由）】 | 混合缩进文档回填活体（生产词形 ok=true∧块外字节恒等∧手术区外 tab 保留）∧缩进族谱对齐（4 空格文档 8sp 重写/4sp 追加∧cs 键分家 6sp 族谱内回填）∧真缺席恒拒绝（无 metadata.name/手术区 tab）∧同值幂等 noop∧既有 2 空格锚零回归∧UI 截图（细化=L64-01…04） |
 ## 5. 执行红线（对 loop 的约束）
 
 1. **不改文档面语义**：console 是观测/操作面，一切写操作（启停/编辑/批准/重跑）=Apply 走既有写路径；发现设计不合理→改文档先于改代码（acceptance 纪律）。
