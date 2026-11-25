@@ -614,6 +614,30 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 3. **跳转到的 agent 可见**：ServiceInstance 详情 agentRefs chip → `#/agent/:name`——身份=文档面 Agent 对象（权限面/owner/父子），运行态=dsh registry（在线/离线/当前会话徽标，区分「文档已注册但未运行」）→ 「对话」按钮进会话。
 4. **与 dsh 原生会话侧栏的关系**：原生侧栏=宿主全局会话列表保持不动；console 的 Agent 会话屏=同一 session store 按 agent 过滤的投影。
 
+### 1.33 对账轮增量：派单批准动作面 console 动作化 + 判定源族收口（2026-11-26，loop-60 轮——§1.32 §11.5 余量第一段收口 + §11.7 queue-2 活体复核）
+
+**缺口根因（loop-60 续跑对账，承接崩溃前在制品 workservice@d81cc60/plugin@de8ea9d）**：
+- ①动作本体残留缺口（v0.58 首版 UI 活体实证）：`dispDecide` 动作 Apply 发 `content:''`——repository 面语义=content 须为可解析文档根（400「文档根须为映射」）；loop-59「零 content noop」词形对 repo 面不成立（API 探针用骨架原文才过，console 动作本体未随行）。
+- ②判定源族缺口（GAP-Q60-2，queue-2 活体复核实证）：`SyncApprovals.Sync` 判定源只认 `workflow:approve|reject`；kind=proposal 派单行的判定走提案通路 `console:approve|reject`（proposalFlip fromDraft 翻转稿既有串）→ 批准投影恒 pending、spawn 恒零值（活体：console:approve 判定行在账 rv2 ok 而投影不判——探针留档 `probe/loop-60/data/l60-dispatch-prop.json`）。
+- ③队列 2 语义勘定：**非缺口**——proposal.md 规则 2 批准=单一判定（console:approve 即派单判定，无第二动作面）；缺口在 cored 投影判定源族未收编 console 族。
+
+**实现拓扑（v0.58a：workservice@604fb28 + plugin@f36f199）**：
+- workservice `DecisionJudgmentFamilies` 判定溯源串族表单点声明（`workflow:approve|reject`+`console:approve|reject` 两族——两类判定主体=wf 派单动作族×proposal 派单提案判定族，判定词汇同一 approve|reject 零新词形）+`SyncApprovals.Sync` 匹配改族表判定（族外串零翻转锚定）+`DecisionAction` proposal 分支改提案判定通路（`console:*` 串+reasonRef=判定串单点拼装）。
+- plugin 动作判定 Apply 原文随行：动作前 `LIVE.get('v1/objects/<kind>/<name>?scope=')` 现读（kind 判别=DecisionAction matchingKeyOf 同键）原文零变更随行=判定行照落照判定；dry-run 预检同载荷同原文；空串词形废除锚进测试。
+- 派单卡动作行（v0.58 既有）=收口后唯一 proposal 派单动作面：批准/驳回=提案判定通路同款动作（零旁路），判定终态=词形 chips 无按钮。
+
+**L60 验收线（探针编号 L60-\*；探针=acceptance/loop-60.md；UI 段 e60-ui 9/9 green）**：
+- L60-01 dry-run 预检零副作用：动作 dry-run 200 `action=dry-run` ∧ 投影词形不翻转（预检≠判定）。
+- L60-02 动作拍判定行在账：`/v1/history` 新增 `workflow:approve` ok/noop 行（同拍判定行喂 Sync——判定窗=动作返回拍）。
+- L60-03 同拍投影翻转：派单行 `approval.state=approved` ∧ `spawn={declared:true, wired:false, target:apply-workflow, rv=判定行 rv}`（红线 a 机械锚——批准≠拉起）。
+- L60-04 回链闭环：`/v1/inbox` 挂起行降位拍即生效（v0.58 已判过滤）；驳回通路对称活体（`workflow:reject` → rejected ∧ spawn 零值键 ∧ 挂起行降位）。
+- L60-05 族表收口回归：`TestProposalDispatchConsoleFamilySync`（proposal 派单行 × console:approve 判定行 → approved ∧ spawn 声明全链——漂移即红）；族外串零翻转锚定。
+- L60-06 UI 活体：wf 配置 tab 派单行 pending → 批准/驳回动作在册 → 确认弹窗（判定串+wired 恒 false 红线词形+dry-run 乐观锁预检）→ chips 原地翻转+按钮摘除（终态守卫）；proposal 提交态主动作（批准=console:approve 判定通路）→ 派单行 approved+spawn 声明收口词形；截图 6 张（`loop-60-inbox-before/wf-dispatch-actions/approve-modal/wf-after-approve/proposal-submitted/proposal-after-approve.png`）。
+
+**实现余量（下轮顺延）**：cored-lint 挂起根因=loop-60 误将 `cmd/cored` 产物装入 `/home/friddle/bin/cored-lint`（19:12 起）——已自纠（重建 `cmd/cored-lint`，`files=49 findings=0 mirror=ok`）；GOMAXPROCS=1 下 cored（服务器形）对本轮 docsRoot 规模疑有活锁，未深究（非本轮面）。插件仓 `core_system` submodule pin 停 v0.53=近几轮既有实践（部署=工作树软链不依赖 pin）。
+
+
+
 ## 4. 落地顺序（一轮一增量，映射 loop 起点）
 
 | 增量 | 内容 | 验收 |
@@ -642,7 +666,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 R-10 | agent-session 域 SelfHeal 注入执行面真实接线 + 派单 ask 批准动作面【实现拓扑与细化验收=§1.30（loop-58）：workservice v0.56 sessionliveness SelfHealBridge 接口+SetSelfHealBridge 装配（env CORE_SYSTEM_SELFHEAL_ADDR 回填——dsh 宿主 loopback listener→sessionController.prompt mode=queue 注入固定词「继续」）+BeatSource 观测续租（不触发 SessionHealed）+心跳防伪（HTTP 面拒收 source=watchdog）+flowbind approval.go（DispatchLog 同拍挂 pending 批准投影→Apply workflow:approve\|reject ok 行原地翻转 approved\|rejected）+派单行 approval 键；spawn 接线=declared-deferred，approved 派单投影≠拉起】 | 注入停滞→prompt 注入「继续」（healed-by-beat 词形）∧失败重试不静默∧纯观测回归不破∧心跳防伪 400∧批准投影翻转可查（细化=L58-01…07） |
 | 对账轮 §1.25 | console 通知中心收件箱（四类汇总页面兜底）【实现拓扑与细化验收=§1.31（loop-58）：workservice v0.56 `flowbind.BuildInbox`+`GET /v1/inbox`（NeedsHuman∧Escalate/ApprovalNeeded+批准挂起/Proposal submitted/DocReview 草稿四类机械自分类——行 link=console 深链路由，watchdog={approvals,pending,approveIdle} 真实词形）+console `#/inbox` 屏（四类 chips/条目深链/空态显式/watchdog 观测面）+总览 metric 卡+palette 动作+inboxCount 回落口径】 | 四类待办计数可查∧条目可点达操作面∧无通道=页面兜底可见∧空态显式（细化=L58-UI-01…04） |
 | 对账轮 §1.32 | 收件箱四类深链操作面活体判定+事件回链闭环+spawn 接线声明投影【实现拓扑与细化验收=§1.32（loop-59）：workservice v0.57 批准投影行集升格（ApprovalNeeded 挂起行进行集——计数=行数同源不翻倍+`ApprovalSpawnDeclaration` 纯函数——派单行 `spawn` 键 `{declared,wired:false,target,approvalId,rv,eventId}` 判定权威=apply_log 行）+console 类内 op 落点消费与轻刷新回链判据；真实拉起仍 deferred（红线 a——wired 恒 false 机械锚）】 | 四类各自落点屏渲染活体∧挂起行进行集（幽灵计数收口）∧操作完成 inbox 下次装载反映∧spawn 声明词形 wired=false∧截图（细化=L59-01…05+L59-UI-01…04） |
-
+| 对账轮 §1.33 | 派单批准动作面 console 动作化+判定源族收口【实现拓扑与细化验收=§1.33（loop-60）：workservice v0.58 动作面 console 动作化（`disp-approve\|disp-reject`=Apply 判定通路+同拍判定行在账+挂起行已判过滤）+v0.58a 判定源族收口（`DecisionJudgmentFamilies` 族表=workflow:\*+console:\* 两族——GAP-Q60-2 活体实证缺口收口）+plugin 动作判定 Apply 原文随行（content='' 活体 400 收口）】 | dry-run 零副作用∧动作拍判定行在账∧同拍投影翻转+spawn 声明（wired=false）∧回链闭环拍即生效∧驳回对称∧proposal 全链收口词形∧UI 截图（细化=L60-01…06） |
 ## 5. 执行红线（对 loop 的约束）
 
 1. **不改文档面语义**：console 是观测/操作面，一切写操作（启停/编辑/批准/重跑）=Apply 走既有写路径；发现设计不合理→改文档先于改代码（acceptance 纪律）。
