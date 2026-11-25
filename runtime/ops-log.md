@@ -30,6 +30,11 @@ apply_log    (ts, field_manager, subject, obj, resource_version, result, policy_
              -- subject：判定主体标识（v0.9 请求级主体，permission.md §3）——denied 行必带
              -- （user 优先，无 user 记断言 roles/groups，全空=anonymous）；ok/noop/conflict 行由
              -- repository 双写落（Write 契约冻结不携主体），归属看 field_manager
+             -- v0.55（R-9 构建生效链判别面）：apply_log 升为「构建生效链对账」的数据源——
+             -- field_manager=workflow:bind ∧ reason_ref 前缀 workflow-bind: 的行=绑定器流水
+             -- （ok=落库后版本/noop=幂等重入照落现值），`GET /v1/workflows` 行集 reconcile 键
+             -- 消费（skeletonRv↔lastBindRv 对账 chain 三词——cored-bridge.md §2 v0.55；
+             -- 账本不删=对象键跨生命周期复用时旧 rv 高位如实参与判定=divergent 真实历史词形）
 event_log    (ts, event_id, type, source, involved, dedup_key, severity, routed_to)
 control_log  (ts, root_agent, primitive, target_agent, task_id, result)   -- 直控审计
 approval_log (ts, approval_id, obj, decision, judged_by, field_manager, resource_version, reason_ref)

@@ -117,3 +117,11 @@ session 生命周期（agent-session.md）只有创建/恢复/结束，缺**活�
 - 权限阻塞场景 → `ApprovalNeeded` 出现且通知送达；
 - 人工介入场景 → bind 用户已配置 email 时收到邮件（dedup 窗口内至多一封）；未配置通道时页面可见且零外发；
 - 长任务场景 → `LongTaskRunning` 有账且无 SuspectedStall 误报。
+
+## KI-009 构建生效链无判别面——「run 相位推进产生的效果与 build 产物对账」不可查（loop-57 R-9 收口）
+
+| 项 | 内容 |
+|---|---|
+| 现象（R-9，console-adoption.md §4 表） | workflow 运行管理屏「构建产物 digest/构建生效链」判别面三问零落点：骨架产物 digest（落库 rv）不可查、apply_log 绑定行与对象现值 rv 无对账投影（人写演进导致的链分裂不可见）、骨架节点接线与 run 相位序列无对账投影、派单受理行不带节点载荷（apply-workflow 拉起输入面缺席） |
+| 状态 | **已收口（loop-57，2026-11-26）**——workservice v0.55（flowbind `execution.go` Reconcile 判别投影 chain 三词 consistent\|divergent\|absent + NodesOf 单点真相；聚合面行集四新键 reconcile/executionFlow/executionDigest/executionHistory + 派单行 nodes 键）+ console 三件呈现（生效链列/详情行/流程图骨架节点 × run 相位对账投影 ◉✓○⤫）——细化验收线=console-adoption.md §1.29（L57-01…11），探针=acceptance/loop-57.md |
+| 余量 | apply-workflow 真实拉起（dsh 会话挂载+ask 批准动作面）declared-deferred——拉起输入面（派单行 nodes）已带接线契约，真实执行仍 observe（红线 a）；判别面跨生命周期词形=divergent 真实历史（账本不删——对象键复用时旧 rv 高位如实参与对账，语义锚定 flowbind delete_reapply_test） |

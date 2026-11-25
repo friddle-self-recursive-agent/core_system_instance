@@ -212,7 +212,13 @@ Workflow spec（新入库/变更）
 - **观测面非账本**：受理投影=进程内环（有界，重启归零=幂等重入不重复派单的语义锚）；持久态=骨架对象本体（聚合面 `execution.skeleton=true`）+ apply_log 审计（fieldManager=workflow:bind）——投影丢失不致实现缺口静默。
 - **余量（declared-deferred）**：会话真实拉起与 ask 批准动作面（ApprovalNeeded→人批→spawn）、watch-only 自监控闭环（§8）、developer-system 代码化调用——随 agent-session 域落地轮扩。
 
-### 11.3 派单第二来源：Proposal 批准派单（2026-11-26，能力 B 轮——concepts/proposal.md）
+### 11.3 拉起投影面第二段（2026-11-26，R-9 轮——派单行携节点接线载荷 nodes）
+
+§11.2 首段的下一步接口面：受理行从「有派单事实」升为「拉起输入面」——派单受理行（kind=workflow）新增 `nodes` 键（v0.55），载荷=骨架 `spec.flow.nodes` 节点清单投影（name/title/unit/op/connector/provider，`flowbind.NodesOf` 单点真相——聚合面 executionFlow 键消费同一投影零硬编码）。apply-workflow 真实拉起时其输入=该节点清单（每个节点=一段接线契约：unit=session 走宿主会话、unit=agent 走跨服务 agent 调用、connector/provider 落实现落点）。**红线不变**：拉起输入面在册≠已拉起——受理投影仍非会话挂载，真实执行仍 observe（红线 a）；本面只证明「骨架→agent 的交棒载荷已带接线契约」，不新增任何自动执行。
+
+**构建生效链判别面随行（R-9 主增量——workflow 运行管理屏判别三问）**：①构建产物 digest=骨架对象落库 rv（`skeletonRv`）；②生效对象 rv=ConnectorOps 面上现值；③对账=骨架 rv ↔ 最近绑定器 apply 行 rv（apply_log fieldManager=workflow:bind 行——ok=落库后版本/noop=幂等重入照落现值）→ chain 三词 `consistent|divergent|absent`：divergent=对象在绑定器之外演进过（骨架翻转为实现后物化器零盲写，实现侧 diff 基线=lastBindRv——链分裂可见不静默）。读口=`GET /v1/workflows` 行集四键 `reconcile`/`executionFlow`/`executionDigest`/`executionHistory`（v0.55 新载荷键=代际判别器）；呈现=console workflows 屏「生效链」列+wf 详情配置 tab 生效链行+流程图 tab 骨架节点 × run 相位对账投影（节点态四词着色 ◉当前·✓已过·○未至·⤫不在序列——off-flow=对账缺口可见）。细化验收线=console-adoption.md §1.29（L57-01…11）。
+
+### 11.4 派单第二来源：Proposal 批准派单（2026-11-26，能力 B 轮——concepts/proposal.md）
 
 apply-workflow 锚的派单投影自 v0.51 起有**第二触发源**：Proposal（需求提案，core_design concepts/proposal.md——console 提需求→审批→派工的一等对象）对象以 `spec.status=approved` 落库 → 一条派单受理投影（同 face `GET /v1/agents/dispatches`，行 `kind=proposal`——v0.50 骨架派单行补 `kind=workflow` 投影，新载荷键=代际判别器）。与骨架派单的分工：骨架派单=「骨架→实现代码」的交棒（步 1→步 2）；Proposal 派单=「需求→执行体」的交棒（批准后 agent 产出=文档草稿（docsRoot 对象）或部署侧任务文件，落点声明=spec.landing 产物指针）。载荷带 proposal 名/目标（title/summary）/验收标准（acceptance）/priority/proposer——执行体输入随行（agent 面余量=真实拉起后消费）；审批链复用（ApprovalNeeded 提交分流自产 + ApprovalGranted/Rejected 判定事件 + approval_log 账）与状态机词汇见 proposal.md §4/§5。**红线不变**：派单受理≠拉起；Proposal 不 enable 任何 workflow、不自动执行代码。
 

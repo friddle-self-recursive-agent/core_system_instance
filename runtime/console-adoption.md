@@ -361,6 +361,29 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 - L51-09 零残留：探针对象 git rm 清场（flow-probe 两件+probe-owned 两件）→ 聚合面行消失 ∧ docsRoot git 洁性（内容轮 commit 非探针残留）。
 
 
+### 1.29 对账轮增量：R-9 build 生效链判别面——骨架产物 digest ↔ apply_log 绑定行 rv 对账 + 流程图骨架节点升格 + apply-workflow 拉起投影面（2026-11-26，loop-57 轮——标准对账选点 R-9）
+
+**缺口根因（R-9，console-adoption.md §4 落地顺序表 R-9 项，loop-56 对账清单首选）**：§1.21/§1.22 已落 execution 判别器（state=bound|unbound+skeleton）与派单受理投影（`/v1/agents/dispatches`），余量=「run 相位推进产生的效果与 build 产物对账」的判别面三问零落点：①构建产物 digest（骨架落库 rv）不可查；②apply_log 绑定行（fieldManager=workflow:bind 的 ok/noop 流水）与对象现值 rv 无对账投影——人写演进（骨架翻转为实现后物化器零盲写）导致的链分裂不可见；③骨架节点接线（spec.flow.nodes）与 run 相位序列无对账投影（流程图 tab 只有声明相位线性渲染）；④派单受理行不带节点载荷（apply-workflow 拉起输入面缺席）。
+
+**收口方向（判别面三件联动——零新写面，全部现读现投）**：
+1. workservice v0.55（flowbind `execution.go` 新件）：**Reconcile 判别投影**——`ReconcileOf(execution, connObj, applies)` 纯函数：骨架产物 digest=绑定对象落库 rv（skeletonRv，absent=0）↔ 最近绑定器 apply 行 rv（lastBindRv/lastBindApply/lastBindAt——行集按 fieldManager=workflow:bind ∧ reasonRef 前缀 workflow-bind: 过滤，rv 最大者为最近：ok 行=落库后版本、noop=面上现值）→ **chain 三词闭合集**：`consistent`（同窗一致）/`divergent`（面上 rv≠绑定行 rv——对象在绑定器之外演进过，链照实分裂可见不静默；含绑定行缺席词形）/`absent`（绑定对象缺席=unbound 同窗缺口词形）。`NodesOf`=骨架对象 spec.flow.nodes 宽松解析投影（派单行与聚合面共用同一投影——单一真相零硬编码）。
+2. 聚合面行集四新键（`GET /v1/workflows` 行——新载荷键=代际判别器）：`reconcile`（Reconcile 判别投影全字段）/`executionFlow`（骨架节点接线投影——bound 行=nodes 数组，unbound=null）/`executionDigest`（`{skeletonRv, bound, skeleton, chain}` digest 三键）/`executionHistory`（apply_log 对象链机读深链参数 `kind=ConnectorOps&scope=<s>&name=<n>`——绑定对象键同源）。派单面行集新键 `nodes`（workflow-runtime.md §11.2 第三段拉起投影面：apply-workflow 拉起输入=骨架节点清单——kind=workflow 行携带，kind=proposal 行空值不适用）。
+3. console（v0.49/50 呈现升格三件——零新组件）：workflows 列表「生效链」列（`链·r<rv>` mute chip=consistent/`链·分裂` warn chip=divergent/`链·absent` faint=absent——digest↔bind rv 对账 head 词形在 title）；wf 详情配置 tab 生效链详情行（骨架 digest ↔ 绑定 apply 行 → chain 词 + 应用史深链）+ 骨架节点接线 chips（spec.flow.nodes 投影：name·unit 全显，unit=agent/connector/provider 落 title）；**流程图 tab 骨架节点 × run 相位对账投影卡**（节点态四词着色 ◉ 当前落点·✓ 已过·○ 未至·⤫ 不在现势 run 相位序列——节点在骨架而 run 序列不含=off-flow 对账缺口可见；骨架缺席=回退声明相位线性渲染既有形态零翻转）；派单行 nodes 键消费（节点输入词形随行）。
+
+**L57 验收线（探针编号 L57-\*；探针=acceptance/loop-57.md）**：
+- L57-01 骨架 rv ↔ 绑定行 rv 对账（核心判据）：apply 探针 workflow（global/l57-chain-probe）→ 同名 ConnectorOps 骨架出现 ∧ 聚合面该锚 `reconcile.chain=consistent` ∧ `skeletonRv`=骨架落库 rv ∧ `lastBindApply=ok ∧ lastBindRv` 同值（apply_log 绑定行同源可回指 `/v1/history`）。
+- L57-02 digest/绑定态/对象链三件联动：`execution.skeleton=true ∧ reconcile.skeletonRv ∧ executionHistory=kind=ConnectorOps&scope=<s>&name=<锚>` 三键同源——「构建产物 digest ↔ 生效对象 rv ↔ execution 绑定态」联动一致可查（unbound/skeleton=true 即缺口词形）。
+- L57-03 executionFlow=骨架节点接线投影：flow.nodes 节点行（name/title/unit/op/connector/provider）在册；unit=agent 节点声明原样投影（跨服务=agent 调 agent 表达面）。
+- L57-04 派单行拉起输入面：`GET /v1/agents/dispatches` 该锚行 `nodes`=节点清单（apply-workflow 拉起输入面首件；autoLevel=ask 数据面；**受理≠拉起红线不变**——真实执行仍 observe）。
+- L57-05 dev-delivery 存量链：boot 存量枚举 noop 行（幂等重入零差异照落现值）→ reconcile=consistent（lastBindApply=noop）；派单行=0（noop 不派单零噪音）。
+- L57-06 divergent 缺口词形（单测锚定）：人写演进（骨架翻转为实现/外部编辑）→ 面上 rv≠绑定行 rv → chain=divergent（flowbind execution_test `-race` 绿；外来 fieldManager/reasonRef 行过滤面随行）。
+- L57-07 流程图对账投影（headless）：wf 详情流程图 tab「骨架节点 × run 相位对账投影」卡在册——节点态四词着色数据面可查（◉/✓/○/⤫）；run 环重启归零=全列 ⤫ 诚实词形；骨架缺席=回退声明相位渲染（既有形态零翻转）。
+- L57-08 console 判别面（headless）：workflows 列表「生效链」列 + 配置 tab 生效链行/骨架节点 chips/应用史深链 + 派单行 nodes 词形——零 console error 零 4xx；截图 ≥3 张（列表+配置+流程图，acceptance/shots/loop-57-*.png）。
+- L57-09 零残留：探针对象（l57-chain-probe 两件）git rm 清场 → 聚合面行消失 ∧ docsRoot git 洁性 ∧ apply_log 探针审计行=合法产物（账本不删——对账锚跨生命周期如实可见）。
+- L57-10 回归：六仓 go build/test/lint 绿（并发包 -race 绿）+ npm test 绿 + loop-50/51 基线判据（execution 投影/派单幂等不派单/所有面不派单）不回退 + loop-56 基线（心跳面活体）不回退 + cored-lint `files=14 findings=0 mirror=ok`（docsRoot scheme 镜像漂移闸本轮复原：core_design@74a8efe 声明面随行镜像同步）。
+- L57-11 代际判别器：新代聚合面行含 reconcile/executionFlow/executionDigest/executionHistory 四键 ∧ 派单行含 nodes 键；旧代（headless 载体或旧构建）无该键（载荷键出现/缺席=代际词形分立）。
+
+
 ### 1.23 用户裁决（2026-11-24）：console 原生整合 + Workspace 按 Service（第一波）
 
 **保留**：现 console 独立页（proto/现有页面）**单独留着**，不改不拆（作为完整形态参照与独立入口）。
@@ -555,6 +578,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 R-6 | Role/Group 文档面对象 + 权限矩阵 Role 列激活【实现拓扑与细化验收=§1.20（loop-49）：core-docs 内容轮（global/roles/admin + global/groups/core-operators——声明面在位的纯数据轮）+console live 小对象现读扩 Role/Group+permissions 屏「Role 授权矩阵」spec 现读区块；零 Go 改动=装载/热装载/ApprovalNeeded 产源皆既有】 | docsRoot Role/Group 对象净入授权面+involved 实体化+UI 矩阵激活（细化=L49-01…07） |
 | 对账轮 R-7 | workflow 执行模型绑定面：execution 判别器 + apply 即实现骨架物化【实现拓扑与细化验收=§1.21（loop-50）：workservice v0.49 `internal/flowbind`（绑定物化器=装配期枚举+DocApplied×Workflow 热路径，走 apply 闸门 fieldManager=workflow:bind，origin=workflow-bind 所有面）+聚合面 execution 投影+scheme.yaml ConnectorOps flow 声明+docsRoot workflow-engine 宿主 WorkService+console workflows 屏执行 chip】 | apply 即同名 ConnectorOps 骨架出现且 diff 可查+决策面 execution=unbound 可见（细化=L50-01…09） |
 | 对账轮 R-8 | apply-workflow agent 派单面：骨架物化即派单受理投影【实现拓扑与细化验收=§1.22（loop-51）：workservice v0.50 flowbind `dispatch.go`（DispatchLog 环=wake 同构——created/updated 即派单，noop/skipped 不派单，autoLevel=ask 数据面）+`GET /v1/agents/dispatches` 读面+console wf 详情骨架态派单行；受理≠拉起——真实拉起=dsh 会话挂载 declared-deferred】 | 骨架物化即 apply-workflow 派单受理投影可查且幂等/所有面/元数据变更零噪音（细化=L51-01…09） |
+| 对账轮 R-9 | build 生效链判别面：骨架产物 digest ↔ apply_log 绑定行 rv 对账 + 流程图骨架节点升格 + apply-workflow 拉起投影面【实现拓扑与细化验收=§1.29（loop-57）：workservice v0.55 flowbind `execution.go`（Reconcile 判别投影——skeletonRv↔lastBindRv 对账 chain 三词 consistent\|divergent\|absent 缺口词形可见+NodesOf 单点真相）+聚合面行集四新键 reconcile/executionFlow/executionDigest/executionHistory+派单行 nodes 键（拉起输入面首件）+console 生效链列/详情行/流程图骨架节点×run 相位对账投影（节点态四词着色 ◉✓○⤫）；真实执行仍 observe（红线 a）】 | 骨架 digest↔绑定行 rv↔execution 绑定态三件联动可查∧链分裂/divergent 缺口可见∧流程图节点态着色数据面可查∧UI 截图（细化=L57-01…11） |
 | 用户裁决 能力 B | 需求提交流：console 提交需求 → Proposal 对象 → 审批 → 自动落文档/派工【实现拓扑与细化验收=§1.24（loop-52）：workservice v0.51 `internal/proposal`（分流 watcher=DocApplied×Proposal 订阅——approved 即 apply-workflow 派单 kind=proposal 行/auto-approve 引擎自写 fieldManager=proposal:auto/高危提交 ApprovalNeeded 自产 source=core）+`GET /v1/proposals` 读面+apiserver `console:reject` 对称扩展（rejected 行+ApprovalRejected 事件）+core_design kind:Proposal+concepts/proposal.md+console「需求提案」屏（表单/列表/详情/批准/驳回）】 | 界面提交→Proposal 在库（rv=1 submitted）∧批准→approved+派单投影+eventId 同源∧驳回→rejected+无派单∧分流可配（细化=L52-01…09） |
 | 用户裁决 能力 A | 设计文档在线编辑：console 屏幕 6 直接改 md → Apply → git commit【实现拓扑与细化验收=§1.26（loop-53）：workservice v0.52 `internal/docrepo`（受限文件面路线②——`--design-repo` 白名单+git HEAD 读面+三检查 403/400/409+权限域 core/design-docs+本地 commit 不 push）+`/v1/design-docs*` 面+plugin `/core-console/design-docs` 写路由+console 屏 6「设计文档」页签+`#/designdoc` 工作台（文件树/编辑器/diff/Apply）+审批屏 DesignDoc 稿；cored-bridge.md §2.4+scheme.yaml Role 词汇 core/*】 | 打开概念文档→编辑 Apply→目标仓新 commit+DocApplied 同源+审计在账∧409/403/400 判据三件∧UI 截图（细化=L53-01…08） |
 | 用户裁决 能力 D | 需求提案对话式录入 + R-UX-1 通用对话交互框架 + R-UX-2 scheme 驱动控件【实现拓扑与细化验收=§1.27（loop-54）：workservice v0.53 `internal/scheme/widgets.go`（8 类控件机读派生+`Scheme.Replace` 热刷新）+`internal/intake`（R-UX-1 六步对话引擎：自由描述多字段抽取/自动补充/缺失冲突询问/提交节点生成+三重 dry-run 字段级归因/会话版本留痕不入公共库）+`/v1/intake/*` 面+plugin `/core-console/intake` 写路由+console 通用对话录入组件与 scheme 控件渲染器（`#/proposals` 默认对话态+字段卡双向同步+预览确认+降级表单+对象编辑器 scheme 控件面板）】 | 零起点 ≤6 轮对话字段全绿∧只问缺失冲突项∧生成对象过三重 dry-run 且失败定位字段∧确认后 rv=1 submitted（高危产 ApprovalNeeded）∧控件=scheme 映射且改 scheme 自动反映∧降级表单可用∧UI 截图（细化=L54-01…07） |
