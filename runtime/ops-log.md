@@ -50,6 +50,16 @@ draft        (kind, scope, name, content, field_manager, reason_ref, base_rv, cr
              -- PRIMARY KEY (kind, scope, name)；v0.10：草稿缓存持久化面（apply.md §1 编辑与
              -- 发布分离）——随 --ops-db 持久化部署决策一并注入：给定 --ops-db=落稿/弃稿写穿
              -- 本表 + cored 启动恢复；缺省内存语义不变（重启即清，草稿可重放）
+ session_heartbeat (session_id PK, ts, phase, last_action, task_name, long_task, heal_attempts, healed_at, state, updated_at)
+              -- v0.54（KI-003 会话活性账面，agent-session.md §7/§8）：心跳=upsert 即续租（watchdog
+              -- 扫描键=updated_at < now-阈值=停滞候选）；state ∈ {live, suspected-stall（判定态词=
+              -- SuspectedStall 的 DB 词形，event.md 规则 14b 判定/事件词分立）, long-task, healed,
+              -- escalated}（闭合集）；task_name/long_task=长任务显式化字段（LongTaskRunning 判据：
+              -- 声明长任务或有进展心跳=不判停滞）；heal_attempts/healed_at=自愈链留痕（第一动作=
+              -- 注入固定 prompt「继续」，连续无效达 --heal-retry-limit 升级 Escalate）；**状态迁移不写
+              -- updated_at**（租约=活性推进——watchdog 自身翻转不算心跳，停滞行不逃扫描池）。
+              -- 注册面=POST /v1/sessions/heartbeat（写面门控同 --allow-apply）；读面=GET /v1/sessions
+              -- （恒开）；账面非权威（活性租约=运行时观测面），不参与 §3 对账不变量。
 ```
 
 > 预算/成本流水（budget_log 类）**不在 ops DB v1 内**：budget 是 metrics 关注的东西，不是核心循环内容——暂不做，日后随 metrics 默认 workflow 落。

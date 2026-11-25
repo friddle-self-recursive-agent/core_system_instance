@@ -67,7 +67,7 @@
 | 项 | 值 |
 |---|---|
 | 发现时间 | 2026-11-24 |
-| 状态 | 设计面已落（event.md 规则 14 / notification.md 规则 6 / runtime/agent-session.md §7）；实现待收口（任务已排队 loop-ki003） |
+| 状态 | **已收口（loop-56，2026-11-25）**——core_design@a4fac9d（eventTypes/dispatch 三行+规则 14b 三词分立）+ workservice@8b789c1（internal/sessionliveness watchdog 全链+session_heartbeat 账面+POST /v1/sessions/heartbeat+GET /v1/sessions+装配三旗标）；自愈第一动作（sessionController.prompt 注入「继续」真实拉起）与 console 通知中心页面展示随 agent-session 域顺延 |
 | 严重度 | 中（自举链的"活性"目前只能由外部巡检用 mtime/git 推断） |
 | 来源 | 用户判断：「session 卡住也是 event」 |
 

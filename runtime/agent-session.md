@@ -95,3 +95,16 @@ Session/Doc/TaskScheme 的**历史检索**设计：tag 元数据 + 简单排序�
 - **自愈固定顺序**：先注入固定 prompt「继续」（保留上下文，不重启）→ 恢复记 `SessionHealed`；仍无心跳 → 诊断（最后工具调用/日志/等待对象/权限面）→ 权限类产 `ApprovalNeeded` 向上提交；人工类按 bind 用户已配置通道上报（未配置=不 notify 仅页面展示，notification.md 规则 6；外发 dedup 窗口内至多一封）；长任务类产 `LongTaskRunning`（任务名/已运行/阶段/决策点），结束回收；
 - **分工**：外部巡检只做确认与兜底，不代替系统判定；同会话连续自愈无效达阈值（缺省 2）→ 停手升级；
 - **判据**：注入停滞 → `SessionStalled` 在账且注入「继续」后恢复；权限阻塞 → `ApprovalNeeded` + 送达；人工 → bind 邮件（dedup 窗口内至多一封）；长任务 → `LongTaskRunning` 且无停滞误报。
+
+## 8. 实现落点（loop-56，KI-003 实现收口）
+
+| 面 | 落点 |
+|---|---|
+| 心跳账面 | ops DB `session_heartbeat` 表（ops-log.md §2 v0.54 行）：session/ts/phase/last_action/task_name/long_task/heal_attempts/healed_at/state/updated_at；upsert 即续租（watchdog 扫描键=updated_at）；进程内计数=观测面（Heartbeats 投影 heartbeats 键） |
+| 心跳注册 | `POST /v1/sessions/heartbeat`（cored-bridge.md §2.3 v0.54；写面门控=--allow-apply 同开关）——会话侧推进点上报 `{sessionId, phase, lastAction, taskName?, longTask?}` |
+| 查询面 | `GET /v1/sessions`（恒开）：`{count, sessions:[{sessionId, state, phase, lastAction, taskName, longTask, healAttempts, heartbeats, involved, lastBeat, healedAt}], watchdog:{enabled, interval, stallThreshold, healRetryLimit}}`——**state 词=suspected-stall 判定态词 SuspectedStall 的 DB 词形**（event.md 规则 14b 判定/事件词分立） |
+| 判定面 | cored 装配层 watchdog（`internal/sessionliveness`，`--session-watch-interval`；0=关断零事件零扫描）——`--stall-threshold` 缺省 10m（event.md 规则 14②）；updated_at < now-threshold=停滞候选；**状态迁移不续租**（watchdog 自身翻转不算心跳，停滞行不逃扫描池）；注册表闸门前置（SessionStalled 未注册=stderr `unregistered` 不启动） |
+| 合成事件 | SessionStalled（error，dedup=`session:<id>`，route=root-agent+notification/*——cc 旁路 bind 通知）/SessionHealed（info，dedup=`session-heal:<id>`）/LongTaskRunning（info，dedup=`longtask:<id>`）/ApprovalNeeded、Escalate（复用既有注册类型）——source 恒 core，与注入同主干零旁路 |
+| 自愈第一动作 | 注入固定 prompt「继续」（装配层 SelfHeal 执行面；dsh 宿主=plugin 侧 sessionController.prompt 软出现面）；注入留痕=行 phase=inject-continue；注入失败继续上报绝不静默（HealAttempts=0 下一拍重试第一动作=重试不是跳步）；心跳重现=恢复记 SessionHealed 且连败计数清零 |
+| 诊断分诊 | 权限类→ApprovalNeeded（向上提交不自行绕过）；人工类→bind 已配置通道（未配置任何通道=不 notify 仅页面展示，零外发）；长任务→LongTaskRunning 显式汇报（有进展心跳=不判停滞；结束回收=恢复出池） |
+| 升级链 | 人工路连续自愈无效达 `--heal-retry-limit`（缺省 2）→ 合成 Escalate + 行态 escalated 停自动处置（不静默重试） |
