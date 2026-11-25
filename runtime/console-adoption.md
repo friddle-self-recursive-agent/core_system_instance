@@ -654,7 +654,26 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 - L61-02 enabled 闸三拍活体：precedence 放行拍（global:false ∧ override:true → 注入×3 全落 run ∧ disabled=0）→ 闸拦拍（override 翻 false → 注入×3 全拦 ∧ disabled 0→3 ∧ anchorRuns 恒值 ∧ started+1=flip 自身对账 run 如实入账）→ 复位放行拍（override 翻 true → anchorRuns+1 ∧ disabled 恒值——零缓存热装载 apply 落库即生效）；单测=拦/放行/判定缺席/precedence 四态+在途 run 迁移判定零改动。
 - L61-03 UI 活体：收件箱屏降级词形行在册 ∧ 尾随分隔符行=0 ∧ involved 在册词形零回归；wf 聚合面 effective.enabled（override 生效词形）× runs disabled × anchorRuns 三面同源；截图 2 张（loop-61-inbox-digest/wf-enabled-agg.png）。
 
-**实现余量（下轮顺延候选）**：object 触发声明（spec.triggers）不入 dispatch 订阅集合（订阅=scheme.dispatch 推导既有口径——对象级触发声明面随 connector watch 声明面扩展顺延）；E5b chat-backfill 已有 status 块结构化合并（§1.11 补注④ declared 在位）；E6 泳道 approval 积压族扩 DocReview/Proposal 类（§1.13 declared 注记原样）。宿主 `/core-console/api` 代理不转发 POST（注入探针直打 cored loopback——loop-51 套路，探针纪律注记随行）。
+**实现余量（下轮顺延候选）**：object 触发声明（spec.triggers）不入 dispatch 订阅集合（订阅=scheme.dispatch 推导既有口径——对象级触发声明面随 connector watch 声明面扩展顺延）；E5b chat-backfill 已有 status 块结构化合并（§1.11 补注④ declared 在位——**loop-62 收口，见 §1.35**）；E6 泳道 approval 积压族扩 DocReview/Proposal 类（§1.13 declared 注记原样——**loop-62 积压族收口，见 §1.35**）。宿主 `/core-console/api` 代理不转发 POST（注入探针直打 cored loopback——loop-51 套路，探针纪律注记随行）。
+
+### 1.35 对账轮增量：E5b chat-backfill 结构化合并收口 + E6 审批积压族扩与收件箱族内落点分化（2026-11-26，loop-62 轮——§1.11 补注④ 余量摘除 + §1.13/§1.25 积压族收口）
+
+**缺口根因（对账选点——§1.34 余量注记顺延，点火队列顺序执行）**：
+- ①队列 1（E5b，§1.11 补注④ declared 余量）：console 新建会话回填 `Agent.status.currentSession` 的写面在「Agent 文档已有 status 块」时**诚实跳过**（toast「currentSession 未回填（诚实余量）」）——已有 status 块的 Agent（生产 docsRoot 现状=core-headless agent.yaml 即是）在 console 新建会话后身份回填缺席，agent-comm 文档面 to 解析（status.currentSession.id 回填体）与归属过滤三层证据①沿旧值漂移。
+- ②队列 2（E6，§1.13 余量注记 declared 原样）：事件流聚合面板「审批积压」计数=ApprovalNeeded 归档行单源——submitted 提案（v0.51 读面）与派单批准投影 pending 行（v0.56/0.57 读面）不入族；收件箱 ApprovalNeeded 族内条目落点=类级审批屏单一落点，dispatch 行的批准动作面（wf 详情配置 tab，v0.58 动作化屏）不可直达。
+- ③评估项（声明面只评估，零改动）：object 触发声明面（spec.triggers 不入 dispatch 订阅集合——订阅=scheme.dispatch 推导既有口径，随 connector watch 声明面扩展顺延）；watch-only 自监控闭环/developer-system 代码化调用（workflow-runtime.md §11.2 余量行——红线 a 域，真实拉起仍 deferred）。
+
+**实现拓扑（零 Go 改动——plugin 客户端面单仓收口）**：
+- 队列 1：`mergeCurrentSession` 结构化合并纯映射（console-chat.js 导出 `__CC.chat.mergeCurrentSession`——DOM 无关 node --test 确定性）——三分支：①无 status 块=文末追加最小块（既有词形）；②有块无 currentSession=块内追加键组；③有 currentSession=子块**键级重写**（id/startedAt 翻新、docsLoaded 保位归零、其余子行原样保留）。零盲写红线=纯文本手术非 yaml 重编码（status 块外字节恒等）；同参回放=幂等 noop 词形（apply 面零新 rv）；预读口径缺席（无 metadata.name / tab 缩进）=ok=false 诚实降级不盲写（余量词形收窄为该形态）。调用点 `backfillCurrentSession` 改接线：结构化合并→既有 apply 通路（fieldManager=`console:chat-backfill` 不变、rv 乐观锁不变）；回执 `action=noop`（apply.md rule 1 幂等重入）=toast「幂等 noop · 同值零盲写」词形。
+- 队列 2：`approvalBacklog()` 积压族单一真相函数——族=ApprovalNeeded 归档行 ∪ status=submitted 提案 ∪ 派单批准投影 pending 行三源（既有读面族语义扩展，零新写路径）；第三源行集=派单受理投影 `/v1/agents/dispatches`（v0.56/0.57 approval 键所在面——live 层既有 GET 读面新增快照键 `dispatches`；runs 面不载 approval 键，探针活体实证修正）；事件流聚合面板「审批积压」行消费族总数+族构成词形标注（三源分解可见+操作面落点：审批屏/提案详情/wf 配置）；`inboxOpOf` 类内落点分化：ApprovalNeeded ∧ kind=dispatch|dispatch-legacy → `wf/:name` 详情配置 tab（cored link=`#/wf/<锚>` 原值不改写，client 预置 `S.wfTab[<锚>]='config'` 后 go()——落地即动作行可见；tab 判据锚 `data-cc-inbox-tab`）、其余归档行=cored link 原值深链（对象编辑器屏）——计数与详情页解析同一函数无双源。
+
+**L62 验收线（探针=acceptance/loop-62.md；UI 段 e62-ui 4/4 green）**：
+- L62-01 结构化合并活体：既有 status 块 Agent（core-headless）经 console 新建会话 → `GET /v1/objects/Agent/core-headless?scope=global` content 的 `status.currentSession.id=<新 SessionId>` ∧ rv 前进 ∧ DocApplied 归档在册（fieldManager=console:chat-backfill）∧ 其余字段零盲写（spec 面/mount 声明逐字节保留——diff 只含 currentSession 增量）。
+- L62-02 幂等 noop：同值回填重放 → apply 回执 `action=noop` ∧ rv 恒值（apply.md rule 1 幂等重入零提交零事件）；单测锚定三分支（有块键级更新/无块追加/有块无键块内追加）+同参回放幂等+未知子键保留+预读缺席两词形（回潮即红）。
+- L62-03 积压族活体：事件流聚合面板「审批积压」=三源和（族构成词形标注在册）；单测锚定三源消费词形（回潮即红）。
+- L62-04 UI 活体：chat 屏新建会话 toast=「已回填」族词形（余量词形摘除）∧ 事件流聚合面板积压族行在册（三源构成词形）∧ 收件箱 ApprovalNeeded dispatch 行落点=wf 详情配置 tab 活体（点行落地 `#/wf/<锚>` ∧ 配置 tab 激活 ∧ 批准/驳回动作行在册——动作本体不点=探针零判定副作用）；截图 4 张（loop-62-chat-backfill/backlog-family/inbox-dispatch/wf-config-actions.png）。
+
+**实现余量（下轮顺延候选）**：object 触发声明面（spec.triggers 订阅集合——随 connector watch 声明面扩展顺延）；watch-only 自监控闭环/developer-system 代码化调用（workflow-runtime.md §11.2 余量行——红线 a 域，只随 agent-session 域落地轮评估）；E6 泳道族 DocReview 归档类行（本轮积压族已收 Proposal+派单两源，DocReview=草稿缓存行与 ApprovalNeeded 归档行已共屏审批——聚合面板族口径维持三源，DocReview 行深链已走类内落点）。
 
 ## 4. 落地顺序（一轮一增量，映射 loop 起点）
 
@@ -686,6 +705,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 §1.32 | 收件箱四类深链操作面活体判定+事件回链闭环+spawn 接线声明投影【实现拓扑与细化验收=§1.32（loop-59）：workservice v0.57 批准投影行集升格（ApprovalNeeded 挂起行进行集——计数=行数同源不翻倍+`ApprovalSpawnDeclaration` 纯函数——派单行 `spawn` 键 `{declared,wired:false,target,approvalId,rv,eventId}` 判定权威=apply_log 行）+console 类内 op 落点消费与轻刷新回链判据；真实拉起仍 deferred（红线 a——wired 恒 false 机械锚）】 | 四类各自落点屏渲染活体∧挂起行进行集（幽灵计数收口）∧操作完成 inbox 下次装载反映∧spawn 声明词形 wired=false∧截图（细化=L59-01…05+L59-UI-01…04） |
 | 对账轮 §1.33 | 派单批准动作面 console 动作化+判定源族收口【实现拓扑与细化验收=§1.33（loop-60）：workservice v0.58 动作面 console 动作化（`disp-approve\|disp-reject`=Apply 判定通路+同拍判定行在账+挂起行已判过滤）+v0.58a 判定源族收口（`DecisionJudgmentFamilies` 族表=workflow:\*+console:\* 两族——GAP-Q60-2 活体实证缺口收口）+plugin 动作判定 Apply 原文随行（content='' 活体 400 收口）】 | dry-run 零副作用∧动作拍判定行在账∧同拍投影翻转+spawn 声明（wired=false）∧回链闭环拍即生效∧驳回对称∧proposal 全链收口词形∧UI 截图（细化=L60-01…06） |
 | 对账轮 §1.34 | needsHuman Escalate 行 digest 尾随空串收口+触发路径 spec.enabled 实时 honoring【实现拓扑与细化验收=§1.34（loop-61）：workservice v0.58b `inboxDigestOf` 单点拼装（involved 缺席=降级词形「（involved 缺席）」——纯展示面零判定语义）+v0.62 `EnabledRules` 规则开关判定面（`EnabledOf` precedence=系统层 override→global 本体→零对象缺省启用，聚合面 effectiveObject 同口径）+StartRun 受理路径闸判（run 不落 disabled 计数可见）+装配层 resolver 注入（零缓存热装载）】 | digest 降级词形∧eventId 深链不变∧历史行投影自愈∧enabled 闸三拍活体（precedence 放行/闸拦/复位放行）∧disabled 新载荷键∧在途 run 零改动∧UI 截图（细化=L61-01…03） |
+| 对账轮 §1.35 | E5b chat-backfill 结构化合并收口 + E6 审批积压族扩与收件箱族内落点分化【实现拓扑与细化验收=§1.35（loop-62）：零 Go 改动 plugin 客户端面——`mergeCurrentSession` 结构化合并纯映射三分支（键级重写/块内追加/文末追加，零盲写=块外字节恒等，同参回放=幂等 noop，预读缺席=诚实降级）+`approvalBacklog()` 积压族三源单一真相（ApprovalNeeded 归档∪submitted 提案∪派单 pending）+`inboxOpOf` 族内落点分化（dispatch 行→wf 配置 tab 批准动作面）】 | 结构化合并活体（已有 status 块 Agent 回填 rv 前进∧其余字段零盲写）∧同值幂等 noop∧积压族三源聚合+构成词形∧收件箱 dispatch 行落点 wf 配置∧UI 截图（细化=L62-01…04） |
 ## 5. 执行红线（对 loop 的约束）
 
 1. **不改文档面语义**：console 是观测/操作面，一切写操作（启停/编辑/批准/重跑）=Apply 走既有写路径；发现设计不合理→改文档先于改代码（acceptance 纪律）。
