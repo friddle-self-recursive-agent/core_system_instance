@@ -766,6 +766,29 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 
 **实现余量（下轮顺延候选）**：object 触发声明面（随 connector watch 声明面扩展顺延）；watch-only 自监控闭环/developer-system 代码化调用（红线 a 域）；E5a 冷会话空窗（declared 维持）；编辑器域新增余量=无（rev-content diff 面收口后历史 tab 判据链完整）。
 
+### 1.41 对账轮增量：cored-bridge.md §2 随行补记 rev-content 读面 + docsRoot 探针残留清场（§5 清场纪律执行）（2026-11-26，loop-68 轮——标准对账选点轮：队列 1 零变化判定+队列 2 文档面增量）
+
+**核验选点（对账——点火队列顺序执行）**：队列 1 余量现势复核三项全**零变化判定**——①object 触发声明面：spec.triggers 在 flowbind 零词形命中（grep 实证零变化）∧ dispatch 订阅集合=表驱动（`/v1/triggers` types=["*"] 活体在运）；②watch-only 自监控闭环/developer-system 代码化调用（workflow-runtime.md §11.2 余量行——红线 a 域，spawn wired 恒 false 机械锚在运）；③E5a 冷会话空窗（宿主读面现势零变化——§1.37 评估维持 declared）。队列 2 现势复核出**一项文档面缺口=当轮增量**：rev-content 读面（loop-67 新面）已随 cored v0.63 在运+plugin v0.67 消费，而 cored-bridge.md §2 GET 端点清单**无 `/v1/rev-content` 行**——桥契约文档缺口（cored-bridge.md §2 是 console 读面契约的权威清单），非运行时缺口（面已在运活体）；判定=文档随行补记当轮收口（「改文档先于改代码」§5 规则 1 的文档域对账件）。队列 3：submodule pin=d3b6930=workservice@6853803（loop-67 已 bump——本轮 workservice 零提交=维持零改动）。
+
+**实现拓扑（零 Go 改动零 plugin 改动——纯文档面增量+部署侧清场执行）**：
+- ①cored-bridge.md §2 补记 `GET /v1/rev-content/{kind}/{name}?scope=&rv=` 行（词形族全量：200 快照词形 kind/scope/name/rv/content/source=git-backend/400 rv 词形/404 ErrRevNotFound 分立/503 face 缺席/405 代际判别器；快照语义=「最新携带该 rv 反写行的提交」+rv 判据=blob 元数据反写行+正文含文末换行+只读纯考古零写路径）+§1 文档存储后端行随行 **v0.63 在运代注记**（真实 sha/rev 记部署台账不入公开仓——R-PUB-3）。
+- ②docsRoot 探针残留清场（console-adoption.md §5 清场纪律首执行——巡检 2026-11-26 发现）：`global/agents/{l59…l67 锚 5 件}+l64-ind4-anchor`、`global/proposals/l60-*11 件`、`global/workflows/l59-spawn-probe`、`systems/self-recursive-core/{connector-ops/l59+l60-*13 件+l62-backlog-probe,workflows/l60-*11 件+l62-backlog-probe}` 共 **43 件**移除+手编 docsRoot 通道 git commit（提交词形 `probe:loop-68 sweep remove…`——非 console:editor 前缀=不经 apply 管线零 DocApplied 零字段管理语义，与 loop-67 判据词形校准①手编通道同源）；**ops DB 账本不删**（apply_log/event_log 判定行与事件行在账=判别面语义注记——清场只净对象面不入审计）。
+- ③队列 2 判据链复核拍：锚域 create→rev-content 快照逐字节恒等判据活体复核（**判据词形校准③=落库正文判据词形**——逐字节恒等对象=稿正文∪rv 反写行（loop-66 校准①），非裸稿正文；探针首拍以裸稿正文为期望误判 FAIL 即校准，快照面零缺陷）。
+
+**清场结构发现（判据词形校准——后续轮判据词形权威）**：①**对象删除后 rev-content 历史 rv 快照恒可达**（快照语义=历史时点正文，git 权威在正文——历史不可变的延伸：已清锚 l67-rev-face-final 现势 objects 404 ∧ rv=2 快照 200 两态分立=审计不冒充的机械词形；cored-bridge.md §2 rev-content 行已随行注记）；②**清场后渲染面账本词形分立**——palette/对象行=零探针残留词形（对象残留断言域），Welcome 卡/编辑器历史 tab reasonRef 列=event_log 归档投影的 `probe loop-<n>` 摘要词形在册=账本不删域预期在册（非对象残留——残留断言勿扫事件账本词形域）；③探针非幂等自照应=判据锚自身留账（l68-face-sweep 首拍后=判别面域）——清场域断言=零探针残留词形（probe/l5x/l6x 前缀），判据锚留账在册属预期。
+
+**L68 验收线（探针=acceptance/loop-68.md；prep 17/17+UI 5/5=22/22 终拍，锚 l68-face-sweep-c）**：
+- L68-01 部署判据：既有对象读面零回归（rv=12 在运）∧ rev-content 既有对象 rv=1 快照 200 source=git-backend（v0.63 读面在运）。
+- L68-02 清场判据：agents 清单零探针残留词形 ∧ 已清锚现势 404∧rv=2 快照 200 分立 ∧ history 账本行不删（count=3 在账）∧ 聚合面/inbox 投影零回归。
+- L68-03 桥契约增量零回归：rv 词形族 400/404 分立 ∧ 宿主代理消费半边 200 git-backend（面行为零变更——文档面增量）。
+- L68-04 桥契约文档机械面：§2 rev-content 行在册 ∧ §1 v0.63 注记在册。
+- L68-05 判据链复核拍：锚域 create rv=1→快照逐字节恒等（稿正文∪rv 反写行，len=127）∧ 缺席锚 404 分立。
+- L68-06 队列 1 零变化机械面：dispatch types 表驱动零 triggers 词形。
+- L68-07 UI 拍：既有对象历史 tab 14 行 ok 行可点（hist-diff）∧ diff 面板「r12 ← r11 · rev-content 读面现读」词形+add/del 行 ∧ palette 对象行零残留∧历史 tab 账本 reasonRef 词形在册 ∧ 零 pageerror ∧ 截图 3 张（editor/history-diff/palette）。
+
+**队列余量对账（下轮顺延候选）**：object 触发声明面（随 connector watch 声明面扩展顺延——零变化判定维持）；watch-only 自监控闭环/developer-system 代码化调用（红线 a 域维持 declared）；E5a 冷会话空窗（declared 维持）；编辑器域余量=无（历史 tab 判据链完整——L67-07 词形活体复核通过零回归）；docsRoot 清场=已执行（后续轮残留断言=每轮探针 P-02 判据位——回潮即红）。
+
+
 ## 4. 落地顺序（一轮一增量，映射 loop 起点）
 
 | 增量 | 内容 | 验收 |
@@ -802,6 +825,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 §1.38 | E6 四源积压词形单点复核：族构成声明单点收口+draft-only 稿 Apply 创建通路活体评估（域内判据集实施）【实现拓扑与细化验收=§1.38（loop-65）：零 Go 改动 plugin 客户端面——`backlogFamilyNote()` 族构成词形单点声明（short∧long）三消费点（Welcome note/palette/聚合面板）单点拼装（backlogCount 计数单点 §1.36 既有零回潮——文字词形散用漂移温床收口）+draft-only 创建通路最小活体判据集（A 段 API=缺席窗诚实+落稿 baseRV=0 创建稿+dry-run 三检查创建哨兵 rv=0+幂等回放+零副作用反证 apply_log=0；B 段 UI=faceAbsent 降级基座词形+dock enabled+弹窗三检查 r0 哨兵词形+零确认+弃稿回基线）；真落库 once-only 执行拍=declared 判据集在案（零副作用纪律——本轮零点）】 | 四消费点同源活体（卡值=badge=族构成实数和）∧词形单点锚定（回潮即红）∧dry-run 创建哨兵（action=dry-run∧rv=0∧幂等∧apply_log=0）∧draft-only 窗 UI（chip 词形∧dock enabled∧r0 哨兵词形∧零确认零落库∧弃稿回基线）∧零 pageerror∧UI 截图（细化=L65-01…04） |
 | 对账轮 §1.39 | draft-only 稿 Apply 创建通路真落库执行拍（§1.38 余量首候选——判据集在案 once-only 执行）【实现拓扑与细化验收=§1.39（loop-66）：既有面执行拍零新代码（client 编辑器 apply dock+宿主 apply/drafts 路由+cored apply 写面——零 Go 改动零 plugin 改动）；专用锚 l66-apply-probe 域内三段=创建拍（缺席诚实→落稿 baseRV=0→dry-run rv=0 哨兵→**create rv=1**→DocApplied eventId 同源→apply_log r1 ok 判定行→稿清 rule 6→noop 复跑拍→ErrNoDraft 404）+UI 拍（编辑器活体→手动编辑落稿→弹窗三检查 r1 更新哨兵→**确认键真点**→真落库 toast）+终态复核（rv=2 恒∧apply_log 4 行 noop:r2\|ok:r2\|noop:r1\|ok:r1∧DocApplied=2 恒∧UI noop 结构守卫词形）；判据词形校准两件=落库正文∪rv 反写行∧UI 确认通路=dock 差异武装只产 update（noop 结构不可达——API 复跑拍承载）】 | create 拍 rv=1∧apply_log 判定行（create∧rv=1∧console fieldManager）∧DocApplied 事件行∧稿清归零∧幂等复跑（noop 恒值+ErrNoDraft 双分支在账）∧UI 确认活体+真落库 toast∧锚留账收尾（rv=2 对象在册不删=判别面域）∧零 pageerror∧UI 截图（细化=§1.39 执行拍实录三段） |
 | 对账轮 §1.40 | 历史 rv 正文读面（rev-content diff 面）——历史 tab「点行 diff 上一版」余量当轮收口【实现拓扑与细化验收=§1.40（loop-67）：三路评估判定②域内可实施——读半边 Go（workservice v0.63 `GitRepo.RevContent` 快照语义=最新携带该 rv 反写行的提交+blob 元数据 rv=唯一判据+ErrRevNotFound 分立+gitRaw 未修剪 stdout+`GET /v1/rev-content` 词形族+`WithRevContent` 口面+git 后端恒注入装配）+消费半边 plugin（v0.67 hydrateHistory ok 行可点 hist-diff+hist-diff-box diff 面板+起点词形+余量标注摘除——零缓存零写路径）；cored v0.62→v0.63 换代+gate 同步；判据词形校准=手编 docsRoot 通道快照语义裁决∧快照含文末换行】 | 既有对象 rv=1 快照 200∧锚缺席窗 404 分立词形∧create→快照逐字节恒等（文末换行在册）∧第二拍 update→rv=2 快照∧rv=1 恒（历史不可变）∧两版分立+rv 行各自 1/2∧noop 复跑 rv 恒+apply_log 3 行∧UI 点行 diff 活体（noop 不可点+面板词形+add/del）∧零 pageerror∧UI 截图（细化=L67-01…07） |
+| 对账轮 §1.41 | cored-bridge.md §2 随行补记 rev-content 读面+docsRoot 探针残留清场（§5 清场纪律执行）【实现拓扑与细化验收=§1.41（loop-68）：队列 1 三项零变化判定（object 触发声明面/watch-only 红线 a 域/E5a declared）+队列 2 文档面缺口当轮收口——cored-bridge.md §2 补 `GET /v1/rev-content` 行（词形族全量+快照语义+对象删除后历史快照恒可达注记）∧§1 v0.63 在运代注记（sha/rev 入部署台账不入公开仓）；docsRoot 43 件探针残留移除+手编通道 git commit（ops DB 账本不删=判别面域）；判据词形校准三件=落库正文判据词形（稿正文∪rv 反写行）∧删除后快照延伸两态分立∧清场后渲染面账本词形分立（残留断言勿扫事件账本词形域）；零 Go 零 plugin 改动】 | 部署判据（v0.63 读面在运）∧清场判据（零残留词形+已清锚 404∧快照 200 分立+history 行不删）∧桥契约增量零回归（词形族分立+宿主代理）∧文档机械面（§2 行+§1 注记）∧判据链复核（快照逐字节恒等）∧UI 零回归（点行 diff 活体+零 pageerror）∧UI 截图（细化=L68-01…07） |
 ## 5. 执行红线（对 loop 的约束）
 
 1. **不改文档面语义**：console 是观测/操作面，一切写操作（启停/编辑/批准/重跑）=Apply 走既有写路径；发现设计不合理→改文档先于改代码（acceptance 纪律）。
