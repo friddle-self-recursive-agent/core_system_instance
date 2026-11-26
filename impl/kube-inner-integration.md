@@ -8,6 +8,7 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-deploy-system}]
 
 > R14.3 指定设计对象：把公司内网 K8s 集群承载的全部内部管理系统纳入文档面（WorkService 纳管 + 页面功能模块划分）。
 > 本文档只做设计，不实现。**公司实物信息（域名/地址/凭据/系统实名）只存公司 git 的 agent_pool 报告仓（A55/R14.6）**，本文档一律用泛化称谓。
+> **部署实例（sybran 侧渠道绑定与实锚点）见 `sybran-developer-system` 仓 `docs/deploy-channels.md`（private，2026-11-26 用户裁决：sybran 内容出公开仓）；本篇保留为 deploy-system 的集群接入设计蓝本。**
 
 ## 0. 已验证现状（事实，非设计）
 
