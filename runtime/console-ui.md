@@ -270,6 +270,7 @@ Apply 流（确认弹窗）：
 | 审批请求卡 | 请求摘要+权限依据 | [去审批]跳审批页对应项 |
 
 - 右栏权限面：该 agent 挂载的 ConnectorOps/Ref/Provider/Role **并集**物化视图，随 Agent spec Apply 即时刷新。
+- **ctx 面板（2026-11-26 用户裁决；context.md 规则 10）**：会话页可查看本会话的 **ctx（ContextPack）全文**——tagSig（按 tagType 归组的 tag 集，装配面受限：每 tagType≤5/总计≤20）、chunks 清单（每条 `ref`=<repo>/<path>#<anchor> + `hash`=commit/blob sha，可展开回原文）、tokens/预算、来源（侦察会话新建 or 缓存复用+相似度）、命中统计；面板内可**设置缓存实效**（手动失效该 pack、调整 TTL）并可见 stale 提示（文档更新→index 重算后受影响的缓存条目）。数据=ops DB `ctx_cache` 表（context-rag.md §6），失效/改 TTL 走写面门控（admin 或会话属主）。
 - 数据来源：session=ctx.agents.list()+dsh-session 记录；线程与会话流=SessionLog 同源；权限面=Agent spec 并集索引。
 
 ## 屏幕 8：连接页
