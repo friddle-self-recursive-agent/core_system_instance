@@ -25,7 +25,8 @@
 | [acceptance/console/console-ui.md](acceptance/console/console-ui.md) | 总控界面设计与验收基线：资源视角第一层 / 信息流视角第二层 / 服务关注区 + v2 Web 界面定稿 + §14 关注报告×工作台 |
 | [runtime/console-adoption.md](runtime/console-adoption.md) | console v2 落地盘点：线上实测现状 / 环境阻塞（trusted-host·代理超时·token 轮换）/ 逐页功能与 UI 建议 / E0–E7 落地顺序 |
 | [runtime/agent-session.md](runtime/agent-session.md) | Agent Plan/Session 记录制（PlanDoc/SessionLog）+ AUTOLEVEL 默认（R2） |
-| [runtime/ops-log.md](runtime/ops-log.md) | git 管文档 + DB 管 ops 历史操作日志（双轨与对账） |
+| [runtime/ops-log.md](runtime/ops-log.md) | sqlite docs DB 管文档内容 + DB 管 ops 历史操作流水（三库分工/审计） |
+| [runtime/docs-export.md](runtime/docs-export.md) | 文档库导出：sqlite→git 工作树→commit→push（output/public；快照非逐次历史） |
 | [runtime/install-service.md](runtime/install-service.md) | install 流程：GitHub org 找 template→WorkServiceTemplate→询问→安装 |
 | [runtime/agent-pool-machine.md](runtime/agent-pool-machine.md) | agent_pool 机器与双 dsh profile 分工（core-system 自举 / kube-inner 接入） |
 | [runtime/event-bus.md](runtime/event-bus.md) | 内置 Event 分发扩展：Kafka 总线（通知用，非真相源）+ 飞书通知到账号（A59） |
