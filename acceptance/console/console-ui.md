@@ -1080,3 +1080,8 @@ corectl loop
 - [ ] #/docs 渲染文档清单（syncBadge 修复实证）
 - [ ] `?token=` 落地直达 `/core-console/v2`；尾斜杠 200
 - [ ] web npm test 全绿；plugin npm test 全绿
+
+## 20. 全页深度扫描与整改方案（2026-11-26）
+
+全量 34 屏活体扫描、16 端点与 21 个在册对象核对结论（含 P0 崩溃/失明修复、以人为本主线收束、布局修复、假数据清理清单及 `core_design` 真实 Scheme/概念文档纠偏），见独立文档：[console-audit-2026-11-26.md](console-audit-2026-11-26.md)。
+
