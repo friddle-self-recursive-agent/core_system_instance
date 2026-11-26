@@ -743,6 +743,29 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 
 **队列余量对账（零改动判定）**：object 触发声明面（grep 实证 spec.triggers 零词形命中 flowbind——随 connector watch 声明面扩展顺延）；watch-only 自监控闭环/developer-system 代码化调用（红线 a 域维持 declared）；E5a 冷会话空窗（宿主读面现势零变化——维持 declared）；submodule pin=b5d5610=workservice HEAD 自然满足。**§1.38 余量首候选摘除（执行拍完成）——编辑器域余量后延候选=rev-content diff 面（历史 tab「点行 diff 上一版」如实标注维持）/落库 rv 反写行 UI 呈现。
 
+### 1.40 编辑器域增量：历史 rv 正文读面（rev-content diff 面）——「点行 diff 上一版」余量当轮收口（2026-11-26，loop-67 轮——§1.39 余量首候选三路评估，判定②域内可实施）
+
+**核验选点（对账——点火队列顺序执行）**：队列 1 三路评估——①宿主 GET `/core-console/api` 只透传 GET ∧ cored 侧无 rv 读面（现势 grep 实证 `v1/history` 唯一史面=apply_log 流水投影，无按 rv 取正文面）→ 若不可域内闭环则读面缺口评估顺延；②若判定域内可实施（如复用 git 后端读面开只读 rv content 投影）则最小实施+活体；③无据顺延不立。**评估实录（判定②）**：git 后端写路径既有面实证——每次 ok apply=一次 git commit（applyWrite 留痕段 `<fm> <action> <key> [reason]`）、blob 即含 `resourceVersion: N` 反写行（§1.39 判据词形校准①同源）⇒ **rv→commit 机械可寻址**，快照读面=纯读 git 裸库（`git log -- <rel>` 文件限定+`git show <sha>:<rel>`），零新持久状态零双源（渲染数据无双源红线 §5 规则 2）；宿主代理只透传 GET=只读面恰合（零写语义暴露）；非 fork 事由（dsh-fork.md §2 未达——cored+plugin 两仓域内即闭环）。
+
+**实现拓扑（读半边 Go+消费半边 plugin——cored v0.62→v0.63 换代，loop-62…66 连续零 Go 改动后首代换代）**：
+- ①Go 读半边（workservice v0.63）：`GitRepo.RevContent(ctx,kind,scope,name,rv)`——快照语义=该对象「**最新携带该 rv 反写行的提交**」时点正文（候选=git log 文件限定=对象自身历史∪手编 docsRoot 通道提交；**blob 元数据 resourceVersion=唯一 rv 判据**——提交消息不含 rv，防消息词形漂移错配；文末换行逐字节恒等=gitRaw 未修剪 stdout 通路）；`repository.ErrRevNotFound` 分立词形（与对象缺席 ErrNotFound 分立——审计不冒充）；noop 零提交/篡改零 rv→快照缺席恒可达=诚实词形；读面零副作用零写路径。apiserver `GET /v1/rev-content/{kind}/{name}?scope=&rv=`（200 快照词形 kind/scope/name/rv/content/source=git-backend；rv 缺席/非正整数=400；快照缺席=404 ErrRevNotFound；face 缺席=503 防御面——sqlite 后端诚实降级；旧构建 405=代际判别器）+`WithRevContent` 口面（具体方法不占冻结 Repository 签名——ApplyLogFace 同款）+装配 git 后端恒注入（type 断言 store2）。
+- ②plugin 消费半边（v0.67）：`hydrateHistory` ok 行可点（`data-act="hist-diff"` data-rv/data-prev=投影行集内下一 ok 行——rv 降序 noop/审计行不产 rv 零位跳；起点行「对象起点（create，无上一版）」如实词形）+`hist-diff-box` diff 呈现面板（单处开合复点换内容；rev-content 读面现读=GET 快照零缓存；读面退化行内如实降级不冒充；r1=create 全文首览词形）；旧「点行 diff 上一版=rev-content 面余量（git show 面未开，如实标注）」自贬标注摘除（已收口不再自贬）。
+
+**L67 验收线（探针=acceptance/loop-67.md；单测=workservice rev_content_test.go×2 五锚+plugin live.test.ts L67 段 1 锚；探针终拍 27/27）**：
+- L67-01 部署判据：既有生产对象（core-headless）rv=1 快照 200 ∧ 快照 rv 反写行在册 ∧ 既有读面零回归；core-system `/proc` exe 判据=v0.63 代（旧代 b374e5a500420037→换代）。
+- L67-02 缺席窗诚实：锚无面 404 ∧ 锚 rv=1 快照 404 ErrRevNotFound 分立词形。
+- L67-03 锚域创建拍→快照域对账：create rv=1 → rv=1 快照 200 ∧ **逐字节=落库面（文末换行在册）** ∧ rv=2 缺席 404。
+- L67-04 第二拍+历史不可变：语义差异 update rv=2 → rv=2 快照 200 ∧ rv=1 快照恒=第一拍词形。
+- L67-05 点行 diff 判据（读面域）：两版快照分立 ∧ rv 反写行各自 1/2。
+- L67-06 noop 复跑拍：同现面正文 → noop ∧ rv 恒=2 ∧ apply_log 锚行=3（`noop:r2|ok:r2|ok:r1`）。
+- L67-07 UI 活体：历史 tab ok 行可点 ∧ 顶行 rv=2 ∧ noop 行不可点 ∧ 点行 diff 面板「r2 ← r1 · rev-content 读面现读（git 权威正文快照）」∧ add/del 行在册 ∧ 起点词形 ∧ 零 pageerror ∧ 截图。
+
+**结构发现（判据词形校准——后续轮判据词形权威）**：①手编 docsRoot 通道=快照语义裁决——候选若限写路径消息键段，手编保 rv 修改被跳过→快照回退 apply 时点 blob（陈旧）→diff 对现读面失真；定案=「最新携带该 rv 反写行的提交」（手编保 rv 修改属于该 rv 状态；单测首拍按键段过滤实现误判 FAIL 即校准）。②rev-content 快照含文末换行（gitRaw 未修剪 stdout——TrimSpace 破坏逐字节恒等判据；既有 git() 调用点零迁移）。
+
+**队列余量对账（零改动判定）**：object 触发声明面（spec.triggers 零词形命中——随 connector watch 声明面扩展顺延）；watch-only 自监控闭环/developer-system 代码化调用（红线 a 域维持 declared）；E5a 冷会话空窗（宿主读面现势零变化——维持 declared）；落库 rv 反写行 UI 呈现（meta tab rv 词形+历史 tab rv-no 直读在册——零缺口零改动）。
+
+**实现余量（下轮顺延候选）**：object 触发声明面（随 connector watch 声明面扩展顺延）；watch-only 自监控闭环/developer-system 代码化调用（红线 a 域）；E5a 冷会话空窗（declared 维持）；编辑器域新增余量=无（rev-content diff 面收口后历史 tab 判据链完整）。
+
 ## 4. 落地顺序（一轮一增量，映射 loop 起点）
 
 | 增量 | 内容 | 验收 |
@@ -778,6 +801,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 §1.37 | E5b chat-backfill 结构化合并余量词形收口：缩进自适应（混合缩进容忍）+ E5a 冷会话空窗余量评估【实现拓扑与细化验收=§1.37（loop-64）：零 Go 改动 plugin 客户端面——缩进基准自适应（ind=首个空格缩进行观测，追加键组=基准×2 族谱对齐）+tab 防御闸收窄（整篇拒绝→手术区限定面：仅 status 块/currentSession 子块 tab=拒绝，手术区外 tab 放行）+currentSession 子块成员=纯列宽模型（任意更深列=成员区）+重写键组缩进=成员缩进观测（族谱对齐；多态/嵌套续行=保守拒绝；空子块回退基准）+纯映射语义零变更（零盲写/幂等 noop/三分支不变）；E5a 冷会话空窗=评估维持 declared（诚实降级口径+宿主历史回放读面缺席≠fork 事由）】 | 混合缩进文档回填活体（生产词形 ok=true∧块外字节恒等∧手术区外 tab 保留）∧缩进族谱对齐（4 空格文档 8sp 重写/4sp 追加∧cs 键分家 6sp 族谱内回填）∧真缺席恒拒绝（无 metadata.name/手术区 tab）∧同值幂等 noop∧既有 2 空格锚零回归∧UI 截图（细化=L64-01…04） |
 | 对账轮 §1.38 | E6 四源积压词形单点复核：族构成声明单点收口+draft-only 稿 Apply 创建通路活体评估（域内判据集实施）【实现拓扑与细化验收=§1.38（loop-65）：零 Go 改动 plugin 客户端面——`backlogFamilyNote()` 族构成词形单点声明（short∧long）三消费点（Welcome note/palette/聚合面板）单点拼装（backlogCount 计数单点 §1.36 既有零回潮——文字词形散用漂移温床收口）+draft-only 创建通路最小活体判据集（A 段 API=缺席窗诚实+落稿 baseRV=0 创建稿+dry-run 三检查创建哨兵 rv=0+幂等回放+零副作用反证 apply_log=0；B 段 UI=faceAbsent 降级基座词形+dock enabled+弹窗三检查 r0 哨兵词形+零确认+弃稿回基线）；真落库 once-only 执行拍=declared 判据集在案（零副作用纪律——本轮零点）】 | 四消费点同源活体（卡值=badge=族构成实数和）∧词形单点锚定（回潮即红）∧dry-run 创建哨兵（action=dry-run∧rv=0∧幂等∧apply_log=0）∧draft-only 窗 UI（chip 词形∧dock enabled∧r0 哨兵词形∧零确认零落库∧弃稿回基线）∧零 pageerror∧UI 截图（细化=L65-01…04） |
 | 对账轮 §1.39 | draft-only 稿 Apply 创建通路真落库执行拍（§1.38 余量首候选——判据集在案 once-only 执行）【实现拓扑与细化验收=§1.39（loop-66）：既有面执行拍零新代码（client 编辑器 apply dock+宿主 apply/drafts 路由+cored apply 写面——零 Go 改动零 plugin 改动）；专用锚 l66-apply-probe 域内三段=创建拍（缺席诚实→落稿 baseRV=0→dry-run rv=0 哨兵→**create rv=1**→DocApplied eventId 同源→apply_log r1 ok 判定行→稿清 rule 6→noop 复跑拍→ErrNoDraft 404）+UI 拍（编辑器活体→手动编辑落稿→弹窗三检查 r1 更新哨兵→**确认键真点**→真落库 toast）+终态复核（rv=2 恒∧apply_log 4 行 noop:r2\|ok:r2\|noop:r1\|ok:r1∧DocApplied=2 恒∧UI noop 结构守卫词形）；判据词形校准两件=落库正文∪rv 反写行∧UI 确认通路=dock 差异武装只产 update（noop 结构不可达——API 复跑拍承载）】 | create 拍 rv=1∧apply_log 判定行（create∧rv=1∧console fieldManager）∧DocApplied 事件行∧稿清归零∧幂等复跑（noop 恒值+ErrNoDraft 双分支在账）∧UI 确认活体+真落库 toast∧锚留账收尾（rv=2 对象在册不删=判别面域）∧零 pageerror∧UI 截图（细化=§1.39 执行拍实录三段） |
+| 对账轮 §1.40 | 历史 rv 正文读面（rev-content diff 面）——历史 tab「点行 diff 上一版」余量当轮收口【实现拓扑与细化验收=§1.40（loop-67）：三路评估判定②域内可实施——读半边 Go（workservice v0.63 `GitRepo.RevContent` 快照语义=最新携带该 rv 反写行的提交+blob 元数据 rv=唯一判据+ErrRevNotFound 分立+gitRaw 未修剪 stdout+`GET /v1/rev-content` 词形族+`WithRevContent` 口面+git 后端恒注入装配）+消费半边 plugin（v0.67 hydrateHistory ok 行可点 hist-diff+hist-diff-box diff 面板+起点词形+余量标注摘除——零缓存零写路径）；cored v0.62→v0.63 换代+gate 同步；判据词形校准=手编 docsRoot 通道快照语义裁决∧快照含文末换行】 | 既有对象 rv=1 快照 200∧锚缺席窗 404 分立词形∧create→快照逐字节恒等（文末换行在册）∧第二拍 update→rv=2 快照∧rv=1 恒（历史不可变）∧两版分立+rv 行各自 1/2∧noop 复跑 rv 恒+apply_log 3 行∧UI 点行 diff 活体（noop 不可点+面板词形+add/del）∧零 pageerror∧UI 截图（细化=L67-01…07） |
 ## 5. 执行红线（对 loop 的约束）
 
 1. **不改文档面语义**：console 是观测/操作面，一切写操作（启停/编辑/批准/重跑）=Apply 走既有写路径；发现设计不合理→改文档先于改代码（acceptance 纪律）。
