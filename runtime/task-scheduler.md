@@ -58,7 +58,7 @@ Task 对象（docs DB / sqlite）
 |---|---|---|
 | `worktree`（代码默认） | 代码/多文件任务 | 每任务独立 git worktree + `task/<name>` 分支；不得写 main；完成走合并队列（rebase→gate→merge）；冲突=blocked + 人可见 |
 | `inplace` | 只读/文档/写集明确不相交 | 需写集互斥且 `perRepo` 允许；文档任务优先走 Apply |
-| 文档 | 对象修改 | 直接 Apply（乐观锁 409→重读/blocked） |
+| 文档 | 对象修改 | 直接 Apply（第一个任务 Apply 后，第二个任务在 Apply 关口 409 拦截 → 判断有无冲突 → 有冲突直接询问 **`pause-first` 暂停第一个任务** 还是 **`abort-current` 放弃当前任务**，严禁循环互踩） |
 
 - 合并队列串行；同一写集的 task 永不并行；`touches.exclusive`（如 `deploy/prod`）同值互斥。
 - 验证失败不得 done；重试上限后 failed + Escalate/通知，不拖垮无关任务。

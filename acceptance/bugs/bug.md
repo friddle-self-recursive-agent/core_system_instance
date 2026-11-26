@@ -4,10 +4,11 @@ docType: VerifyDoc
 scope: core_system
 ownerRefs: [{kind: ServiceDesc, name: core_system}]
 ---
-# Bug 与架构矛盾清算基线（bug.md）
+# Bug 与架构矛盾清算基线（bug.md · 临时文档）
 
-> 概念依据：core_design [rule/rule.md](../../../core_design/rule/rule.md)（R-DOC-6/7/8、R-CTX-1..8、R-ENG-4）与本仓 [runtime/acceptance.md](../../runtime/acceptance.md)。
-> 定位：本文件汇总系统概念与运行时对账中检出的 **9 项架构矛盾、机制不足与后期隐患（BUG-001 ~ BUG-009）**、裁决修复方案及**机读验收判据**，作为每轮 workflow loop 验收报告（`acceptance/loop-<seq>.md`）的必检回归基线。
+> **[临时文档 / R-DOC-10 生命周期约定]**：正式设计中不一致的地方就是这些 Bug，本文件是驱动修复与验收的**中间临时产物**。当某项任务完成并经 Verify 验证 OK 后，该 Bug 条目即刻删除；**当全部条目验证 OK 后，本文件（含 `bug.md.metadatainfo` 侧车）直接 `git rm` 删除**，不保留永久历史 Bug 台账。
+> 概念依据：core_design [rule/rule.md](../../../core_design/rule/rule.md)（R-DOC-6/7/8/9/10、R-CTX-1..8、R-ENG-4）与本仓 [runtime/acceptance.md](../../runtime/acceptance.md)。
+> 定位：本文件汇总系统概念与运行时对账中检出的 **14 项架构矛盾、机制不足与后期隐患（BUG-001 ~ BUG-014）**、裁决修复方案及**机读验收判据**，作为 workflow loop 验收报告（`acceptance/loop-<seq>.md`）的验证基线（验证 OK 后即消）。
 
 ## 1. 缺陷与架构矛盾总表
 
@@ -24,6 +25,9 @@ ownerRefs: [{kind: ServiceDesc, name: core_system}]
 | **BUG-009** | Storage / Git | **Git 文件树作运行时主存储的锁竞争与提交噪音** | 高频 Apply 与并发读写受限于 git 锁 | **R-DOC-7**：默认权威切换为 **SQLite `docs DB`**（`--docs-backend sqlite` 缺省，root 禁选 git）；Git 退回**定时按规则导出并 push 远程的公开/备份载体** | `B9` |
 | **BUG-010** | Event / Agent Scope | **底层 `Heartbeat` 等事件缺一等建模或混入默认界面 + Event 缺 `scope` 与 Agent `eventScopes` 约束** | 高频心跳淹没人类与 Agent 视野；Agent 可能越界消费其他 Service scope 的事件导致串台 | **event.md 规则 18–19 / agent.md 规则 8**：① 注册 `Heartbeat` 事件（与 `ReconcileTick` 等同属 `tier: infra` + **`visibility: default-hidden` 默认不展示**）；② Event 强制带四层 `metadata.scope`，Agent 声明 `spec.eventScopes`，派发与消费双侧强制校验 `event.metadata.scope ∈ agent.spec.eventScopes` | `B10` |
 | **BUG-011** | Traceability / Docs | **`ServiceDesc` 设计文档与 `ServiceInstance` 实现文档 `1:N` 缺 `[metadata 关联]` 追踪** | 1 篇设计对应多篇 `ImplDoc`/`VerifyDoc` 时，设计更新无法自动标记下游 N 篇实现过期（文档腐化说谎） | **R-DOC-9**：在 frontmatter `metadata.trace` 与 `<doc>.md.metadatainfo` 建立双向 `1:N` 关联（`ImplDoc/VerifyDoc` 声明 `trace.implements`/`verifies` + `designRev`，`DocIndex` 自动反向聚合 `trace.implemented_by`/`verified_by`）；设计更新自动标下游 N 篇实现 `stale` | `B11` |
+| **BUG-012** | Rollback / Undo | **回滚未区分「要不要回滚 + 四类回滚方式 + 回滚文档描述」** | 不可逆操作被错误尝试回滚，或需人/Agent 介入的半成品缺少回滚文档描述 | **workservice.md 规则 8 / task-scheme.md 规则 8**：声明 `rollback: {policy: never\|auto\|ask\|optional, type: irreversible\|code\|agent\|human, description, docRef?}`，明确要不要回滚、回滚类型（无法回滚/代码/Agent/人）及回滚文档描述 | `B12` |
+| **BUG-013** | Apply / Concurrency | **两个并发冲突任务在 Apply 关口缺明确二选一询问裁决** | 冲突任务后台盲目重试或静默覆盖 | **apply.md 规则 7 / task-scheduler.md 规则 11**：两个冲突任务在 `Apply` 关口被乐观锁拦下（最终一致）；第一个 Apply 后，第二个判断有无冲突，有冲突**直接询问「暂停第一个任务 (`pause-first`) 还是放弃当前任务 (`abort-current`)」** | `B13` |
+| **BUG-014** | Security / TrustLevel | **外部系统 `Provider`/`ConnectorOps` 缺 `trustLevel` 与 Workflow 级内容检验门** | 外部不可信内容未经检查直入 Context 引发注入或污染 | **provider.md 规则 9 / connector.md 规则 10 / workflow.md 规则 21**：默认内部系统均为 `trustLevel: trusted`；外部系统 `Provider`/`ConnectorOps` 添加 `trustLevel: external`；Workflow 级可配置 `trustGate`（`mode: code \| agent`）判断一遍内容是否 OK | `B14` |
 
 ---
 
@@ -77,3 +81,6 @@ ownerRefs: [{kind: ServiceDesc, name: core_system}]
 - **`B9`（SQLite 默认权威与定时 Git 导出）**：root `cored` 默认挂载 SQLite `docs DB`（无 `--docs-backend git`），定时导出 Git 工作树与侧车幂等可推。
 - **`B10`（底层 `Heartbeat` 默认隐藏与 Event/Agent Scope 隔离）**：`Heartbeat` / `ReconcileTick` 等 `tier: infra` 事件默认 `visibility: default-hidden` 不出现在默认事件流/关注报告/第一段侦察；Event 必带 `metadata.scope`，且越出 `agent.spec.eventScopes` 的事件被派发/消费闸门拦截。
 - **`B11`（`ServiceDesc` ↔ `ServiceInstance` 1:N `[metadata 关联]` 追踪）**：`ImplDoc` / `VerifyDoc` 的 `trace.implements` / `verifies` 在 `DocIndex` 与 `.md.metadatainfo` 中正确反向聚合为设计文档的 `trace.implemented_by`（1 对 N）；上游设计 `resourceVersion` 推进时自动将下游 N 篇实现文档标为 `stale`。
+- **`B12`（回滚策略、四分类与回滚文档描述）**：`WorkService.tools` 与 `TaskScheme.steps` 支持 `rollback: {policy: never|auto|ask|optional, type: irreversible|code|agent|human, description, docRef?}`；凡需回滚的操作必带文档描述并按 `irreversible / code / agent / human` 正确分派。
+- **`B13`（并发冲突任务在 Apply 关口拦截并直接询问）**：两个同时改同一对象的任务在 `Apply` 关口（乐观锁 `409`）被拦截；第二个任务检测到与第一个任务冲突时，直接触发询问「暂停第一个任务（`pause-first`）还是放弃当前任务（`abort-current`）」。
+- **`B14`（外部系统 `trustLevel` 与 Workflow 级 `trustGate` 内容检验）**：内部系统默认 `trustLevel: trusted`；标记 `trustLevel: external` 的 `Provider` / `ConnectorOps` 返回内容进入 Workflow 时，按 Workflow 级可配置的 `trustGate`（`mode: code | agent`）执行内容校验。

@@ -91,7 +91,7 @@ Session / Doc / TaskScheme / Event 的**上下文装配与历史检索**统一�
 
 - **底层心跳事件（`Heartbeat`）一等建模与默认隐藏（event.md 规则 18）**：会话推进点（相位推进/工具调用完成/产物落盘任一）除更新 `session_heartbeat` 行外，周期心跳建模为一等事件 `Heartbeat`（`tier: infra`，`visibility: default-hidden`，`defaultLevel: debug`）；`Heartbeat` 与 `ReconcileTick`、`SessionHealed`、`LongTaskRunning` 均属底层 `infra` 事件，**默认不在 Console 事件流、工作台事件片、关注报告（AttentionReport）及第一段侦察「近期相关事件」中展示**（仅当调试视图显式开启 `showInfra=true` 时可见），而异常失活事件（`SessionStalled`、`HeartbeatLost`）属 `tier: attention` + `default-visible`，默认立即上屏；
 - **Event `scope` 区分与 Agent `eventScopes` 边界校验（event.md 规则 19）**：每条 Event 必带四层 `metadata.scope`（`builtin | global | systems/<s> | systems/<s>/instances/<i>`）；每个 Agent 通过 `spec.eventScopes` 声明可处理的事件 scope 范围（ServiceAgent 缺省锁定本 Service 及所属 Instance，子 Agent $\subseteq$ 父 Agent），派发与消费双侧强制校验 `event.metadata.scope ∈ agent.spec.eventScopes`；
-- **watchdog**：装配层定时器（阈值可配，缺省 10m）超时合成 `SessionStalled`（复用合成死信机制；过阶段门 + dedup，同 session 同窗至多一条）；
+- **watchdog（`pingheart` 盯着恢复，本层级不考虑高可用）**：本层级明确不设计多副本高可用（Non-HA）或复杂级联租约，统一靠装配层 `Heartbeat`（`pingheart`）定时器（阈值可配，缺省 10m）盯着恢复——超时合成 `SessionStalled`（复用合成死信机制；过阶段门 + dedup，同 session 同窗至多一条）并进入自愈链；
 - **自愈固定顺序**：先注入固定 prompt「继续」（保留上下文，不重启）→ 恢复记 `SessionHealed`；仍无心跳 → 诊断（最后工具调用/日志/等待对象/权限面）→ 权限类产 `ApprovalNeeded` 向上提交；人工类按 bind 用户已配置通道上报（未配置=不 notify 仅页面展示，notification.md 规则 6；外发 dedup 窗口内至多一封）；长任务类产 `LongTaskRunning`（任务名/已运行/阶段/决策点），结束回收；
 - **分工**：外部巡检只做确认与兜底，不代替系统判定；同会话连续自愈无效达阈值（缺省 2）→ 停手升级；
 - **判据**：注入停滞 → `SessionStalled` 在账且注入「继续」后恢复；权限阻塞 → `ApprovalNeeded` + 送达；人工 → bind 邮件（dedup 窗口内至多一封）；长任务 → `LongTaskRunning` 且无停滞误报。

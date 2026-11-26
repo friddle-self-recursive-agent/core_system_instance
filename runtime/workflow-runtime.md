@@ -81,6 +81,9 @@ Workflow 引擎 = core 内的一段**确定性代码**（状态机 + 触发器 +
 
 | 异常 | 处理 |
 |---|---|
+| 两个并发任务冲突 | 在 `Apply` 这一关被乐观锁拦截（最终一致）：第一个任务 Apply 后，第二个任务判断有无实质冲突；有冲突**直接询问「暂停第一个任务（`pause-first`）还是放弃当前任务（`abort-current`）」** |
+| 步骤失败与回滚 | 按步骤/工具声明的 `rollback: {policy: never|auto|ask|optional, type: irreversible|code|agent|human, description, docRef?}` 处理：先判定要不要回滚（可询问），再按 `irreversible`（不可逆）/ `code`（代码回滚）/ `agent`（Agent 读回滚文档回滚）/ `human`（人按文档回滚）分派 |
+| 外部系统不可信内容 | 默认内部系统 `trustLevel: trusted`；外部 `Provider`/`ConnectorOps` 标 `trustLevel: external`，在 Workflow 级可配置 `trustGate`（`mode: code | agent`）先判断一遍内容是否 OK |
 | 修复震荡 | CoolDown + maxMutationsPerTick + DriftReport 记录防重 |
 | 重试耗尽 | Escalated（一等终态，非异常） |
 | 审批长时间无人处理 | Notification 重发 + Escalate 上溯（无 SLA 机器，A35/A32） |

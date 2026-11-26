@@ -38,6 +38,7 @@ Event/命令 ──► Agent（分析，读 L0/L1 + 触发 TagCtxShard 上下文
 1. **单文件单 Scheme（R-DOC-8）**：每个 Scheme / TaskScheme 按 `spec.aspect`（如 `build / verify / reconcile / notify / deploy`）拆分为细粒度方面；系统自己保存的文件**严禁多 Scheme 在同一文件**（仅 `import` 导入包允许输入多 Scheme，导入落库时必须自动拆成单文件单 Scheme）。
 2. **改值免改代码 vs 改契约触发代码（R-ENG-4）**：若编排仅调整既有 `aspect` 支持的参数值、步骤组合或行为描述，Apply 即生效；若引入未支持的枚举/`op` 或修改了 Scheme 契约，必须触发对应代码仓库改动与构建。
 3. **兜底收敛**：连续同类兜底 N 次（默认 3）→ 必须提案 Scheme，否则 Workflow 拒绝继续兜底（防"永远即兴"）。
+4. **回滚区分「要不要回滚 + 四类回滚方式 + 回滚文档描述」（2026-11-26 用户裁决）**：步骤失败时按 `rollback: {policy: never|auto|ask|optional, type: irreversible|code|agent|human, description, docRef?}` 执行——先定**要不要回滚**（`never` 不回滚直修 / `ask` 询问要不要回滚 / `auto` 自动触发），再按**回滚类型**分发（`irreversible` 根本无法回滚走事前人审与事后补救 / `code` 代码确定性回滚 / `agent` 唤醒 Agent 读回滚文档描述诊断补偿 / `human` 挂起交人按文档回滚），凡需回滚的操作必须具备清晰的文档描述。
 
 ## 3. 基础调度（常见任务，可配置）
 

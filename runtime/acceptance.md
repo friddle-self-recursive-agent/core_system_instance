@@ -29,9 +29,9 @@ dev-delivery loop：… → Execute（build/test/lint）→ Verify → Report
 | 路径 | 内容 | 入库 |
 |---|---|---|
 | `acceptance/loop-<seq>.md` 等根文件 | 运行时验收报告 / 版本记录 | 否（.gitignore） |
-| `acceptance/<主题>/` | 设计 / 验收基线文档（如 `console/console-ui.md`、`bugs/bug.md`） | 是（带 `.metadatainfo` 侧车，R-DOC-6） |
+| `acceptance/<主题>/` | 设计 / 验收基线文档（如 `console/console-ui.md`；以及待修期间的**临时文档** `bugs/bug.md`） | 是（带 `.metadatainfo` 侧车，R-DOC-6；其中 `bugs/bug.md` 按 **R-DOC-10** 在任务完成并验证 OK 后直接删除） |
 
-主题子目录按领域分（`console/`、`bugs/`、`agent/`、`workflow/`…），运行时报告不混入主题目录；其中 **`acceptance/bugs/bug.md`（架构与机制缺陷清算基线 BUG-001~009，对应 core_design `bug.md`）是每轮验收报告必检的 `B1–B9` 回归探针集**；影响设计的结论走文档更新提交（终态制）。
+主题子目录按领域分（`console/`、`bugs/`、`agent/`、`workflow/`…），运行时报告不混入主题目录；其中 **`acceptance/bugs/bug.md`（对应 core_design `bug.md`）为待修不一致项的中间临时文档（R-DOC-10）**：在待修与验证期间作为验收报告必检的 `B1–B14` 探针集，**一旦任务完成且验证 OK 后，对应 Bug 条目及 `bug.md` 临时文档直接删除**，正式设计文档只保留收敛一致的终态。
 
 ## 3. 收敛判定（系统自身验收）
 
