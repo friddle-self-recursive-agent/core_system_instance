@@ -7,3 +7,5 @@ acceptance/*
 !acceptance/README.md.metadatainfo
 !acceptance/console/
 !acceptance/console/**
+!acceptance/bugs/
+!acceptance/bugs/**

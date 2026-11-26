@@ -27,6 +27,7 @@
 | [runtime/agent-session.md](runtime/agent-session.md) | Agent Plan/Session 记录制（PlanDoc/SessionLog）+ AUTOLEVEL 默认（R2） |
 | [runtime/ops-log.md](runtime/ops-log.md) | sqlite docs DB 管文档内容 + DB 管 ops 历史操作流水（三库分工/审计） |
 | [runtime/docs-export.md](runtime/docs-export.md) | 文档库导出：sqlite→git 工作树→commit→push（output/public；快照非逐次历史） |
+| [runtime/task-scheduler.md](runtime/task-scheduler.md) | 多任务并发调度：Task DAG/写集/上限、宿主 /task/spawn、worktree/合并、状态回写 |
 | [runtime/install-service.md](runtime/install-service.md) | install 流程：GitHub org 找 template→WorkServiceTemplate→询问→安装 |
 | [runtime/agent-pool-machine.md](runtime/agent-pool-machine.md) | agent_pool 机器与双 dsh profile 分工（core-system 自举 / kube-inner 接入） |
 | [runtime/event-bus.md](runtime/event-bus.md) | 内置 Event 分发扩展：Kafka 总线（通知用，非真相源）+ 飞书通知到账号（A59） |

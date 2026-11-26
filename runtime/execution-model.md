@@ -20,18 +20,24 @@
 
 **为什么**（R1.2.3 原文）：长时间运行系统肯定不能依赖 Agent 自定义。LLM 的不确定性被限制在 Agent 层的"选择与兜底"，一切重复发生的动作最终都沉淀为 Scheme（可审、可重放、可预算）。
 
-## 2. 执行路径
+## 2. 执行路径与「改 Scheme 值免改代码 vs 改契约触发代码」边界（R-ENG-4 / R-DOC-8）
 
 ```
-Event/命令 ──► Agent（分析，读 L0/L1 上下文）
-                │ 有匹配 TaskScheme（trigger.match 命中）──► 执行 Scheme ──► 代码层
+Event/命令 ──► Agent（分析，读 L0/L1 + 触发 TagCtxShard 上下文）
+                │ 有匹配 TaskScheme（按 aspect 细粒度拆分，单文件单 Scheme）
+                │   ├─ ① 仅改已支持 Scheme 的值与行为描述 ──► Apply 落 SQLite docs DB 即刻生效（免改代码、免重编译）
+                │   └─ ② Scheme 值不被现有代码支持 或 Scheme 契约改动 ──► 判 execution=unbound / scheme-contract-changed
+                │        ──► 自动触发对应代码改动（workservice 或 connectops-<concept> 改代码 + build 生效 + 提交）
                 │ 无匹配：
                 │   ├─ 一次性小事（权限白名单内）──► 兜底执行 + DriftReport 留痕
-                │   └─ 会重复发生/高危 ──► 提案新 TaskScheme（Apply 入库，过审后用）
+                │   └─ 会重复发生/高危 ──► 提案新 TaskScheme（单文件单 Scheme，带 aspect: <xxx>，过审后用）
                 └─ 失败 ──► onFailure（retry/escalate/rollback）
 ```
 
-规则（来自 task-scheme.md §5）：连续同类兜底 N 次（默认 3）→ 必须提案 Scheme，否则 Workflow 拒绝继续兜底（防"永远即兴"）。
+规则（来自 task-scheme.md §5 / scheme.md §5 / R-DOC-8 / R-ENG-4）：
+1. **单文件单 Scheme（R-DOC-8）**：每个 Scheme / TaskScheme 按 `spec.aspect`（如 `build / verify / reconcile / notify / deploy`）拆分为细粒度方面；系统自己保存的文件**严禁多 Scheme 在同一文件**（仅 `import` 导入包允许输入多 Scheme，导入落库时必须自动拆成单文件单 Scheme）。
+2. **改值免改代码 vs 改契约触发代码（R-ENG-4）**：若编排仅调整既有 `aspect` 支持的参数值、步骤组合或行为描述，Apply 即生效；若引入未支持的枚举/`op` 或修改了 Scheme 契约，必须触发对应代码仓库改动与构建。
+3. **兜底收敛**：连续同类兜底 N 次（默认 3）→ 必须提案 Scheme，否则 Workflow 拒绝继续兜底（防"永远即兴"）。
 
 ## 3. 基础调度（常见任务，可配置）
 

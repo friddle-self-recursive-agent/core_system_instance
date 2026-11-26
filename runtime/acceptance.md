@@ -29,15 +29,15 @@ dev-delivery loop：… → Execute（build/test/lint）→ Verify → Report
 | 路径 | 内容 | 入库 |
 |---|---|---|
 | `acceptance/loop-<seq>.md` 等根文件 | 运行时验收报告 / 版本记录 | 否（.gitignore） |
-| `acceptance/<主题>/` | 设计 / 验收基线文档（如 `console/console-ui.md`） | 是（带 `.metadatainfo` 侧车，R-DOC-6） |
+| `acceptance/<主题>/` | 设计 / 验收基线文档（如 `console/console-ui.md`、`bugs/bug.md`） | 是（带 `.metadatainfo` 侧车，R-DOC-6） |
 
-主题子目录按领域分（console/、agent/、workflow/…），运行时报告不混入主题目录；影响设计的结论走文档更新提交（终态制）。
+主题子目录按领域分（`console/`、`bugs/`、`agent/`、`workflow/`…），运行时报告不混入主题目录；其中 **`acceptance/bugs/bug.md`（架构与机制缺陷清算基线 BUG-001~009，对应 core_design `bug.md`）是每轮验收报告必检的 `B1–B9` 回归探针集**；影响设计的结论走文档更新提交（终态制）。
 
 ## 3. 收敛判定（系统自身验收）
 
 dev-delivery 自举循环的终止不是"跑完一轮"，是**收敛**：
 
-1. 文档→实现对账：core_design 声明的概念/规则，在 workservice/plugin 代码里均有落点（对账表全绿或明确标 declared-deferred）；
+1. 文档→实现对账：core_design 声明的概念/规则（含 `bug.md` / `acceptance/bugs/bug.md` 中的 BUG-001~009 修复契约），在 workservice/plugin 代码里均有落点（对账表全绿或明确标 declared-deferred）；
 2. 连续 N 轮（默认 3）loop 无新偏差、全探针绿 → 判定收敛，loop 转 watch-only；
 3. 收敛报告（终版 loop 记录）是人批 Resume/验收的唯一交接物。
 
@@ -48,9 +48,10 @@ dev-delivery 自举循环的终止不是"跑完一轮"，是**收敛**：
 trigger: <事件/点火/人工>
 docs: core_design@<sha> core_system_instance@<sha>
 code: workservice@<sha> plugin@<sha>
-build: <结果>  test: <n passed / n total>  lint: <R-PUB-1 结果>
+build: <结果>  test: <n passed / n total>  lint: <R-PUB-1 / R-DOC-6 / R-DOC-8 结果>
 probes:
   - <Goal.acceptance 条目>: pass|fail|unverified（证据一行）
+  - <acceptance/bugs/bug.md B1..B9 条目>: pass|fail|unverified（BUG-001~009 回归证据一行）
 deviations:                       # 与设计文档不一致处
   - <现象> → <处置：修代码 | 改文档（已提交 <sha>）| 挂起>
 next: <下一轮建议>

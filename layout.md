@@ -1,15 +1,16 @@
-# 目录结构规范（v1：文件夹即存储）
+# 目录结构规范（SQLite 默认权威 + Git 导出/公开布局）
 
-> 原稿："现在没有系统。但是默认就按文件夹保存这些文档"。本规范把目录定为 v1 的存储层：**目录即 scope，文件即对象**。Core 封装 Repository 接口，未来换真数据库时，本布局降级为导入/导出格式。
+> 概念依据：core_design R-DOC-6 / R-DOC-7 / R-DOC-8（`rule/rule_doc.md`）。**SQLite `docs DB`（`--docs-backend sqlite`）是默认文档内容权威**；本目录结构是**种子导入与定时导出/公开（output/public）的标准布局**（目录即 scope，文件即对象；每篇 `.md` 同目录带 `<name>.md.metadatainfo` 侧车；每个 `.yaml` 严禁多 Scheme 合一）。
 
 ## 1. 顶层布局
 
 ```
 <repo>/
 ├── core/                                # Builtin scope（控制面自描述）
-│   ├── scheme.yaml                      # Scheme（类型注册 + dispatch 表）
+│   ├── scheme.yaml                      # 根 Scheme（aspect: root；严禁多 Scheme 在同一文件，R-DOC-8）
+│   ├── schemes/<aspect>.yaml            # 按 aspect 细粒度拆分的单文件单 Scheme（可选分册）
 │   ├── core.desc.yaml                   # Core 自身 ServiceDesc
-│   └── docs/                            # core 的 Goal/Rule/Auth/...
+│   └── docs/                            # core 的 Goal/Rule/Auth/...（同目录带 .md.metadatainfo）
 ├── global/                              # Global scope
 │   ├── agents/<agent-name>/
 │   │   └── agent.yaml                   # Agent 对象（concepts/agent.md §3）
@@ -70,7 +71,8 @@ ownerRefs: [{kind: ServiceDesc, name: developer-system}]
 
 本仓库（core_design/）是这套设计的**声明侧**：concepts/、doctypes/、workflow/ 是 Scheme 层的设计文档；它们描述的系统真正落地时，业务内容按本规范住进 systems/ 等目录。两层的边界：**core_design 描述"管理面如何工作"；systems/ 承载"被管理系统是什么"**。当 Core 代码实现后，core_design 中的 core/、global/ 部分可直接作为首版 Builtin 文档被 Igniter 装载（bootstrap.md §2）。
 
-## 5. 迁移预留（v2+）
+## 5. 存储权威与定时导出（R-DOC-7 / R-DOC-8）
 
-- Repository 接口：get/apply/list/watch 五方法（对齐 Connector 契约风格）；git 实现 v1 唯一后端。
-- 布局与逻辑层解耦：所有访问经 URI，不裸操作文件路径——换 DB 时仅迁移脚本变，概念层零改动。
+- **默认权威 = SQLite `docs DB`**（`--docs-backend sqlite --docs-db <path>`，root 部署固定 sqlite，不得选 git）；
+- **Git 布局 = 种子导入与定时导出/公开格式**：系统按规则定时从 SQLite 导出工作树（含 `.md.metadatainfo` 侧车）→ commit → push 远程（详见 `runtime/docs-export.md`）；
+- **单文件单 Scheme（R-DOC-8）**：自己保存的 `.yaml` 严禁多 Scheme 合一（仅 `import` 输入包例外，落库必拆为单文件单 Scheme）。
