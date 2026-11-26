@@ -943,20 +943,26 @@ corectl loop
 
 > 用户原话要点：「最上面是总览，总览下面就是 rootAgent 直接对话。可以对话提需求（默认可以看上下文，上下文做成规则结构展示，可以直接编辑 apply 文档）。apply 后可以看到触发的哪些文档更新。workflow 可以看到哪些 agent 哪些 session，其中 session 相关文档（RAG 的）、上下文、资源。现在我提交一个需求『进行代码审核。看看实际和文档差距有多大。并进行修复』，像在 zcode 上提交一样在框内提交。然后可以看到 doc 的文档更新（分析结论提交到相应 doc 然后 apply）。文档 apply 即状态从 InSync 变成 Running，然后可以点进相应的 workflow 看在哪个节点（agent）。workflow 查看一定是可视化的节点，标准多节点 workflow 模式。点击 workflow 节点就可以看到 agent 和 session，后者看到程序的日志和状态。整个网页流程非常顺畅。workflow 的展示和配置都默认多节点、可编辑、美观好看、自动扩展。」
 
-### 18.1 总览顶部对话提需求（B1+B2）
+### 18.1 rootAgent 对话框（2026-11-26 二次裁决，取代 intake 方案）
+
+> 用户修正原话：「需求提案没有。就是 rootAgent 而已。入口永远是一个对话框可选 session。只是对话框目标是为了找到文档、更新文档。交互要做的非常多。别人是 ask question，你应该是提示文档是什么、生成结论是什么、给完整文档模式观看。另外 chat.js 中某些对话或者思考过程是可以 expand 的（一定要有）。chat 中开始说的 ref 文档、provider connector 以及内部资源啥的一定要能点击查看。」
 
 | 项 | 设计 |
 |---|---|
-| 入口 | 大屏顶部固定 DeepSeek 风 composer（rootAgent 预填），多轮对话线程展示（user/assistant 气泡） |
-| 数据通路 | `POST /core-console/intake/turn`（TurnRequest{sessionId,kind:Proposal,scope,name,message} → TurnResponse{reply,ready,askingField,turns}——多轮问询逐轮展示）；ready → `POST /core-console/intake/generate` → YAML+baseResourceVersion |
-| 落库 | 「Apply」走既有 `/core-console/apply`（乐观锁 baseResourceVersion；正文=generate YAML） |
-| 上下文结构卡 | 对话框侧栏「上下文（规则结构）」：ContextPack 投影（tagSig/规则命中 rulesFor/预算域）复用 sessionctx 渲染核；可编辑分叉→apply |
-| api.js | 新增 `intakeTurn/intakeGenerate`（路径走 BASES 注入：代理态 `/core-console/intake`，直连态 `v1/intake`） |
+| 入口形态 | **永远一个对话框**（大屏顶部，可选 session——下拉切换目标会话；rootAgent 缺省）。无 intake/Proposal 表单环节 |
+| 对话目标 | **找文档、更新文档**——不是问答机：AI 主动提示「涉及哪些文档（ref 可点）/ 生成结论是什么 / 完整文档模式观看」 |
+| 文档为中心的交互 | ①消息内文档 ref 内联可点（→渲染视图/编辑器）②结论卡：AI 生成的修改结论结构化展示（结论+涉及文档+变更要点）③**完整文档模式**：结论对应的目标文档全文预览模式（渲染 md），确认后写入草稿→Apply |
+| 消息级 expand | 思考过程/长内容/工具过程折叠块，点开展开（chat.js 必备交互） |
+| ref 可点击族 | 文档（doc/:… 渲染视图）、provider/connector（connectors 屏）、内部资源（对象工作台/system tree）——消息文本中出现的 ref 一律链接化 |
+| 数据通路 | 宿主注入 `__CC.chatFaces.{send(sessionId,text), transcript(id), docFix(prompt,ref), sessions}`——plugin 侧经 sessionController（selfheal 桥同款注入通路）实现 send；未注入=composer 显式缺席词形（不装假） |
+| 上下文结构卡 | 对话框侧栏「上下文」：ContextPack 投影（tagSig/规则命中/预算域）复用 sessionctx 渲染核；可编辑分叉→apply |
 
-### 18.2 文档状态徽 InSync→Running（B3+B4）
+### 18.2 文档状态徽 InSync→Running（2026-11-26 二次裁决：语义简化）
 
-- docs 屏行与对象详情头：`最近 DocApplied 事件 ∧ 存在非终态 run（eventId 同源关联）→ 徽 Running`；否则 `InSync`。
-- apply 成功回执页：显示本次落库触发的 run 深链（DocApplied→trigger→RunRecord eventId 同源回指——routes_workflow 已投影 `eventId` 键）。
+> 用户修正原话：「文档状态徽就是看自己所属的 Workflow 开始运动了。」
+
+- **语义=所属 workflow 动了**：文档所属 workflow 存在非终态 run → 徽 `Running`；否则 `InSync`。（不做 eventId 逐事件关联——单看文档所属 workflow 的 run 活性。）
+- docs 屏行、对象详情头、编辑器头共用此徽；apply 成功回执仍显示触发 run 的深链。
 
 ### 18.3 Workflow 可视化节点图（B5+B6+B7）
 
@@ -969,6 +975,12 @@ corectl loop
 
 - 提需求→分析→doc 更新→apply→Running→点进节点：全程深链一条龙，无手工拼 URL；patch 增量驱动状态流转零轮询。
 - i18n 词条随批；`npm test`+构建+`lint/max-file-lines.sh` 全绿；部署 CT116 浏览器全流程验收截图留证。
+
+### 18.4a editor scheme 引用折叠（2026-11-26 二次裁决）
+
+> 用户修正原话：「editor.js 这些没问题。但是有 editor.js ref 到 scheme 的，默认隐藏不展示 scheme，expand 才展示完整 scheme 给你看。」
+
+- editor 渲染视图中一切 scheme 派生内容（frontmatter 声明区/YAML 字段卡/scheme 引用段）**默认折叠隐藏**——默认只见文档正文（渲染 md）；点「scheme」expand 展开完整 scheme 内容。
 
 ### 18.5 收尾动作（用户指令）
 
