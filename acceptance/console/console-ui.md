@@ -903,3 +903,87 @@ corectl loop
 | 旧路由/深链 | ⚠️低 | 书签失效 | 保留旧路由别名；`#/session/<id>` 兼容 |
 
 **结论：可行。任务中心是 Task/Workflow/会话三源的统一读侧投影；新增的只有 Task 状态与深链，不引入第二套状态。**
+
+## 17. web/ v2 重构批：两级控制台·总览大屏·宿主界面复用·文档目录化·AI 修文档（2026-11-26 用户裁决；已实现 workservice@bf532f9）
+
+> 用户原话要点：「核心控制台改成系统控制台。添加另一个级别叫业务控制台先不加东西。系统控制台以系统视角展示，连接/Global/会话/系统树放二级。总揽就是大屏：现在跑的任务[workflow]系统的状态、最近需要的审批、核心 Agent。点击 Service 也是这样的布局展示（后续 ServiceAgent 登录就干这个）。能不能直接复用 deepseek 的 session 界面。文档界面目录展示是目录树，有 tag 过滤，展示 tag/版本/重要程度，直接展示渲染后的 markdown——现在谁还编辑，直接有对话框通过 llm 来修复文档然后 apply。」
+
+### 17.1 两级控制台（IA 重构）
+
+| 项 | 落地 |
+|---|---|
+| 级别 tabs | 侧栏顶部「系统控制台 / 业务控制台」，`localStorage('cc.level')` 持久化；业务级切 `#/biz` |
+| 业务控制台 | 占位屏（显式空态：后续 ServiceAgent 登录后承载业务大屏与操作面——先不加东西） |
+| 系统级一级 | 总览 / 关注报告 / 任务中心 / Workflows / 事件 / 审批 / 需求提案 |
+| 系统级二级 | 折叠组「基础设施」：会话 / 系统树 / 文档库 / 对象工作台 / 连接（组头点击折叠，会话级内存态） |
+
+### 17.2 总览大屏（`#/`）
+
+- 统计条五卡（在册对象/事件/待审/收件箱/进行中任务）+ 当前循环卡（`GET /v1/loop/current` 现读，缺席=诚实降级）。
+- 三区：**正在跑的 Workflows**（snapshot.runs 非终态，行=workflow/#run/相位徽/相对时间，深链运行页）、**最近需要的审批**（草稿缓存 ∪ ApprovalNeeded/Escalate 归档行，最近 8 条，「去处理」深链）、**核心 Agent**（kind=Agent 对象 ∪ 会话活性状态徽，深链会话屏）。
+- **Service 同构视角** `#/service/:name`：同一 dashLayout 换 ServiceDesc 数据源（正文 `agent://` 引用解析→核心 Agent 区过滤），页脚 ServiceDesc 在册性诚实词形——后续 ServiceAgent 登录即落此视图。
+
+### 17.3 会话屏复用宿主原生界面（DeepSeek 风格零重复建设）
+
+- `#/chat/:agent` 与 `#/session/:id`：右主区 iframe 同源嵌宿主原生会话界面（消息流/tool 折叠/composer 全套复用；门牌 cookie 已共享）；「新窗口打开」弹全屏原生。
+- 左栏会话清单保留（faces.sessions 注入优先，快照 sessions 投影次之，双缺=诚实空态）。
+- `#/session/:id` 下方保留 ContextPack 契约面（§14/G-14：takeBudget/tagSig/分片缓存/编辑分叉/撤销栈）。
+
+### 17.4 文档库目录化 + AI 修文档
+
+- 文档库屏：tag 过滤输入框（缓存正文 frontmatter 现匹配，预取窗口 24 篇诚实注记）+ 行内 tag chips / rv 版本 / 重要度列（`importance:` frontmatter，≥80 高亮）。
+- editor 右栏第三 tab「**AI 修文档**」：契约 `__CC.chatFaces.docFix(prompt, ref) => Promise<string>`（宿主 LLM 通道）→ 全文建议 → 「写入草稿」→ 既有 Apply 通路（乐观锁+预检照走，AI 无特权）；未注入=显式缺席词形（「原文」手编保留）。
+
+### 17.5 判据（机械）
+
+- `npm test` 全绿（50+；i18n 六锚含词典规模底线）；全部文件 ≤800 行。
+- 浏览器活体：级别 tabs 切换保持深链；大屏三区随 patch 增量刷新；Service 视角与大屏同构；iframe 同源加载宿主界面；文档库 tag 过滤生效；AI 面板未注入显式缺席。
+
+## 18. 需求直达链路批（2026-11-26 用户裁决；待实现清单）
+
+> 用户原话要点：「最上面是总览，总览下面就是 rootAgent 直接对话。可以对话提需求（默认可以看上下文，上下文做成规则结构展示，可以直接编辑 apply 文档）。apply 后可以看到触发的哪些文档更新。workflow 可以看到哪些 agent 哪些 session，其中 session 相关文档（RAG 的）、上下文、资源。现在我提交一个需求『进行代码审核。看看实际和文档差距有多大。并进行修复』，像在 zcode 上提交一样在框内提交。然后可以看到 doc 的文档更新（分析结论提交到相应 doc 然后 apply）。文档 apply 即状态从 InSync 变成 Running，然后可以点进相应的 workflow 看在哪个节点（agent）。workflow 查看一定是可视化的节点，标准多节点 workflow 模式。点击 workflow 节点就可以看到 agent 和 session，后者看到程序的日志和状态。整个网页流程非常顺畅。workflow 的展示和配置都默认多节点、可编辑、美观好看、自动扩展。」
+
+### 18.1 总览顶部对话提需求（B1+B2）
+
+| 项 | 设计 |
+|---|---|
+| 入口 | 大屏顶部固定 DeepSeek 风 composer（rootAgent 预填），多轮对话线程展示（user/assistant 气泡） |
+| 数据通路 | `POST /core-console/intake/turn`（TurnRequest{sessionId,kind:Proposal,scope,name,message} → TurnResponse{reply,ready,askingField,turns}——多轮问询逐轮展示）；ready → `POST /core-console/intake/generate` → YAML+baseResourceVersion |
+| 落库 | 「Apply」走既有 `/core-console/apply`（乐观锁 baseResourceVersion；正文=generate YAML） |
+| 上下文结构卡 | 对话框侧栏「上下文（规则结构）」：ContextPack 投影（tagSig/规则命中 rulesFor/预算域）复用 sessionctx 渲染核；可编辑分叉→apply |
+| api.js | 新增 `intakeTurn/intakeGenerate`（路径走 BASES 注入：代理态 `/core-console/intake`，直连态 `v1/intake`） |
+
+### 18.2 文档状态徽 InSync→Running（B3+B4）
+
+- docs 屏行与对象详情头：`最近 DocApplied 事件 ∧ 存在非终态 run（eventId 同源关联）→ 徽 Running`；否则 `InSync`。
+- apply 成功回执页：显示本次落库触发的 run 深链（DocApplied→trigger→RunRecord eventId 同源回指——routes_workflow 已投影 `eventId` 键）。
+
+### 18.3 Workflow 可视化节点图（B5+B6+B7）
+
+- runScreen 重做：**横排管线节点图**——节点=run.`phases` 声明序列（数据已在 runs 行：phases/transitions/phase/status/eventId/involved），连线=transitions 边；当前相位高亮+状态徽+推进动画（patch 增量驱动重绘）。
+- 节点点击→下方抽屉：①该相位事件链（日志=events 按 run/相位过滤）②agent/agentSession 深链（loop/current 与 Task.status.agentSession 回填链）③involved 文档 chips（RAG 关联）④session 上下文深链（`#/session/:id`→ContextPack/分片=「相关文档(RAG)、上下文、资源」）。
+- 列表/详情/运行页统一大屏卡风格（dash-card 体系）；节点图默认多节点（phases 缺席=诚实降级为单节点+注记，不编造）。
+- 「可编辑、自动扩展」：相位编辑面后续接 Workflow 对象 spec.phases/transitions 的 apply 通路（本轮先读侧可视化+编辑占位，声明面已支持——objspec.go `view.Phases = doc.Spec.Phases`）。
+
+### 18.4 全链顺畅（B8+B9）
+
+- 提需求→分析→doc 更新→apply→Running→点进节点：全程深链一条龙，无手工拼 URL；patch 增量驱动状态流转零轮询。
+- i18n 词条随批；`npm test`+构建+`lint/max-file-lines.sh` 全绿；部署 CT116 浏览器全流程验收截图留证。
+
+### 18.5 收尾动作（用户指令）
+
+1. 按本需求生成文档（本节+必要的 concepts 增量）。
+2. **CLI 自己提交 apply 触发一次**：把需求写成文档对象 → `corectl` apply → 触发 workflow/loop。
+3. **全程跟踪**：浏览器跟拍 InSync→Running→节点图亮起→终态，截图留证。
+
+### 可行性
+
+| 项 | 等级 | 说明 | 缓解 |
+|---|---|---|---|
+| intake 多轮契约 | ✅低 | TurnRequest/Response 词形已在册（intake.go §97-130），plugin 代理通路已有（/core-console/intake→/v1/intake/*） | 前端按 ready/askingField 逐轮渲染 |
+| 节点图数据 | ✅低 | runs 行已携带 phases/transitions/phase/status/eventId/involved（routes_workflow.go §293-312）——零后端改动 | phases 缺席=单节点诚实降级 |
+| InSync/Running 徽 | ⚠️中 | 「对象↔run」关联靠 eventId 同源+involved 回指；冷启动窗口外的 run 不可见 | 徽语义=「窗口内可见事实」，出窗=InSync 诚实降级 |
+| AI 修文档通道 | ⚠️中 | 依赖宿主 chatFaces.docFix 注入（未注入=缺席词形） | 会话屏原生界面兜底人工通路 |
+| 流程顺畅度 | ⚠️中 | intake→generate→apply→run 三跳跨面 | 全深链+patch 增量+过渡态显式 |
+
+**结论：可行。数据面零后端改动（runs/intake/apply 契约全在册）；新增全部在读侧投影与可视化层。**
