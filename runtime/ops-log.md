@@ -17,11 +17,19 @@
 
 | 库 | 装配 | 权威面 | 可丢弃？ | 理由 |
 |---|---|---|---|---|
-| docs DB | `--docs-backend sqlite --docs-db <path>` | 文档内容权威（doc 表；sqlite 后端下 git 布局降级为导入导出格式——种子导入=迁移路径） | **否** | 丢库=丢文档内容（权威面本体） |
+| docs DB | `--docs-backend sqlite --docs-db <path>`（**缺省 sqlite**） | 文档内容权威（doc 表；git 布局=导出/公开格式——种子导入=迁移路径） | **否** | 丢库=丢文档内容（权威面本体） |
 | ops DB | `--ops-db <path>` | 操作流水（apply_log/event_log/…六表+draft 写穿） | **是** | 非权威可重建（从文档面+审计重建大部分）——本文件 §1 既有口径不变 |
 | 秘密库 | `--secrets-db <path>` | 凭据真实值（secret: 引用的解析源；0600 独立文件） | **否** | 秘密=权威运行时值非缓存，丢库=丢凭据；**独立文件最小暴露面**——不随可丢弃的 ops DB 走（丢上库连坐丢凭据），也不进 docs DB（文档库有查询/导出/备份面，脱敏红线：值只进不出） |
 
 三库任何查询/导出/备份口径互不携带对方内容；秘密库读面只出名称与更新时刻（provider.md 规则 2 脱敏红线——值只经引用式取值 `secret:<name>` 在实现侧进程内解析，永不跨进程边界）。
+
+**默认存储口径（2026-11-26 用户裁决，core_design R-DOC-7）**：
+
+- **默认=sqlite + 本地 storage**：新建部署与 root（core_system）固定 sqlite docs DB，root 启动参数不得出现 `--docs-backend git`；
+- **git=导出/公开（output/public）**：不再作为写路径权威。按规则**定时**从 sqlite 导出 git 工作树 → commit → push 远程；git 历史=导出快照，**不是逐次写账本**；导出失败只告警，不回滚 sqlite 写；频率/分支/远程目标=部署侧配置；
+- **迁移**：`--docs <旧 git 布局根>` 对空库一次性种子导入，保留各对象 `resourceVersion`；非空库不导入（幂等）；
+- **兼容期**：非 root 部署可显式 `--docs-backend git`（kube-inner 等），迁移后同上；root 不允许；
+- **逐次正文历史**：sqlite 后端当前无逐次内容快照，`GET /v1/rev-content` 返回 503 诚实降级；`apply_log` 仍有操作流水（谁/何时/rv/结果）。`doc_history` 或等价读面为下一段（不得用周期 git 快照冒充逐次历史）。
 
 ## 2. ops DB 表（v1）
 
