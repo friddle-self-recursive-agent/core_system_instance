@@ -36,7 +36,7 @@ deploy-system 不内置任何"业务怎么部署"的知识；每个业务的部�
 | scm-ci | 既有 SCM/CI（build-status 回写、gate-status 抽查、产物登记） | 同左 | 已有 buildspec 的业务：构建发布走自家管道，deploy-system 只做门禁与状态投影 |
 
 判定规则（边界决策树）：业务的 DeployDesign 声明渠道引用（Ref，resolve{system,type,params}）→ deploy-system 按 Ref 调 ConnectorOps → 渠道实现可以换（换=改 Ref 指向，不改业务声明）。
-**具体渠道实例（sybran 侧：公司集群受限 SA、入口宿主、OneDev `git.service.code27.cn` 渠道）落 `sybran-developer-system` 仓 `docs/deploy-channels.md`（private）——builtin 本体零部署锚点（2026-11-26 用户裁决：sybran 内容出公开仓）**。
+**具体渠道实例（sybran 侧：公司集群受限 SA、入口宿主、公司 SCM（OneDev，地址不公开）渠道）落 `sybran-developer-system` 仓 `docs/deploy-channels.md`（private）——builtin 本体零部署锚点（2026-11-26 用户裁决：sybran 内容出公开仓）**。
 
 ## 6. 可行性（渠道项，补 §6 原表）
 
