@@ -1093,3 +1093,7 @@ corectl loop
 ## 22. 统一样式规范（2026-11-26）
 
 全站 style 混乱整治（字号 15 档半像素混用/40+ 裸色值两蓝并存/radius 10 档六成绕过 token/按钮无变体体系）——以 DeepSeek 实测 token 体系为基准定版：--ds token 全表+按钮四变体+S-01..S-06 机械迁移判据，见独立文档：[style.md](style.md)。
+
+## 23. 会话屏通信与视觉重建（2026-11-26）
+
+chat 批：通信病灶实测（steer 闲置/无停止/无活体反馈/整屏重绘/requestId 丢弃）+ 视觉重建（DeepSeek 对话版型三段式/零 inline style/chat.css 拆分）——C-01..C-11 逐项判据，见独立文档：[chat.md](chat.md)。
