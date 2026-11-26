@@ -843,6 +843,24 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 
 **队列余量对账（下轮顺延候选）**：object 触发声明面（升格判据三词形零变化维持顺延——随 connector watch 声明面扩展轮）；watch-only 自监控闭环（红线 a 域维持 declared）；E5a 冷会话空窗（declared 维持）；CTX 声明面（零运行时落点=同源顺延）；P-02 清场残留断言=第三拍通过零清场动作（判据位维持每轮必查）；§2 机械对账=解析器随行直测范式维持（每轮随行直测勿回退硬编码转录）。
 
+### 1.45 对账轮增量：队列 1 三项+CTX 零变化判定维持顺延（第三连拍）+ 清场残留断言第四拍（双域）+ §2 解析器范式随行直测（2026-11-26，loop-72 轮——标准对账选点轮：全零变化判定第三连拍+三判据位随行直测全绿零缺口）
+
+**核验选点（对账——点火队列顺序执行）**：六仓 pull 零新提交（core_design@74a8efe/workservice@6853803/instance@6e6528b/plugin@d3b6930——loop-71 提交时点即六仓 HEAD=CTX 与队列 1 同源零变化基线第三连拍成立）。队列 1 余量复核三项**维持顺延**：①object 触发声明面——loop-70 升格判据三词形全数复验（P72-03：connectors 契约域零 `) Watch(` receiver 实现∧生产装配 `--watch-source` 旗标 /proc cmdline 实证缺席（off=零驱动）∧live 订阅集合恒表驱动 types=["*"]）→ spec.triggers 不入集合零变化；②watch-only 自监控闭环/developer-system 代码化调用（红线 a 域——wired 恒 false 机械锚在位∧全仓零 `Wired:true` 词形）；③E5a 冷会话空窗（宿主读面现势零变化——§1.37 维持 declared）。CTX 声明面对账（队列 1 第四项）：conventions.context 词汇∧rule.md R-CTX-1..6 在册∧运行时零落点=**零变化判定同源顺延第三连拍**。队列 2 三判据位随行拍全绿：**P-02 清场残留断言第四拍**（对象清单面+docsRoot fs 直扫面双域零残留+l68 活体锚两态分立复核（现势 404∧rv=1 快照 200 含 rv 反写行词形）——零回潮零清场动作）；**§2 机械对账解析器随行直测**（代码路由集 43↔文档侧行集 43 双向差集=0——P-03 解析器范式随行直测在位，未回退硬编码转录清单，「同范式随行补记」不触发）；**P-01 personal-info 六仓必查**（✓×6 零回潮——判据位维持）。
+
+**实现拓扑（零 Go 零 plugin 改动零文档面语义变更）**：探针=prep 15 项+UI 5 项=**20/20 终拍零 pageerror**（部署判据×3/清场第四拍×3=双域+l68 锚/队列 1 判据面×3/桥契约解析器×2/投影零回归/CTX×2/探针纪律×1；脚本与数据分离 `<部署根目录>/probe/loop-72/`，node_modules 软链继承 loop-68）；质量闸全绿（workservice go build/test 23 包/race 7 并发包（eventbus/watchsrc/opslog/workflow/flowbind/metricsrc/repository——并发包清单按现势包位随行校准）+plugin npm 137 pass+personal-info 六仓 ✓+mirror 基线 `files=18 findings=0 ok`）；零服务重启零 cookie 轮换（loop-68 jar 恒有效复用——五连轮）；**零锚落库零写路径**（判据锚沿用 l68 留账锚活体复验——探针零对象面动作）。
+
+**L72 验收线（探针=acceptance/loop-72.md；prep 15/15+UI 5/5=20/20 终拍）**：
+- L72-01 部署判据：三 cored 子进程 exe sha=v0.63 在运代（pids=3，五连轮零换代）∧ 既有对象读面 rv=12 ∧ rev-content rv=1 快照 200 source=git-backend。
+- L72-02 清场残留断言第四拍：四清场域对象清单零探针残留词形（Agent=1/Proposal=0/Workflow@global=2/ConnectorOps@systems=0）∧ docsRoot fs 直扫文件名域零残留（双域断言=P-02 判据位维持）∧ l68 活体锚两态分立（现势 404∧rv=1 快照 200）。
+- L72-03 队列 1 零变化判据面：契约域零 receiver 实现∧生产装配旗标缺席（off）∧flowbind 零 spec.triggers 词形∧零 connectops-context 词形∧wired 恒 false 锚在位∧全仓零 Wired:true∧live types=["*"]。
+- L72-04 桥契约机械对账：代码路由集 43↔文档侧行集 43 双向差集=0（解析器随行直测）∧ §2 升格注记+proposals/{name} 补记行在册（零回退硬编码转录词形）。
+- L72-05 投影零回归：聚合 count=7∧inbox=61∧types=["*"]∧events 面活体。
+- L72-06 CTX 声明面对账：conventions.context∧R-CTX-1..6 六词全在册∧运行时零落点=零变化判定（同源顺延第三连拍）。
+- L72-07 探针纪律：全链宿主同源/loopback 读面+本地 fs+本地 grep——零外部端点零写路径零锚落库（KI-001）。
+- L72-08 UI 拍：编辑器活体∧历史 tab 14 行 ok 行可点（hist-diff）∧ diff 面板 r 词形+add/del ∧ palette 对象行零残留∧账本 reasonRef 词形在册 ∧ 零 pageerror ∧ 截图 3 张（editor/history-diff/palette）。
+
+**队列余量对账（下轮顺延候选）**：object 触发声明面（升格判据三词形零变化维持顺延——随 connector watch 声明面扩展轮）；watch-only 自监控闭环（红线 a 域维持 declared）；E5a 冷会话空窗（declared 维持）；CTX 声明面（零运行时落点=同源顺延）；P-02 清场残留断言=第四拍通过零清场动作（判据位维持每轮必查）；§2 机械对账=解析器随行直测范式维持（每轮随行直测勿回退硬编码转录）。
+
 ## 4. 落地顺序（一轮一增量，映射 loop 起点）
 
 
@@ -884,6 +902,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 §1.42 | 清场常态化首拍+cored-bridge.md §2 桥契约机械对账复核+删除后快照两态分立新实证【实现拓扑与细化验收=§1.42（loop-69）：队列 1 三项零变化判定维持顺延（object 触发声明面/watch-only 红线 a 域/E5a declared——connector watch 声明面现势零变化升格不触发）+队列 2 两件——①P-02 残留断言判据位常态化首拍（四清场域对象清单零探针残留词形，零回潮零清场动作）②§2 代码路由集 43 条↔行集 43 行双向差集=0（loop-68 补记后完整性复核——「同范式随行补记」不触发）；现势发现两件=core-headless 载体已自然换代（三 web 同代 v0.63）∧l68 判据锚对象面巡检移除（两态分立活体锚恒可复验——账本+快照在判别面域）；零 Go 零 plugin 改动】 | 部署判据（三 cored 子进程 sha=v0.63 含载体）∧清场残留断言首拍（四域零残留词形）∧删除后快照两态分立（l68 锚现势 404∧rv=1 快照 200∧history 行不删）∧投影面零回归（聚合/inbox/triggers）∧桥契约机械对账（§2 双向差集=0）∧队列 1 零变化机械面（flowbind 零 triggers 词形∧wired 锚在位）∧UI 零回归（点行 diff 活体+零 pageerror）∧UI 截图（细化=L69-01…07） |
 | 对账轮 §1.43 | 清场残留断言第二拍+cored-bridge.md §2 机械对账解析器范式升格（缺行补记）+部署路径泄漏红线域收口【实现拓扑与细化验收=§1.43（loop-70）：六仓零新提交=CTX 声明面对账专项判零现势变化（R-CTX-1..6+conventions.context 在册∧运行时零落点=connectops-context 归 deploy-system 域同源顺延）+队列 1 判据词形随行校准（connector watch 桥声明面在册——旧「零 Watch 驱动实现」词形过时摘除；升格判据=契约域零 receiver 实现∧生产装配旗标缺席（--watch-source off）∧live types=["*"]）；缺口收口两件=①P-01 personal-info 闸 instance FAIL（§1.33/§1.42 两处部署路径词形——R-PUB-3）→ 占位符收口六仓 ✓（自此入每轮质量闸必查判据位）②P-03 §2 行集机械解析直测出缺行 GET /v1/proposals/{name}（loop-69 复核=代码↔硬编码转录清单非文档侧直测）→ 当轮补记独立行 43↔43 双向差集=0 可复现解析器；零 Go 零 plugin 改动，零锚落库零写路径】 | 部署判据（三 cored 子进程 sha=v0.63）∧清场残留断言第二拍（对象清单面+docsRoot fs 直扫面双域零残留+l68 活体锚两态分立）∧队列 1 判据面升格三词形∧桥契约解析器直测双向差集=0∧投影零回归∧CTX 专项零变化判定∧UI 零回归（点行 diff 活体+零 pageerror）∧UI 截图（细化=L70-01…07） |
 | 对账轮 §1.44 | 队列 1 三项+CTX 零变化判定维持顺延+清场残留断言第三拍（双域）+§2 解析器范式随行直测【实现拓扑与细化验收=§1.44（loop-71）：六仓零新提交=CTX 与队列 1 同源零变化基线+队列 1 三项零变化判定维持（object 触发声明面升格判据三词形全数复验/watch-only 红线 a 域 wired 恒 false/E5a declared）+CTX 声明面零变化同源顺延（conventions.context∧R-CTX-1..6 在册∧运行时零落点）+队列 2 三判据位随行拍全绿（P-02 第三拍双域零残留+l68 锚两态分立复核；§2 解析器随行直测 43↔43 双向差集=0 未回退硬编码转录；P-01 personal-info 六仓 ✓ 零回潮）；零 Go 零 plugin 改动零文档面语义变更，零锚落库零写路径】 | 部署判据（三 cored 子进程 sha=v0.63 四连轮零换代）∧清场残留断言第三拍（对象清单面+docsRoot fs 直扫面双域零残留+l68 活体锚两态分立）∧队列 1 判据面三词形零变化∧桥契约解析器随行直测双向差集=0∧投影零回归∧CTX 零变化判定∧探针纪律零外发∧UI 零回归（点行 diff 活体+零 pageerror）∧UI 截图（细化=L71-01…08） |
+| 对账轮 §1.45 | 队列 1 三项+CTX 零变化判定维持顺延（第三连拍）+清场残留断言第四拍（双域）+§2 解析器范式随行直测【实现拓扑与细化验收=§1.45（loop-72）：六仓零新提交=CTX 与队列 1 同源零变化基线第三连拍+队列 1 三项零变化判定维持（object 触发声明面升格判据三词形全数复验/watch-only 红线 a 域 wired 恒 false/E5a declared）+CTX 声明面零变化同源顺延第三连拍（conventions.context∧R-CTX-1..6 在册∧运行时零落点）+队列 2 三判据位随行拍全绿（P-02 第四拍双域零残留+l68 锚两态分立复核；§2 解析器随行直测 43↔43 双向差集=0 未回退硬编码转录；P-01 personal-info 六仓 ✓ 零回潮）；零 Go 零 plugin 改动零文档面语义变更，零锚落库零写路径】 | 部署判据（三 cored 子进程 sha=v0.63 五连轮零换代）∧清场残留断言第四拍（对象清单面+docsRoot fs 直扫面双域零残留+l68 活体锚两态分立）∧队列 1 判据面三词形零变化∧桥契约解析器随行直测双向差集=0∧投影零回归∧CTX 零变化判定∧探针纪律零外发∧UI 零回归（点行 diff 活体+零 pageerror）∧UI 截图（细化=L72-01…08） |
 ## 5. 执行红线（对 loop 的约束）
 
 1. **不改文档面语义**：console 是观测/操作面，一切写操作（启停/编辑/批准/重跑）=Apply 走既有写路径；发现设计不合理→改文档先于改代码（acceptance 纪律）。
