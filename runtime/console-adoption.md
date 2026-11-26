@@ -917,6 +917,24 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 
 **判定**：§13.4 判据四项全绿（机械断言回潮即红入 npm test 常态化+活体 DOM+截图）；R-UX-3/4/5 落地零 Go 改动零 cored 改动（纯 client 面——任务红线维持）；kind 名降次级徽章（系统声明副注记+chip kind）主标题=用户词（服务实例/工作流/连接与凭据源/系统卡标题=系统名）；053dd1a 提案屏×上下文对照卡=余量项不阻塞（§13 主线收口后余力再做）。
 
+### 1.49 提案×上下文对照卡：053dd1a + proposal.md §4.6 落地（2026-11-26 用户裁决，loop-76 轮——纯 client 面改动：对照卡+审批屏同屏零 Go 改动）
+
+提交节点（intake-generate 对话式生成 + prop-submit 降级表单提交）对提案摘要跑上下文对照（concepts/proposal.md §4.6——client/console-ctx.js 新模块）：
+
+- **装配与产出**：文档库索引现读（`v1/design-docs` repo/path/sha——宿主 loader 注入，模块零直接网络依赖；120s 缓存）× 确定性检索（中文主题词→basename 映射 + YAML 域关键词双通道）产 `conflicts`（双命中=主题+域——与现有文档可能冲突）/`supplements`（单命中=建议随行核对）；ref=`<repo>/<path>#<锚>` + hash（blob sha——git hash-object 对账同字节口径）；对照=辅助判定信息不改准入判定（准入仍=dry-run 三检查；取舍留 approval_log 既有人审通路）。
+- **对话区独立卡**（不静默不折叠进其他）：`#intake-messages` 消息行尾 `data-ctx-card` 独立卡——冲突卡逐条 `<details>` 可展开（ref+hash 短形 summary+全形核对行+why）、补充卡一键「加入随行清单」（`ctx-supplement-add` → 会话内 taken 清单；批准派工后作为文档更新起点随载荷——载荷接线=余量）；消息行同步播报对照结果。
+- **审批屏同屏携带**：详情屏 landing 卡内 `#pd-ctx-slot` 折叠次级（`data-ctx-approval`）——会话在册=完整对照卡；缺位=降级占位可见（不静默）+ 摘要现读补挂完整对照。
+- **degraded 可见不阻断**：索引现读失败=degraded 卡（明确「不阻断提交」）；`ctxRunCheck` 失败链路零 throw 传染（`Promise.resolve(null)` 兜底）——提交按钮 disabled 逻辑零触碰。
+- **复用**：会话内 byKey（kind|scope|name → sig=DJB2(yaml) 复用）——同键同摘要不重复装配（tagSig 语义的 client 侧复用）。
+- L76-01 对照卡三态必现其一（conflicts/supplements/degraded——模块直测三态构造）∧冲突卡 details 可展开∧hash 短/全形在册∧补充卡一键按钮词形。
+- L76-02 check 复用（sig 同→不重复装配，索引只现读一次）∧loader 失败=degraded 卡∧审批屏缺位降级可见（不静默）。
+- L76-03 挂载词形在册（对话区独立卡/预览区/详情屏 slot/一键随行动作/setDocsLoader 注入）∧console-ctx.js 入 bundle 拼接序（console-md 后 console-live 前）。
+- L76-04 对照卡文案零违禁词形（「面」族/E<n>/L<n>-/真数据——专锚）∧零新色值（dsh 原生 token 消费——ctx 样式块专扫）。
+- L76-05 探针 UI 拍 11/11（U76-01a…05b）：对话模式在册∧对照卡三态其一（实测 conflicts 态：冲突 1+补充 2，文档 102 份现读）∧对话区独立卡∧预览区同卡∧一键随行按钮态翻转∧冲突卡可展开+hash 短/全形一致（6ca86566 ↔ hash=6ca86566eb11…）∧提交→详情屏跳转∧审批屏同屏携带（data-ctx-approval 在册+可展开）∧对照卡零违禁词形活体∧零 pageerror∧截图 3 张（ctx-card/ctx-approval/ctx-approval-open——PNG file 验证 1440×900，载体模型无图像输入机械面代替目检如实注记）。
+- L76-06 探针纪律：全链宿主同源/loopback（KI-001）——探针对象 Proposal/global/l76（rv=1 submitted）验收后 docsRoot git rm 清场（commit 991dc82——loop-68 先例同法；apply 面无 delete 动作=写路径唯一红线照旧）；P-02 第八拍 CLEAN-OK（四域计数=loop-75 基线逐位一致+fs 直扫 l76* 归零+intake 会话=0+l68 活体锚两态分立）。
+
+**判定**：§12 机读判据全绿（对照卡三态必现其一+冲突引用可展开 hash 一致+一键加入+审批屏同屏+rv=1 submitted+截图入报告+零 pageerror）；npm 151 pass（+4 本轮锚；fd33912 新代际 2 测试并入全绿）；lint mirror 闸 files=19 findings=0 ok（开局修复交接发现镜像漂移：docsRoot scheme 缺 core_design@2d43a1a StateModel/Finance 两行——sudo cp 同步+commit c069f1e 恢复基线）；R-UX-8 corectl/wake 桥新代际（e1daec2/e93069e/712f4de/fd33912）并行落库零冲突（fd33912 仅 src/index.ts 2 行——与本轮 client 层零交集）；sybran remote 交接档过期=已指 OneDev 且 ls-remote 通（推通路就绪）；R-UX-6/7 关注报告×对象工作台=下轮独立成轮（控制台首屏形态级+corerd 换代判据——超出本轮红线）。
+
 
 ## 4. 落地顺序（一轮一增量，映射 loop 起点）
 
@@ -963,6 +981,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 §1.46 | 队列 1 三项+CTX 零变化判定维持顺延（第四连拍）+清场残留断言第五拍（双域）+§2 解析器范式随行直测【实现拓扑与细化验收=§1.46（loop-73）：六仓零新提交=CTX 与队列 1 同源零变化基线第四连拍+队列 1 三项零变化判定维持（object 触发声明面升格判据三词形全数复验/watch-only 红线 a 域 wired 恒 false/E5a declared）+CTX 声明面零变化同源顺延第四连拍（conventions.context∧R-CTX-1..6 在册∧运行时零落点）+队列 2 三判据位随行拍全绿（P-02 第五拍双域零残留+l68 锚两态分立复核；§2 解析器随行直测 43↔43 双向差集=0 未回退硬编码转录；P-01 personal-info 六仓 ✓ 零回潮）+race 闸并发包清单现势校准复核（goroutine 派生词形全仓扫描=清单 7 包完备零调整）；零 Go 零 plugin 改动零文档面语义变更，零锚落库零写路径】 | 部署判据（三 cored 子进程 sha=v0.63 六连轮零换代）∧清场残留断言第五拍（对象清单面+docsRoot fs 直扫面双域零残留+l68 活体锚两态分立）∧队列 1 判据面三词形零变化∧桥契约解析器随行直测双向差集=0∧投影零回归∧CTX 零变化判定∧探针纪律零外发∧UI 零回归（点行 diff 活体+零 pageerror）∧UI 截图（细化=L73-01…08） |
 | 对账轮 §1.47 | 队列 1 三项+CTX 零变化判定维持顺延（第五连拍）+清场残留断言第六拍（双域）+§2 解析器范式随行直测+race 并发包清单现势校准复核【实现拓扑与细化验收=§1.47（loop-74）：六仓零新提交=CTX 与队列 1 同源零变化基线第五连拍+队列 1 三项零变化判定维持（object 触发声明面升格判据三词形全数复验/watch-only 红线 a 域 wired 恒 false/E5a declared）+CTX 声明面零变化同源顺延第五连拍（conventions.context∧R-CTX-1..6 在册∧运行时零落点）+队列 2 三判据位随行拍全绿（P-02 第六拍双域零残留+l68 锚两态分立复核；§2 解析器随行直测 43↔43 双向差集=0 未回退硬编码转录；P-01 personal-info 六仓 ✓ 零回潮）+race 闸并发包清单现势校准复核（行首派生词形全仓扫描=清单内 watchsrc=1/workflow=2/metricsrc=1/repository=4 与 loop-73 台账逐包一致∧清单外包零行首派生=清单完备零调整；行内 `go func` 词形四包假阳性域识别——判据词形基准=行首派生，P74-08 机械断言入探针常态化）；零 Go 零 plugin 改动零文档面语义变更，零锚落库零写路径】 | 部署判据（三 cored 子进程 sha=v0.63 七连轮零换代）∧清场残留断言第六拍（对象清单面+docsRoot fs 直扫面双域零残留+l68 活体锚两态分立）∧队列 1 判据面三词形零变化∧桥契约解析器随行直测双向差集=0∧race 清单校准（清单外包零行首派生）∧投影零回归∧CTX 零变化判定∧探针纪律零外发∧UI 零回归（点行 diff 活体+零 pageerror）∧UI 截图（细化=L74-01…09） |
 | 界面用户视角 §1.48 | R-UX-3/4/5+§13 落地（loop-75）：文案人话化（字符串域零「面」族+零里程碑词形——双拍机械断言）+渲染优先（console-md.js 渲染器+XSS 红线+字段卡/YAML 次级+编辑器双视图）+系统视角首屏（系统卡+入口卡四张+文档退折叠次级）+dsh 原生 token（零新色值断言）【实现拓扑与细化验收=§1.48；纯 plugin/client 零 Go 零 cored】 | §13.4 判据四项全绿（npm 145 pass+prep 16/16+UI 11/11 零 pageerror+截图 4 张）∧mirror 基线 files=18 findings=0 ok（镜像随行同步 commit a0246bd）∧探针零外发零锚落库 |
+| 提案×上下文对照卡 §1.49 | 053dd1a+§4.6 落地（loop-76）：console-ctx.js 对照模块（确定性检索 conflicts/supplements+ref+hash）+提交节点随行（intake-generate/prop-submit 双入口）+对话区独立卡（冲突可展开/补充一键随行）+审批屏同屏携带（折叠次级+缺位降级可见）+degraded 不阻断+sig 复用【实现拓扑与细化验收=§1.49；纯 plugin/client 零 Go 零 cored】 | §12 机读判据全绿（三态必现其一+hash 一致+一键加入+审批屏同屏+rv=1+截图+零 pageerror——UI 11/11）∧npm 151 pass（+4 L76 锚）∧mirror files=19 findings=0 ok（开局修复镜像漂移 commit c069f1e）∧P-02 第八拍 CLEAN-OK（探针 l76 清场 commit 991dc82） |
 ## 5. 执行红线（对 loop 的约束）
 
 1. **不改文档面语义**：console 是观测/操作面，一切写操作（启停/编辑/批准/重跑）=Apply 走既有写路径；发现设计不合理→改文档先于改代码（acceptance 纪律）。
