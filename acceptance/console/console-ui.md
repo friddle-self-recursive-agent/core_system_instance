@@ -742,7 +742,7 @@ corectl loop
 | `config.loopRunningPattern` / `CORE_SYSTEM_LOOP_RUNNING_PATTERN` | 单飞检测 `pgrep -f` 模式 |
 | `config.coredAddrFile` | 就绪后写地址文件（仅主控制面 profile） |
 
-失败语义：cored 未开桥=纯投影零出站；宿主未配命令=503；已有 loop=200 `already-running`；宿主不可达/拉起失败=stderr 留痕，事件仍受理。
+失败语义：cored 未开桥=纯投影零出站；宿主未配命令=503；已有 loop=200 `already-running` + pending 持久化（循环退出后自动拉起，不丢事件）；宿主不可达/拉起失败=stderr 留痕，事件仍受理。
 
 ### 15.3 判据（机读）
 
@@ -762,6 +762,6 @@ corectl loop
 | 命令注入 | ❗高 | 固定命令、参数空数组、载荷只进日志 |
 | 桥不可用/宿主重启 | ⚠️中 | 显式 503/日志；下一事件重试；过渡期保留外部 ignite 到桥验收 |
 | 权限旁路 | ❗高 | 与桌面同一主体判定；部署侧可覆写受限 role |
-| 循环在跑时新事件 | ✅ 低 | 返回 already-running，不杀不重启；由 running loop 自行完成 |
+| 循环在跑时新事件 | ✅ 低 | 返回 already-running 并入 pending（持久化、同因合并）；循环退出后自动拉起，不杀不重启 |
 
 **结论：可行。CLI=既有控制面的薄客户端；事件点火复用既有事件总线/路由/唤醒面，新增仅宿主唤醒桥与部署侧命令配置；零新写路径、零新权限模型。**
