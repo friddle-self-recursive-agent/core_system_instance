@@ -10,7 +10,7 @@
 | # | 位置 | 现场现象 | 根因定位 | 修复方案 |
 |---|---|---|---|---|
 | F-01 | 入口 `/core-console/` 与 `/core-console` | 直接访问返回 **HTTP 404**，仅 `/core-console/v2` 可开 | `plugin/src/routes/console-v2.ts:124-127` 只注册了 `/core-console/v2` 与 `/core-console/v2/` | 将 `/core-console` 与 `/core-console/` 转正为主壳（或 302 到 `/core-console/v2`，建议直接以 `/core-console/` 为正式路径，`/core-console/v2` 兼容重定向） |
-| F-02 | `#/workflows` 与 `#/tree` | 整屏崩溃，`在册工作流` / `运行记录` 永卡加载中；导航与面包屑残留在上一页 | `web/src/screens/workflows.js:9` 漏导 `involvedRoute`，第 121/248 行抛出 `ReferenceError: involvedRoute is not defined` | 补齐 `involvedRoute` 导入；所有屏 render 包一层错误边界（出错显式提示，不静默卡 loading） |
+| F-02 | `#/workflows` 与 `#/tree` | 整屏崩溃，`在册工作流` / `运行记录` 永卡加载中；导航与面包屑残留在上一页 | `web/src/screens/workflows.js:9` 漏导 `involvedRoute`，第 121/248 行抛出 `ReferenceError: involvedRoute is not defined` | **已修（本地）**：补齐 `involvedRoute` 导入；所有屏 render 包一层错误边界（出错显式提示，不静默卡 loading） |
 | F-03 | `#/wf/:name` | 运行记录编号倒挂：`run #1`（2h 前 suspended）显示成 `run #2`，`run #2` 显示成 `run #1` | `workflows.js:253` 读 `r.no`（后端键是 `r.run`），退化为 `runs.length - i` 倒排 | 统一取 `r.run ?? r.no` |
 | F-04 | `#/wf/:name/r/:n` | ① 失败的 `core-workflow #2` 把 `Verifying` / `Reporting` 全标绿勾；② 静态状态机边表 `transitions` 当事件时间线展示；③ `Failed` 终态仍写「正在发生」；④ 推进过 `Reporting` 居然落入 `Failed` | 后端 `workflow/run.go` 把异常态 `Failed` 放进线性 `phases` 末尾并生成 `Reporting --advance--> Failed`；前端按数组下标 `< curIdx` 盲标绿勾且无 `run.history` 轨迹 | **设计+代码同修**：① `scheme.yaml` 与 `workflow.md` 已将 `Failed/Paused` 移出正向 `phases`、补 `converged`/`canceled` 状态、拆分静态 `transitions` 与运行轨迹 `run.history`；② 引擎停在正向末步落 `converged`；③ 节点图按 `history` 标色、终态改文案、点节点弹出对应 agent/session/日志 |
 | F-05 | `#/tasks` 与总览 KPI | 活体任务 `phase: "running"` 被判成「状态未知」丢进「排队」，并弹出过时 BUG-013 警告；总览「进行中任务」误显示 `0`；点任务进详情报「任务不在册」 | `tasks.js:24` 读 `t.status.phase`、`welcome.js:327` 读 `x.status.phase`，但 `/v1/snapshot` 与 `/v1/tasks` 返回扁平 `t.phase`；且路由 ID 编码不匹配 | `statusOf(t)` 兼容扁平顶层字段（`t.phase`/`t.lastAction`）与 `t.status`；统一任务详情深链 `scope/name` 解析 |
@@ -100,6 +100,16 @@
 4. **`core/scheme.yaml` & `concepts/proposal.md`**：收敛需求入口为统一 rootAgent 对话（`Proposal` 退居系统内部结构化变更/审计对象，不占主导航），并扩展 `ApprovalGranted`/`ApprovalRejected` 支持 `Proposal/<scope>/<name>` 锚（消除审批死路）。
 5. **`core/scheme.yaml`**：统一检索元数据落位为顶层 **`metadata.*`**（废除违背 P2 的 `spec.metadata.*`）；显式声明 `Proposal`/`Task` 支持 `markdown-frontmatter` 载体格式。
 6. **`core/scheme.yaml` & `concepts/attention.md` & `concepts/event.md`**：确立收件箱/待审/关注报告的 **Level-triggered 活体收敛口径**（已决/终态退出待办，不拿 append-only 历史日志计数当待办），以及 watchdog 会话终态退出规则（`escalated`/`SessionClosed` 停止周期重复发送 `SessionStalled`）。
+
+---
+
+## 五点五、本轮新增裁决落地（2026-11-26 用户三项补充指令）
+
+| # | 指令 | 落地 |
+|---|---|---|
+| N-01 | **系统树点进系统默认=看 goal**（其他需求要求文档） | `web/src/screens/misc.js` 新增 `treeLandingRoute()`：ServiceDesc 行落点从 `objRoute` 改为 `designdoc/<repo>/goal.md`（设计文档渲染视图——goal 是系统第一眼；其余需求/约束文档在 goal 页内 ref 链接与文档库展开）；非 ServiceDesc kind 仍进对象工作台。机读判据：`#/tree` ServiceDesc 行 `data-go` 前缀=`designdoc/`，渲染视图含 goal 正文 |
+| N-02 | **代码 ref 直达代码仓库地址（内部仓+对外仓均可）** | `web/src/render/chips.js` 新增 `repoUrl()/repoLinkChip()` 纯函数映射：`pkg://<org>/<repo>/<path>` / `git://` / `github.com/...` / 裸仓名（六仓家族）→ `https://github.com/.../blob/main/<path>`；`window.__CC.repoOrg` 可覆写（私有仓=部署侧注入 OneDev 词形，前端零私网硬编码——R-PUB-1）。接线点：①对象工作台「操作」片=scope/name 仓 chip；②工作流详情概览=`spec.impl`/`execution.impl` 仓 chip。机读判据：对象工作台含 `href^="https://github.com/"` chip；单测锚 `repoUrl('pkg://org/repo/src/x.go')` |
+| N-03 | **CLI apply 整改文档→事件触发自循环** | 以本文件+§20 落 instance 仓 apply（DocApplied 事件）→ `corectl loop` 点火 LoopRequested→wake 桥→core-headless 接管 Batch 1–3 修复；验收报告照 acceptance.md §8（截图强制） |
 
 ---
 
