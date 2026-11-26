@@ -41,6 +41,7 @@ Task 对象（docs DB / sqlite）
 - 默认 `maxConcurrent=4 / perService=2 / perRepo=1`；配置来自 `scheme.runtime.taskScheduler`，Apply 即时生效（调度器热读）。
 - 同 repo 默认串行；放开 `perRepo` 需 worktree/合并队列同时满足。
 - 队列积压与阻塞原因必须可见（任务中心/`/v1/objects/Task`），不静默等待。
+- **孤儿租约认领（v0.67，loop-84）**：租约起点=进程内本轮拉起时刻——cored 重启后进程内租约清零，而 `status.phase=running` 留在仓库：只扫进程内租约会让孤儿 running 永不回收也永不重拉（attempts 恒 0、lastAction 恒「拉起中（spawn）」），且 running 计入现势占额阻塞全部后续派单（loop-82/83 活体实证：console-audit-20261126 自 14:13 running 悬挂 2h+，cored 14:21 换代 34643→38307）。补口=本进程首拍扫 `event_log` 归档取每任务最近一次 `TaskStateChanged` running 事件（dedup=`task:<id>:running` 机械键），在册视图仍 running 的认领为租约起点 → 走既有租约回收路（TTL 到点 ready+attempts+1 / failed 超上限）。审计事实=归档事件（可回查非凭空推断）；归档读口未装配=认领关断（既有行为面零翻转）；回归锚=workservice `internal/scheduler/orphan_lease_test.go`（L84-01，`-race` 绿）。
 
 ## 4. 宿主 spawn 桥
 

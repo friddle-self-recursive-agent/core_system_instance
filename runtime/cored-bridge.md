@@ -54,6 +54,14 @@
 | `GET /v1/secrets` | 秘密元数据清单（v0.34）：`{count, secrets:[{name, updatedAt}]}`——**只出名称与更新时刻，值永不回显**（脱敏红线）；秘密库未装配=503 |
 | `POST /v1/secrets` | 秘密落值（v0.34）：`{name, value}` → `{name, set:true}`——受理即吞值（请求体 value 不出现在任何响应/留痕）；写面门控同 apply（`--allow-apply`，未开启=405）；秘密库未装配=503；空 name/value=400 |
 | `DELETE /v1/secrets/{name}` | 秘密删除（v0.34）：幂等（键不存在=成功）；写面门控同上 |
+| `GET /v1/events/{eventId}` | 单事件详情读面（**v0.66** R-ENG §3——G-08 事件详情↔会话/运行互链）：归档直投单事件全字段+同 eventId 关联链（run/同 dedupKey 后续事件/involved 键解析）；404=不在归档；只读 GET 恒开，非 GET=405 |
+| `GET /v1/loop/current` | 当前/最近一轮自循环投影面（**v0.66** R-ENG §3）：wakes face 最近 LoopRequested 行直投只读聚合（不发明状态机）；face 缺席=503 |
+| `GET /v1/snapshot` | console 首屏聚合快照面（**v0.66** R-ENG §2）：14 键载荷（objects/events/tasks/runs/drafts/inbox/metrics/sessions/wakes/dispatches/deliveries/proposals/schemeKinds/generatedAt）关键聚合在位（G-02）；face 缺席字段=null 不冒充；只读 GET 恒开 |
+| `GET /v1/stream` | WebSocket 推送面（**v0.66** R-ENG §2）：连接即推 snapshot、变更推 RFC6902 patch（保守 diff 器）、30s ping；face 缺席=升级失败诚实词形 |
+| `GET /v1/sessions/{id}/context` | 会话注入上下文读面（context.md §4 本代诚实降级）：pack.degraded 恒 true、chunks=/v1/context/find 同查询 TopK 投影（**不冒充会话真实装配包**）；会话不在活性账=session:null；contextIdx 缺席=503；GET 恒开 |
+| `PUT /v1/sessions/{id}/context` | 会话注入上下文写面：写面门控同 `--allow-apply`（与 POST /v1/sessions/heartbeat 同口径）；覆盖存进程内存重启即失（诚实词形） |
+| `POST /v1/sessions/{id}/context/revert` | 会话注入上下文撤销面（恢复最近一次写前快照）：门控同 PUT；无快照=404 |
+| `GET /v1/code-audit/findings` | 代码审核只读投影面（**V-18** connectops-code-audit 快照读）：驱动未注册=503（诚实缺席不冒充）；零写面；只读 GET 恒开 |
 
 - 对象键 = `(kind, scope, name)`：scope 四层（builtin/global/系统/系统+实例）物化为目录前缀（layout.md），storage 路径由 scheme.yaml 各 kind 的 storage 模板解析。
 - 错误→状态码：kind 未注册或对象不存在 → 404；scope 与模板不相容/命名违规 → 400；docs 未配置 → 503。
@@ -111,6 +119,7 @@
 | `POST /v1/events` | 事件注入面（§2.3 v0.20 发布面首段，**写面门控**：未开启=405 与 apply 同口径）：`{type, involved?, level?, dedupKey?}` + 请求级主体（§2.1 同形 `subject`）→ `{id, type, dedupKey, level, source, involved}`——类型注册校验（Scheme.eventTypes 唯一权威，未注册=404）→ 发布权限域判定（动作=`publish` × 域=`events`，与 apply 写权限域分立，拒绝=403）→ level 缺省=注册表 defaultLevel 投影（越词=400）→ 总线发布（与引擎内部事件同管线：去重/派发/归档零旁路；载荷声明的 source 非 human 值=400——来源是服务侧判定的审计事实；回执 id 与留痕 eventId 同源） |
 | `POST /v1/drafts` | 落稿（upsert，同对象键覆盖=最新代改稿，`createdAt` 定格 `updatedAt` 更新）：`{kind,scope,name,content,fieldManager,reasonRef,baseResourceVersion}`；键不全/无主/空稿 → 400 |
 | `DELETE /v1/drafts/{kind}/{name}?scope=<scope>` | 弃稿；无稿 → 404。**v0.46 驳回落账**：弃稿成功 → `approval_log` rejected 行（rv=0——弃稿零文档面动作，判定仍落账；judged_by=请求主体头 `X-Core-Subject`，DELETE 无 body；幂等 404 无判定不落账）——审批屏「驳回」与编辑器「弃稿」同动作同账面（变更不采纳的判定在册可审计） |
+| `DELETE /v1/objects/{kind}/{name}?scope=<scope>` | 文档对象删除面（写面门控同 `POST /v1/apply`——`--allow-apply` 开启才可用）：幂等键语义（对象缺席=404 与 drafts 弃稿 404 分立）；落 `DocDeleted` 事件+apply_log 删除行（审计可回查）；成功 200 `{deleted:true, name, rv:0}` 词形 |
 | `POST /v1/apply` + `"fromDraft":true` | 稿→面落库：以草稿 content 为写者输入、草稿 `baseResourceVersion` 为乐观锁期望值，走与直写同一三步闸门（scheme/权限/存储——权限按**请求级主体**判定，同 §2.1 `subject` 语义；成功后**清稿**）；无稿 → 404 |
 
 - **门控**：POST/DELETE 草稿与 `fromDraft` apply 随写面开关 `--allow-apply`（缺省 405，与 §2.1 同一开关）；草稿 GET 属查询面恒开。开启写面须同时 `--docs`（fromDraft 恒有文档库可落）。
