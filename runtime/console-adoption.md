@@ -984,6 +984,26 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 
 **测试与 UI 拍（loop-80）**：`console-ux.test.ts` 新增 `L80-01/02/03` 三锚，**`npm test` 163 pass 0 fail**；UI 拍（`e80-ui.mjs` 零写操作、**8/8 零 pageerror**）：①`console-obj/tasks` 新能力在册；②工作台 `#/obj/Agent/global/core-headless` 上下文片活体接入 `/v1/trace` + `/v1/context/find`（5 条相关对象）+ 标签「补标」按钮；③相关对象深链可点互跳 `#/obj/Group/global/core-operators`；④`#/report` 当前循环卡活体（`active` 态含最近 `LoopRequested` 唤醒 + 「会话型任务（无 workflow run）」显式标注 + 深链，零 `[object Object]`）；⑤编辑器历史 tab（`Task/self-recursive-core/probe-smoke-1`）呈现 `doc_history` 4 条快照并点 `r5` diff `r4`（`source=sqlite-doc-history` 标注「sqlite 逐次正文账」）；⑥点 `r1`（`rv=1` 修复）成功现读首版全文；⑦`Agent/global/core-headless` 点 `r13`（`r12` 404）优雅回退展示当前版全文与诚实缺席说明；⑧全程零 `pageerror`。
 
+### 1.54 Workflow 页与审批页联动深化 + supplements 派单载荷接线 + 提交字段单点即修（loop-81）
+
+> 对应 loop-80 队列 1①②③（`console-ui.md` §16.1 C / E / F + `proposal.md` §4.6 对照卡余量①②）+ 随行缺陷即修（`precheckFields` 悬空引用）。纯 `plugin/client` 增量，零 Go 零 cored 改动。
+
+**Workflow 详情页环绕循环卡与运行抽屉深化（`console-tasks.js` + `console-app.js`，`console-ui.md` §16.1 C/E）**：
+1. **`loopCardFor` 与 `wakeRunWord` 抽提**：`console-tasks.js` 抽提纯函数 `wakeRunWord(w)`（按 `dedupKey` 区分「loop 会话型任务」与「事件对账 run」）与 `loopCardFor(wakesBody, sessionsBody, opts)`（支持调用方指定锚属性 `data-wf-loop` vs `data-report-loop` 并在非报告页显式叠加「loop 唤醒≠该 workflow run」关系说明，报告页零词形污染）。
+2. **`#/wf/:name` 页头挂载 + 运行抽屉**：`wfLoopCard()` 在存在 `LoopRequested` 唤醒时于工作流页头挂载 `data-wf-loop` 环绕循环卡（零新读、零前端自建状态，复用 `LIVE.state.wakes` + `LIVE.state.sessions`）；运行抽屉头部追加 `data-wf-run-kind="reconcile"`（「事件对账 run」）与 `loop-relation` 关系徽；`SessionLog` 空态由死胡同改为 `sessLogSlotHtml()`——活性面有活跃会话时直接给 `#/session/:id` 真实深链（最多 3 条），无活跃会话时诚实说明原因，不假画全文。
+
+**审批页来源/背景深链与已决账备注列（`console-app.js`，`console-ui.md` §16.1 F + 对照卡余量②）**：
+1. **待审项来源行与背景深链**：新增 `approvalSourceLine(d)`（草稿卡片头部按真实字段呈现优先级/提出人/提案详情深链/非 console 来源 `fieldManager`，无字段不猜）与 `approvalBgLink(obj)`（覆盖 `Proposal`/`Task`/`Workflow` 三类真实详情页深链 `data-ap-bg`，同时接入无稿 `ApprovalNeeded` 卡片与 `approval_log` 已决表）。
+2. **已决账 `approval_log` 备注列与取舍标注**：表头新增「备注」列，`approvalLogNote(r)` 纯翻译账面既有字段（`fieldManager`/`reasonRef`/`obj`），**实测即修**：`console:approve`/`console:reject` 按 `obj` 前缀区分「提案判定（批准/驳回）」与非提案对象的「审批落库（批准/驳回）」，不再把 `ConnectorOps` 草稿批准误标为「提案判定」；对冲突取舍文本如实标注「未在册（对照摘要=辅助判定不落本账——`proposal.md` §4.6）」，零冒充。
+
+**对照卡余量① `supplements` 派单载荷接线与 `precheckFields` 悬空引用即修（`console-app.js`）**：
+1. **`supplements` → `docsUpdate`**：点击「一键随行」（`ACTIONS['ctx-supplement-add']`）将补充文档记入 `window.__CC.ctx.taken` 并在预览 yaml 同步补行；提交面 `prop-submit` 将 `taken` 清单单出为 `f.docsUpdate`，由 `propYaml()` 写入提案稿 `spec.docsUpdate`（纳入 `known` 白名单，不走杂散字段通路），批准翻转 `status` 时原稿携带随派单载荷下发（`proposal.md` §4.6）。
+2. **缺陷即修（`precheckFields` 悬空引用）**：核对提案提交通路时发现 `prop-submit` 与 `ctxRunCheck` 两处仍调用已删函数 `precheckFields()`；即修收口为单点函数 `intakeFieldsOf(st)`（以 `st.fields` 为单一真相，数组/文本验收统一归一为换行串），并补回归锚 `L81-05` 锁死防回潮。
+
+**结构段完成度片观察（队列 2）**：活体实探 `/v1/objects/DocType` 仍为 `count=0`，继续诚实等待 `DocType` 对象入册后再接入真数据。
+
+**测试与 UI 拍（loop-81）**：`console-ux.test.ts` 新增 `L81-01..05` 五锚，**`npm test` 168 pass 0 fail**；Playwright 活体 UI 拍（`e81-ui.mjs` 零写操作、**8/8 零 pageerror**）：①`loopCardFor`/`wakeRunWord` 在册且词形分立；②`#/wf/core-workflow` 页头环绕循环卡（`active` 态 + 关系词形 + 会话型任务标注）；③运行抽屉「事件对账 run」徽 + 3 条活跃会话深链；④`#/approvals` 审批页 25 处 `[data-ap-bg]` 背景深链 + 已决表 20 行含「备注」列与取舍说明 + 非提案行如实标「审批落库（批准）」；⑤`ctx.taken` 随行清单通路在册；⑥提案屏锚与 `docsUpdate` 机械锚双覆盖；⑦`#/report` 报告版循环卡零回潮污染；⑧全程零 `pageerror`。
+
 ## 4. 落地顺序（一轮一增量，映射 loop 起点）
 
 
@@ -1034,6 +1054,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 通用对象工作台 §1.51 | R-UX-7+console-ui.md §14.5（loop-78）：console-obj.js 新模块（六片同一套——tagType 分组/规则确定性命中四路来源显式/结构段完成度/ctx 摘要/kinds 载荷声明投影 kindRegYaml/六片渲染纯函数）+screenObjWorkbench 屏本体（#/obj/:kind/:scope/:name+kind 别名两段+裸词缺省对象三路由；左清单 tag 联动/中六片/右对话栏——对话=一等片深链带对象引用）+loader 注入（规则文档族全文现读+metadatainfo tagType 词表，120s 缓存失败降级）+首屏取代 Welcome（§14.0：entry 面板 route=#/obj+空段/裸词重定向+侧栏首位）+css 布局块零新色值【实现拓扑与细化验收=§1.51；纯 plugin/client 零 Go 零 cored——R-UX-6 报告首屏（#/v1/attention）仍 405 顺延，工作台=§14.5 内不依赖 attention 的先行面】 | npm 155 pass（+L78-01/L78-02+L36-03 锚随行）∧UI 拍 7/7 零 pageerror（六片齐全/规则 8 份现读命中 6/规则原文 designdoc 深链可达/首屏 #/obj→缺省对象活体）∧mirror files=18 findings=0（双 sha 30d9c496——scheme 未提交态沿用）∧P-01 六仓 ✓∧P-02 第十拍 CLEAN-OK |
 | 任务中心与关注报告 §1.52 | R-UX-6+console-ui.md §16/§14+task-scheduler.md §4（loop-79）：插件 mountTaskSpawnBridge（POST /task/spawn 固定命令+stdin 喂 taskPath+单飞锁）+console-tasks.js 模块（groupTasks 五组人话词形+statusOf/specOf 列表扁平行与详情嵌套形双形态归一+runningCount+sessionChips+evidenceRoute+windowLabel `{from,to}`→`24h` 消解 `[object Object]`+loader 注入）+app 三屏（#/tasks 任务中心·#/task/:id 任务详情·#/report 关注报告）+工作台 objOpsFor 补 Session/Task 操作片深链（loop-78 队列 3①）+entry 侧栏 11 入口【实现拓扑与细化验收=§1.52；三 cored 换代 3fa671f0 后 /v1/attention 与 /v1/tasks 双解锁活体】 | npm 160 pass（+L79-01/L79-02+taskspawn 3 锚+L36-02 随行）∧UI 拍 7/7 零 pageerror（#/report 活体 5 卡+窗口 24h 零 `[object Object]`+证据深链可点 / #/tasks 扁平行归一运行中 1+正在做组 / #/task/:id ≤2 次点击三行+双卡 / 工作台 Task 操作片深链跳达）∧mirror files=18 findings=0（双 sha b1d4034f 同步）∧P-01 六仓 ✓∧P-02 第十一拍 CLEAN-OK |
 | 工作台 trace/上下文+sqlite 历史+循环卡 §1.53 | R-UX-7 深化+R-DOC-9+R-DOC-7+console-ui.md §16.1 C（loop-80）：console-obj.js 接入 `/v1/trace/{kind}/{scope}/{name}`（双向 `implements/implemented_by/verified_by`+`stale` 待对齐徽+可点互跳）与 `/v1/context/find`（Top5 相关对象）+标签「补标」入口+工作台编辑判据 `!kindReg.builtin`→`kindReg.storage` 活体缺陷即修；编辑器历史 tab 接入 `/v1/doc-history/{kind}/{name}` 双轨呈现+修复 `hist-diff` 误跳过 `rv=1`+`revSourceLabel` 区分 `sqlite-doc-history` 与 `git`+`prev` 404 优雅回退；console-tasks.js 新增 `loopCard()`（`#/report` 当前循环卡四态+「会话型任务（无 workflow run）」显式标注）【实现拓扑与细化验收=§1.53；纯 plugin/client 零 Go 零 cored】 | npm 163 pass（+L80-01/02/03）∧UI 拍 8/8 零 pageerror（工作台 `/v1/trace`+`/v1/context/find` 5 条+互跳+补标 / `#/report` 循环卡 active / 历史 tab `doc_history`+r5 diff r4+r1 起点修复+Agent r13 prev 404 回退）∧P-03 52↔52=0∧mirror files=18 findings=0（双 sha b1d4034f）∧P-01 六仓 ✓∧P-02 第十二拍 CLEAN-OK |
+| Workflow/审批联动+supplements 载荷+引用即修 §1.54 | console-ui.md §16.1 C/E/F + proposal.md §4.6 对照卡余量①②（loop-81）：console-tasks.js 抽提 `loopCardFor`/`wakeRunWord`；`#/wf/:name` 页头挂载 `wfLoopCard` 环绕循环卡（显式标注「loop 唤醒≠该 workflow run」与「会话型任务（无 workflow run）」）+运行抽屉追加「事件对账 run」型徽与 `SessionLog` 空态活跃会话深链（`sessLogSlotHtml`）；`#/approvals` 新增待审项来源行 `approvalSourceLine` + `Proposal/Task/Workflow` 背景深链 `approvalBgLink` + 已决账 `approval_log` 备注列 `approvalLogNote`（区分提案判定与非提案审批落库，标注冲突取舍未在册）；`supplements` 随行清单经 `propYaml` 写入 `spec.docsUpdate` 随派单载荷下发；即修 `precheckFields` 悬空引用收口为 `intakeFieldsOf`【实现拓扑与细化验收=§1.54；纯 plugin/client 零 Go 零 cored】 | npm 168 pass（+L81-01..05）∧UI 拍 8/8 零 pageerror（`#/wf/core-workflow` 页头循环卡 active+关系词形 / 运行抽屉 run 型徽+3 条活跃会话深链 / `#/approvals` 25 处背景深链+已决表 20 行备注列+非提案审批落库区分 / `ctx.taken` 随行清单 / `#/report` 循环卡零污染）∧P-03 52↔52=0∧mirror files=18 findings=0（双 sha b1d4034f）∧P-01 六仓 ✓∧P-02 第十三拍 CLEAN-OK |
 ## 5. 执行红线（对 loop 的约束）
 
 1. **不改文档面语义**：console 是观测/操作面，一切写操作（启停/编辑/批准/重跑）=Apply 走既有写路径；发现设计不合理→改文档先于改代码（acceptance 纪律）。
