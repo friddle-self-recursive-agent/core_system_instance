@@ -744,6 +744,8 @@ corectl loop
 
 失败语义：cored 未开桥=纯投影零出站；宿主未配命令=503；已有 loop=200 `already-running` + pending 持久化（循环退出后自动拉起，不丢事件）；宿主不可达/拉起失败=stderr 留痕，事件仍受理。
 
+**会话结束**：loop 会话不得自行 `setsid` 点火下一轮；结束前用 `corectl loop` 提交（`ignite-loop.sh` 护栏 6），本轮仍在收尾时走 pending，退出后自动拉起。循环每一轮都由事件链驱动。
+
 ### 15.3 判据（机读）
 
 - `corectl loop` 后 `GET /v1/events?type=LoopRequested` 命中，且 `GET /v1/agents/wakes` 出现 `agent=root,type=LoopRequested`；
