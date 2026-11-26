@@ -127,10 +127,12 @@ Workflow 引擎 = core 内的一段**确定性代码**（状态机 + 触发器 +
   ↓ Execute   ① developer-system：onedev pull 修复分支/新代码
               ② 本地 build + test（红线：lint/test 全绿才产物）
               ③ 产物 digest 入库
-  ↓ Verify    探针复测（错误率归零？新功能验收点？）
+  ↓ Verify    探针复测 + 代码规则审核（connectops-code-audit）+ agent 规则验证
   ↓ Deploy    deploy-system 按 DeployDesign.envs 升序发布（preview→prod，prod 人批）
   ↓ Report    Status 追平 + DriftReport/SessionLog 归档 + Event(DriftFixed)
 ```
+
+**Verify=硬 gate（R-TYPE-3 / concepts/rule-verification.md）**：`mode: code` 规则经 scheme `runtime.ruleChecks` 由 `connectops-code-audit` 审核（findings.ruleId/file/line/severity/evidence）；`mode: agent` 规则把规则原文（ref+hash）+diff 丢给指定/服务 agent 验证（verdict+证据）。`error` finding / `fail` verdict 阻断 Deploy；`warn` 进 Report；checker 未注册/未实现/超时、agent 不可用/`unverified`=显式失败/降级，不得默认通过。
 
 **override 默认验收报告标准**=acceptance.md §8：里程碑标题 `[<scope>] <里程碑>（loop-<seq>）` + 机械证据指针 + 页面截图（内置 Skill acceptance-screenshot/chromium-headless 由 agent 在验收节点调用）。
 
