@@ -37,7 +37,7 @@
 
 | level | 含义 | 典型文档 | 是否常驻（pin） |
 |---|---|---|---|
-| **L0 宪法** | 不可协商的规则与类型总表 | `rule.md`、`core/scheme.yaml`、`concepts/README.md` | 是（pin 权重最高） |
+| **L0 宪法** | 不可协商的规则与类型总表 | `core_design rule/`、`core/scheme.yaml`、`concepts/README.md` | 是（pin 权重最高） |
 | **L1 概念** | 终态概念文档（定义/边界/规则） | `concepts/*.md` | 是（按 module 命中） |
 | **L2 运行时设计** | 实现拓扑与机读契约 | `runtime/*.md` | 否（按需） |
 | **L3 证据** | 验收报告、运行记录（gitignore，永不入公开仓） | `acceptance/loop-*.md` | 否（默认不入索引；冲突排查时按需） |
@@ -60,7 +60,7 @@
 | `runtime/console-adoption.md` | **129KB** | **必拆**：按能力族拆 4 篇（`console-adoption-core` / `-capabilities` / `-workspaces` / `-locked`），原文件保留为目录页（索引 + 链接） |
 | `runtime/cored-bridge.md` | **98KB** | **必拆**：按面族拆（`cored-bridge-read` / `-write` / `-apply` / `-events` / `-intake` / `-context`），目录页保留 |
 | `concepts/workflow.md` | 36KB | 可拆（执行模型 / 相位机 / 触发与派发 / 证据），拆前先确认引用面 |
-| `runtime/console-ui.md` | 36KB | 可拆（§11 整改清单独立成册） |
+| `acceptance/console/console-ui.md` | 36KB | 可拆（§11 整改清单独立成册） |
 | 其余 130+ 篇 | ≤24KB | 不拆，按章节 chunk 化即可 |
 
 拆分原则：**拆分只切文件、不切语义**——每篇自带"上级目录页回链"，概念终态不变；拆分后旧锚点（`path#§n`）必须保留重定向表（`docs/redirects.yaml`），否则既有引用全断。

@@ -1,4 +1,9 @@
-# 个人决策台账（core_design rule.md R-PUB-2）：永不入库
+# 个人决策台账（core_design rule/rule_pub.md R-PUB-2）：永不入库
 friddle_decision.md
-# 验收报告与 loop 版本记录（运行时临时文档，R-PUB-3）：永不入库
-acceptance/
+# 验收报告与 loop 版本记录（运行时临时文档，R-PUB-3）：acceptance 根忽略
+# 设计与验收基线文档走 acceptance/<主题>/ 入库（R-PUB-3 分层例外）
+acceptance/*
+!acceptance/README.md
+!acceptance/README.md.metadatainfo
+!acceptance/console/
+!acceptance/console/**

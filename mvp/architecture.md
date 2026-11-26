@@ -86,7 +86,7 @@ timer(resync) 或 Apply 触发
 
 ## 5. LLM
 
-MVP 决策：generator/plan **直连 provider 的 openai-completions HTTP**（任一可用 LLM provider 的 flash 档；具体 baseURL/模型/env 变量名等个人选型记入部署侧决策文件，不入公开仓——rule.md R-PUB），不耦合 dsh-llm 的 session 消息 API——那是 rc 期接口，MVP 不押注；宿主 profile 里 dsh-base 的 llm/agent/session 栈照常装载，供 dsh 自身 Web 控制台使用。key 由 systemd `EnvironmentFile=<部署根目录>/dsh-core-agent/.env` 注入（`<PROVIDER>_API_KEY`，0600，永不入库）。LLM 消费点只有两个：generator（Goal 提案）与 Plan（PlanDoc 步骤）。两者都要求 JSON/受控格式输出：不合法 → 丢弃重试 ≤2 → Escalated。模型选型：任一可用 provider 的 flash 档即可，机制不假设模型能力（P8）。
+MVP 决策：generator/plan **直连 provider 的 openai-completions HTTP**（任一可用 LLM provider 的 flash 档；具体 baseURL/模型/env 变量名等个人选型记入部署侧决策文件，不入公开仓——core_design rule/rule_pub.md R-PUB），不耦合 dsh-llm 的 session 消息 API——那是 rc 期接口，MVP 不押注；宿主 profile 里 dsh-base 的 llm/agent/session 栈照常装载，供 dsh 自身 Web 控制台使用。key 由 systemd `EnvironmentFile=<部署根目录>/dsh-core-agent/.env` 注入（`<PROVIDER>_API_KEY`，0600，永不入库）。LLM 消费点只有两个：generator（Goal 提案）与 Plan（PlanDoc 步骤）。两者都要求 JSON/受控格式输出：不合法 → 丢弃重试 ≤2 → Escalated。模型选型：任一可用 provider 的 flash 档即可，机制不假设模型能力（P8）。
 
 ## 6. Console API
 

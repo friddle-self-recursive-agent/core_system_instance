@@ -1,6 +1,6 @@
 # Runtime — 验收与验证流程（acceptance）
 
-> 概念依据：Goal.acceptance 必须可验证（doctypes/README.md）、Verify 相位（concepts/workflow.md）、执行留痕（ops-log.md）。本文回答三个问题：**一次 workflow loop 怎么验收、验收报告放哪、系统自身的收敛怎么判定**。规则来源：core_design rule.md R-PUB-3（运行时验收产物不入公开仓）。
+> 概念依据：Goal.acceptance 必须可验证（doctypes/README.md）、Verify 相位（concepts/workflow.md）、执行留痕（ops-log.md）。本文回答三个问题：**一次 workflow loop 怎么验收、验收报告放哪、系统自身的收敛怎么判定**。规则来源：core_design rule/rule_pub.md R-PUB-3（运行时验收产物不入公开仓）。
 
 ## 1. 验收在闭环里的位置
 
@@ -23,6 +23,15 @@ dev-delivery loop：… → Execute（build/test/lint）→ Verify → Report
 | 内容 | 触发源、相位轨迹、文档 commit（core_design/core_system_instance）、代码 commit（workservice/plugin）、构建产物 digest、探针结果表、偏差清单、下一轮建议 |
 | 去向 | `acceptance/loop-<seq>.md`（**运行时临时文档，gitignore，永不提交**，R-PUB-3）+ ops DB 相位流水 |
 | 语义 | 版本记录是对账锚点：按版本可复查"这轮改了什么、验了什么、过没过" |
+
+**目录分层（2026-11-26 用户裁决，R-PUB-3 分层例外）**：
+
+| 路径 | 内容 | 入库 |
+|---|---|---|
+| `acceptance/loop-<seq>.md` 等根文件 | 运行时验收报告 / 版本记录 | 否（.gitignore） |
+| `acceptance/<主题>/` | 设计 / 验收基线文档（如 `console/console-ui.md`） | 是（带 `.metadatainfo` 侧车，R-DOC-6） |
+
+主题子目录按领域分（console/、agent/、workflow/…），运行时报告不混入主题目录；影响设计的结论走文档更新提交（终态制）。
 
 ## 3. 收敛判定（系统自身验收）
 

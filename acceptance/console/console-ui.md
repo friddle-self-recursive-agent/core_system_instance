@@ -88,7 +88,7 @@ Global
         │ 点击"对话"
         ▼
   在宿主内 ctx.agents.create({parentAgent, setup: 该 service 的 tools/docs})
-  → followup 开聊；session 列表可见、可续聊（机制见 runtime/cross-agent.md）
+  → followup 开聊；session 列表可见、可续聊（机制见 ../../runtime/cross-agent.md）
 ```
 
 **实现判断（R2.3 的"能不能用插件做"）**：能——服务关注区是渲染层聚合（数据全部来自 Core 的 Scheme 索引 + Status），对话入口走 dsh-agent 的 `ctx.agents` 原生父子机制（cross-agent.md §3）。**不需要 fork dsh**；fork 仅当 dsh 宿主本身挡死定制时启动（当前无此情况）。
@@ -457,13 +457,13 @@ spec:
 |---|---|---|
 | E1 | **锁定模式**：只保留需求内入口——经 profile patch 按行 id 禁用（如 `plugin-manager`/`workspace-controller`/`schedule`/`plugin-inventory`），禁用项 UI 不渲染、对应 API 拒绝 | 侧栏无"添加插件/新建 Workspace/新建自动化任务"入口；API 调用 403/404 |
 | E2 | CLI 侧锁定：profile 目录 root 属主/只读，普通用户不能 `dsh plugin add` | 非 root 执行被拒 |
-| E3 | fork 兜底：需要"改行为"而非"隐藏入口"时 fork dsh（MIT，repo=deepseek-ai/deepseek-harness，默认分支 master），补丁面最小化+定期同步上游；详见 runtime/dsh-fork.md | fork 触发条件满足才动 |
+| E3 | fork 兜底：需要"改行为"而非"隐藏入口"时 fork dsh（MIT，repo=deepseek-ai/deepseek-harness，默认分支 master），补丁面最小化+定期同步上游；详见 ../../runtime/dsh-fork.md | fork 触发条件满足才动 |
 
 > **2026-11-26 更新**：A1/A3 的落地页结论由 §14 取代（首屏=关注报告×对话，`#/welcome`/`#/overview` 重定向 `#/report`）；其余条仍生效。
 
 ## 12. 需求提案对话式录入（Proposal Chat，2026-11-24 用户裁决）
 
-> 用户裁决：现有表单「跟傻子一样」——改成对话录入。**通用规则见 core_design/rule.md R-UX-1（所有与人交互默认对话）**；本节是其在提案录入面的落地形态。
+> 用户裁决：现有表单「跟傻子一样」——改成对话录入。**通用规则见 core_design/core_design rule/rule_ux.md R-UX-1（所有与人交互默认对话）**；本节是其在提案录入面的落地形态。
 
 ### 交互
 
@@ -525,7 +525,7 @@ spec:
 - 「直接填表」路径仍可用（回归不掉）；UI 截图（对话态/预览态/对照卡）入报告。
 
 
-## 13. 界面文案与内容展示规则（用户视角，2026-11-26 用户裁决；rule.md R-UX-3/4/5 落地）
+## 13. 界面文案与内容展示规则（用户视角，2026-11-26 用户裁决；core_design rule/rule_ux.md R-UX-3/4/5 落地）
 
 > 用户原话：「什么事件面。面这个字就很尴尬。去掉面。概念还是概念。但是界面设计按人来设计」「默认优先用户看的是 markdown（渲染后的），细节详细的才是 scheme。scheme 展示也要做的好看。基本上界面上一定要考虑用户的理解」「系统树。界面展示是系统」。
 
@@ -553,7 +553,7 @@ spec:
 - 文档页签默认渲染视图，scheme/原文切换可用（截图）。
 - 全站视觉仍 dsh 原生 token（§11 基线不回退，R-UX-5）。
 
-## 14. 关注报告主界面与对象工作台（2026-11-26 用户裁决；rule.md R-UX-6/7 落地）
+## 14. 关注报告主界面与对象工作台（2026-11-26 用户裁决；core_design rule/rule_ux.md R-UX-6/7 落地）
 
 > 用户原话：「大部分页面设计就是概念的 CRUD 直接翻译。非常难以操作以及理解」「可以用 LLM 跑一个完全的报告出来。哪些值得关注哪些不值得关注。然后默认直接报告旁边可以直接开对话 session 这是主要界面」「你作为业务人员视角你关注是什么。一眼看到的是状态。是异常。是重要系统提案。不是数字的堆叠」「整个 session 和文档交互界面做一个通用界面【设计 tagtagtyperule。ctx.操作。有 scheme 预览就 scheme 预览】其中交互也是能在交互中用 markdown 画出相应重点」「其中 workflow 也是这样的」。
 >

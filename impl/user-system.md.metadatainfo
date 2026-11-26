@@ -1,0 +1,5 @@
+# 元数据侧车（R-DOC-6）：正文以同名 .md 为准；导出/GitHub 镜像保留
+tags:
+  - {tag: user-system, tag_type: mech}
+  - {tag: impl, tag_type: doc}
+importance: 60

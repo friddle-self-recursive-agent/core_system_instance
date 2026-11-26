@@ -1,6 +1,6 @@
 # Runtime 3：cored 只读面与 plugin↔cored 桥（cored-bridge）
 
-> 落点依据：impl/self-recursive-core.md「cored 保留为冷启动入口与调试用途」+ dsh-plugin.md「core plugin 承接控制面」。本文定义 cored 进程的最小只读查询面与 dsh plugin 拉起 cored 的桥接契约——两者都是**机制描述**，不含部署锚点（真实路径经环境/配置注入，rule.md R-PUB-1/2）。代码落点：workservice 仓 `cmd/cored` + `internal/{scheme,apiserver}`；plugin 仓 `plugin/src/index.ts`。
+> 落点依据：impl/self-recursive-core.md「cored 保留为冷启动入口与调试用途」+ dsh-plugin.md「core plugin 承接控制面」。本文定义 cored 进程的最小只读查询面与 dsh plugin 拉起 cored 的桥接契约——两者都是**机制描述**，不含部署锚点（真实路径经环境/配置注入，core_design rule/rule_pub.md R-PUB-1/2）。代码落点：workservice 仓 `cmd/cored` + `internal/{scheme,apiserver}`；plugin 仓 `plugin/src/index.ts`。
 
 ## 1. cored 进程契约
 
@@ -180,7 +180,7 @@
 
 ### 2.5 对话式录入与 scheme 驱动控件面（v0.53 能力 D + R-UX-1/R-UX-2）
 
-用户裁决（2026-11-24：concepts/proposal.md §4.5、console-ui.md §12、core_design/rule.md R-UX-1/R-UX-2）：
+用户裁决（2026-11-24：concepts/proposal.md §4.5、console-ui.md §12、core_design/core_design rule/rule_ux.md R-UX-1/R-UX-2）：
 1. **R-UX-2 scheme 驱动控件投影**：`GET /v1/scheme/kinds` 与 `GET /v1/scheme/kinds/{kind}` 返回的每个 `Kind` 附带机读字段控件描述符 `widgets: []FieldDescriptor`（从 `Kind.Spec`/`Kind.Fields` 实时派生，单一真相零硬编码）。控件映射：`a|b|c` 枚举→`selector`（下拉/分段，禁手输）；单行字符串→`input`；长文本→`textarea`；数组 `[]X`→`list`（逐项增删，行内递归 `elem`）；`ref`→`ref`（对象选择器，按 kind/scope 枚举显示 `name + r<rv>`）；`bool`→`switch`；`map`→`map`（键值编辑器）；`int|number`→`number`（带 `min/max`）；嵌套 `{...}`→`object`（递归 `fields`）。当 `Scheme/builtin/default`（对象 apply）或 `core_design/core/scheme.yaml`（设计文档 apply）经准入与 R-PUB-1 lint 校验落库后，`cored` 内存 `Scheme` 原子热刷新（`sch.Replace`），UI 重新读取即自动反映新字段/新枚举/新类型。
 2. **R-UX-1 通用对话录入与准入预检面（Proposal 为首个接入面，全部注册 kind 可复用）**：
    - 固定六步顺序：①自由描述+自动上下文（当前主体/系统 scope/在册对象预填）→ ②自动补充（`proposer`=当前主体、`priority` 缺省 `low`、`landing.target` 缺省 `doc`、scheme `(=...)` 缺省值）→ ③缺少询问（**只问缺失/不明确/冲突字段**，不重复盘问已推断项；每问必带默认值与示例，支持跳过采用默认；支持一段话自由描述多字段抽取与字段卡双向同步）→ ④提交节点生成 spec 对象（`rv=0`）+ 三重 dry-run（R-PUB-1 lint 含 secret 引用式前缀检查 + `scheme.ValidateDoc` spec 准入与 `ref` 存在性校验 + `apply.Engine` 权限准入预览与审批分流预示），**失败精确归因定位到具体字段 `fieldErrors:[{field, rule, message}]`** → ⑤确认 diff 后系统自动补全缺省字段（`proposer`/`status=submitted`/审计时间戳与会话版本 `reasonRef=intake:<sessionId>:v<genVersion>`），经既有草稿→Apply 唯一写路径入库（高危自产 `ApprovalNeeded`）→ ⑥降级表单（LLM 不可用或用户显式切换「直接填表」时回退 scheme 驱动表单，与对话共享同一字段态、产同一对象、无双源）。

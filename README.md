@@ -15,13 +15,14 @@
 | systems/builtin/user-system | [impl/user-system.md](impl/user-system.md)（接入 LDAP 认证+目录同步 / 飞书账号映射，A59） | —（设计，未开工） |
 | （挂 deploy-system：部署渠道矩阵） | [impl/deploy-system.md](impl/deploy-system.md) §5-6（kube / ssh-host / onedev-ci 三渠道，每业务 DeployDesign 声明） | —（设计，未开工） |
 
-## 运行时设计（R1.2 / R1.4 / R1.5）
+## 运行时设计与验收基线（R1.2 / R1.4 / R1.5）
 
 | 文档 | 内容 |
 |---|---|
+| [acceptance/README.md](acceptance/README.md) | 验收目录分层：根=运行时报告（不入库）；`<主题>/`=设计/验收基线（入库） |
 | [runtime/execution-model.md](runtime/execution-model.md) | 四层执行：用户意图→Agent→Scheme→代码；基础调度可配置 |
 | [runtime/dsh-plugin.md](runtime/dsh-plugin.md) | dsh 基础 agent、root 直控通道、Plugin 首批四件 |
-| [runtime/console-ui.md](runtime/console-ui.md) | 总控界面：资源视角第一层 / 信息流视角第二层 / 服务关注区 + v2 Web 界面定稿（proto 交互契约） |
+| [acceptance/console/console-ui.md](acceptance/console/console-ui.md) | 总控界面设计与验收基线：资源视角第一层 / 信息流视角第二层 / 服务关注区 + v2 Web 界面定稿 + §14 关注报告×工作台 |
 | [runtime/console-adoption.md](runtime/console-adoption.md) | console v2 落地盘点：线上实测现状 / 环境阻塞（trusted-host·代理超时·token 轮换）/ 逐页功能与 UI 建议 / E0–E7 落地顺序 |
 | [runtime/agent-session.md](runtime/agent-session.md) | Agent Plan/Session 记录制（PlanDoc/SessionLog）+ AUTOLEVEL 默认（R2） |
 | [runtime/ops-log.md](runtime/ops-log.md) | git 管文档 + DB 管 ops 历史操作日志（双轨与对账） |
