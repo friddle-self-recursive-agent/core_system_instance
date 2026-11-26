@@ -246,7 +246,7 @@ MVP 落点：mvp/console 只实现服务关注区的单 service 行 + /api/statu
 |---|---|
 | LLM | 提案流：LLM 只产**草稿提案**——split diff 卡片，每张 [加入草稿]/[丢弃]；**机制上 LLM 无 Apply 权**，Apply 按钮不在它的通路上 |
 | 草稿 | 当前草稿累积 diff（手动编辑+已采纳提案同一通道）；**吸底大按钮「Apply（N 处变更）」** |
-| 历史 | Revision 流水（git log+ops DB apply_log 双轨），任一 rev 可开只读视图 |
+| 历史 | Revision 流水（ops DB apply_log 账本 + 默认 sqlite 后端下 rev-content 503：正文 diff 标注「逐次正文历史待补」，只显示账本行；**不得用周期 git 快照冒充逐次历史**）；git 兼容后端仍可 git log+rev-content 双轨 |
 | 元数据 | scope/kind/labels/ownerRefs/refs/fieldManager 历史 |
 
 Apply 流（确认弹窗）：
