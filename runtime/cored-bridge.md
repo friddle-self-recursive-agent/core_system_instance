@@ -22,7 +22,7 @@
 
 ## 2. 只读查询面（HTTP，全部 GET）
 
-> **清单完整性对账（loop-69 机械复核）**：本表行集 ↔ apiserver 代码路由集（HandleFunc 注册 43 条）双向差集=0——零缺行零多行（「读面扩展轮随行补记词形」范式当轮不触发；下轮读面扩展时随行补记）。rev-content 行=loop-68 补记（词形族全量+快照语义+对象删除后历史快照恒可达注记）。
+> **清单完整性对账（loop-70 机械复核——解析器范式升格）**：本表行集改由机械解析器直测（§2 表格行首列端点词形+剥查询后缀）↔ apiserver 代码路由集（HandleFunc 注册字面）双向差集=0——43↔43 零缺行零多行。loop-69 复核=代码↔硬编码转录清单 43↔43（转录面当时同构）；loop-70 文档侧行集实测出缺行 `GET /v1/proposals/{name}`（详情面词形旧只在主行载荷列内联，与 objects 单对象独立行范式不一致）=当轮补记独立行。「读面扩展轮随行补记词形」范式维持；rev-content 行=loop-68 补记（词形族全量+快照语义+对象删除后历史快照恒可达注记）。
 
 | 端点 | 载荷 |
 |---|---|
@@ -39,6 +39,7 @@
 | `GET /v1/rev-content/{kind}/{name}` | 历史 rv 正文快照读面（**v0.63** rev-content diff 面——console-adoption.md §1.40，编辑器历史 tab「点行 diff 上一版」数据面）：数据源=git 后端裸库考古（`git log -- <对象文件>` 文件限定候选∪手编 docsRoot 通道提交；**快照语义=「最新携带该 rv 反写行的提交」时点正文**——blob 元数据 `resourceVersion: N` 反写行=唯一 rv 判据，提交消息不含 rv 防消息词形漂移错配；正文逐字节含文末换行=gitRaw 未修剪 stdout 通路）。`?scope=<scope>&rv=<n>`：200 快照词形 `{kind, name, scope, rv, content, source:"git-backend"}`；rv 缺席/非正整数=400；快照缺席（noop 零提交/篡改零 rv）=404 `ErrRevNotFound` 分立词形（与对象现势缺席 ErrNotFound 分立——审计不冒充）；对象现势缺席=404；键不可解析=400；face 缺席=503 防御面（sqlite 后端诚实降级）；旧构建 405=代际判别器。**只读纯考古零写路径**（git show 读历史 blob，零副作用）；对象删除后历史 rv 快照恒可达=快照语义的延伸（历史不可变——git 权威在正文），现势面缺席判定走 objects 面（404 与快照 200 分立不互混）；只读 GET 恒开，非 GET=405 |
 | `GET /v1/approvals` | 审批判定账面查询面（v0.46 审批独立账——console-adoption.md §1.17，console-ui.md 屏幕 10 已决账面区块数据面）：数据源=ops DB `approval_log`（审批判定独立账，ops-log.md §2 v0.46 注记——apply_log 承落库流水，本账承"谁在何时对哪条提案做了什么判定"；批准=console:approve fromDraft 非 dry-run apply 成功落 granted 行（rv=落库后 rv，noop 幂等重入照落 rv=面上现值）；驳回=DELETE 弃稿成功落 rejected 行（rv=0——弃稿零文档面动作仍落账；幂等 404 无判定不落账）；dry-run 预检/非 fromDraft 直接落库不落账）。`?decision=<granted\|rejected>&obj=<kind/scope/name>&limit=<n>`：decision/obj 精确过滤+rv 降序+limit 收敛（≤500 同口径）→ `{count, approvals:[{ts, approvalId, obj, decision, judgedBy, fieldManager, rv, reasonRef}]}`；`ApprovalLogFace` 可变口面（写钩子+查询读面，opslog.SQLiteStore 满足）；face 缺席=503 防御面（装配层随 ops DB 恒注入；账面非权威——落账失败不翻转写路径结果）；旧代 405=代际判别器。只读 GET 恒开，非 GET=405 |
 | `GET /v1/proposals` | 需求提案读面（**v0.51** 能力 B——console-adoption.md §1.23，proposal.md 一等对象）：数据源=文档库 Proposal 对象（跨 scope 枚举，零缓存现读）。`?status=<s>`（draft\|submitted\|approved\|rejected\|landed 闭合集过滤）+`?scope=<scope>`：rv 降序（同 rv 名升序——确定性投影）→ `{count, proposals:[{name, scope, resourceVersion, title, summary, status, priority, proposer, acceptanceCount, landing}]}`；`GET /v1/proposals/{name}?scope=<scope>` 单条详情（scope 缺省=global 优先→其余首个，与 execution 投影同确定性口径）→ `{name, scope, resourceVersion, spec:{title, summary, acceptance, impact, priority, proposer, status, landing}, content}`（content=文档原文——声明演进不破坏查询面）。解析失败/未注册 kind→404/503 与 objects 面同口径；非 GET=405；旧构建 405=代际判别器。派单投影与产物落点不在本面（聚合零 duplication——详情屏组合 `/v1/agents/dispatches`（proposal 过滤）与 spec.landing 指针） |
+| `GET /v1/proposals/{name}?scope=<scope>` | 提案单条详情面（**v0.51** 与清单面同段落库——本行=loop-70 §2 机械对账补记独立行，与 objects 单对象独立行范式对齐）：解析失败/未注册 kind→404/503 与 objects 面同口径；非 GET=405；旧构建 405=代际判别器（载荷词形见上行详情段——行集完整性判据只锚「行在册」不复制载荷） |
 | `GET /v1/secrets` | 秘密元数据清单（v0.34）：`{count, secrets:[{name, updatedAt}]}`——**只出名称与更新时刻，值永不回显**（脱敏红线）；秘密库未装配=503 |
 | `POST /v1/secrets` | 秘密落值（v0.34）：`{name, value}` → `{name, set:true}`——受理即吞值（请求体 value 不出现在任何响应/留痕）；写面门控同 apply（`--allow-apply`，未开启=405）；秘密库未装配=503；空 name/value=400 |
 | `DELETE /v1/secrets/{name}` | 秘密删除（v0.34）：幂等（键不存在=成功）；写面门控同上 |
