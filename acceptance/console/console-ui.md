@@ -982,7 +982,24 @@ corectl loop
 
 - editor 渲染视图中一切 scheme 派生内容（frontmatter 声明区/YAML 字段卡/scheme 引用段）**默认折叠隐藏**——默认只见文档正文（渲染 md）；点「scheme」expand 展开完整 scheme 内容。
 
-### 18.5 收尾动作（用户指令）
+### 18.4b 用户视角设计原则+三段式会话展示+bug workflow 呈现（2026-11-26 三次裁决）
+
+> 用户原话：「一定要有用户人的视角。我怎么简单的无副作用的用。可以在用的过程中不停的提供新的信息、新的要求。但是别一开始就这么多概念。概念是为了保运行的、保可查、不失控的。用这个思路重新对页面和部分流程进行设计。goal 要加上这条：这是一个企业级内置 agent 系统。其中一个运行的 workflow[session] 结束了，三段的部分也要在界面上分别展示（还是默认隐藏，可以 expand，或者跳转详情卡片）。另外运行时候的 bug 应该开始进入 event 了。默认的 workflow 中有 bug 触发 agent 评审→触发临时性 bug 文档→修复代码→发版本→bug 文档删除→整理更新部分文档/记忆（这也是一个 workflow，要跑起来）。workflow 感觉也要有 workflow 模版了。」
+
+**设计原则（全页面回检准绳）**：
+
+1. **简单无副作用优先**：使用者的每个动作默认零副作用（看=免费，动=显式确认）；概念（workflow/scheme/权限）一律不前置——默认隐藏、可 expand、或跳详情卡。
+2. **使用中持续供信息**：对话/表单允许边用边补充新信息新要求（不锁轮次、不强迫一次说全）。
+3. **概念=机制层**：概念展示统一收进「详情卡/expand」，主流程只见人话词形（goal.md 已补企业级内置 agent 系统定位——core_design@084a0c6）。
+
+**落地项**：
+
+| 项 | 设计 |
+|---|---|
+| 三段式会话分展示 | workflow[session] 结束后，三段（tag 装配段/执行段/收尾段）在界面分别可读：默认折叠，expand 原地展开，或「详情卡」跳 `#/session/:id`（ContextPack 面板已承载第一段；执行段=事件链；收尾段=收敛结论）——chat 屏 session 抽屉统一入口 |
+| bug 生命周期 workflow | 呈现于 workflows 列表（模板实例卡：六步相位管线=BugReport→评审→BugDoc→修复→发版本→删除+整理）；事件屏 BugReport 归档行深链；设计面已落（core_design concepts/workflow.md §9a——BugReport 事件+BugDoc kind+dispatch 声明） |
+| workflow 模板 | workflows 屏新增「模板」区（首批三模板：bug 生命周期/dev-delivery/文档收敛——core_design workflow.md §9b）；模板卡=「实例化」按钮（复制模具→参数表单→apply） |
+| 页面回检 | 总览大屏/会话/文档库按三原则回检：主流程人话词形、概念全部收进 expand/详情卡 |
 
 1. 按本需求生成文档（本节+必要的 concepts 增量）。
 2. **CLI 自己提交 apply 触发一次**：把需求写成文档对象 → `corectl` apply → 触发 workflow/loop。
