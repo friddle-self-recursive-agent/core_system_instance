@@ -695,3 +695,73 @@ spec:
 | 旧路由/旧屏迁移 | ⚠️低 | 深链失效 | 旧路由别名 + 重定向表；验收含深链抽查 |
 
 **结论：可行。全部为读侧派生+渲染层重组，零新后端概念；最大风险（LLM 不可用/幻觉/越权）都有确定性兜底与生成前裁剪。**
+
+## 15. 命令行（corectl）与事件点火（2026-11-26 用户裁决；core_design concepts/cli.md / R-UX-8）
+
+> 用户原话：「看看写一个命令行[对应桌面功能]然后命令行来提交。来触发系统的event而不是再外面点火了」「接下来任务请用cli提交。一旦有bug修复bug保证event自动能成功走循环」。
+
+**结论：桌面能看的、能提交的，`corectl` 都能做；写命令只走既有 `POST /v1/apply` 与 `POST /v1/events`；自循环点火=`LoopRequested` 事件，外部 ignite 脚本退役。**
+
+### 15.1 桌面 ↔ 命令行
+
+| 桌面 | CLI | 入口 |
+|---|---|---|
+| 关注报告 / 总览 | `corectl report` / `status` | GET scheme/objects/workflows/runs/inbox/events |
+| 系统树/详情 | `corectl get ServiceDesc|ServiceInstance` | GET /v1/objects/{kind} |
+| 文档查看 | `corectl get <kind> <name>` / `cat` | GET /v1/objects/{kind}/{name} |
+| Workflows / 运行 | `corectl workflows` / `runs` | GET /v1/workflows[/runs] |
+| 事件 | `corectl events` / `event publish` | GET/POST /v1/events |
+| 审批 / 收件箱 | `corectl approvals` / `inbox` | GET /v1/approvals / /v1/inbox |
+| 连接 | `corectl get WorkService|ConnectorOps|Provider` | GET /v1/objects |
+| 会话 | `corectl sessions` / `wakes` | GET /v1/sessions / /v1/agents/wakes |
+| 文档编辑 Apply | `corectl apply -f <file> [--dry-run]` | POST /v1/apply（唯一写入口） |
+| 自循环点火 | `corectl loop` | POST /v1/events `LoopRequested` |
+
+- 地址发现：宿主就绪写 `~/.dsh/cored.addr`（0600）；CLI 优先级 `--server` > `CORED_ADDR` > 文件。
+- 主体：缺省 `console-operator` + `role/global/admin`；部署侧可覆写受限 role，与桌面 `config.applySubject` 同口径。
+
+### 15.2 事件点火链路（替代外部 ignite）
+
+```
+corectl loop
+ → POST /v1/events {type: LoopRequested, dedupKey: <loop>:<round>}
+ → eventbus → dispatch {on: LoopRequested, dispatch: root-agent}
+ → WakeLog（/v1/agents/wakes 投影）
+ → WakeNotifier（CORE_SYSTEM_WAKE_ADDR 开启）→ 宿主 plugin POST /wake/spawn
+ → 宿主校验 type/agent → pgrep 单飞 → 执行部署侧 loopCommand（固定命令，载荷不进命令）
+ → core-headless loop 会话（loop-next.md + 运行护栏）
+```
+
+部署配置（部署侧，不入公开仓）：
+
+| 配置 | 作用 |
+|---|---|
+| `CORE_SYSTEM_WAKE_ADDR` | cored 唤醒桥地址（宿主 listener 回填） |
+| `CORE_SYSTEM_WAKE_TYPES` | 白名单（缺省 `LoopRequested`） |
+| `config.loopCommand` / `CORE_SYSTEM_LOOP_CMD` | 宿主拉起 loop 的固定命令（如部署脚本） |
+| `config.loopRunningPattern` / `CORE_SYSTEM_LOOP_RUNNING_PATTERN` | 单飞检测 `pgrep -f` 模式 |
+| `config.coredAddrFile` | 就绪后写地址文件（仅主控制面 profile） |
+
+失败语义：cored 未开桥=纯投影零出站；宿主未配命令=503；已有 loop=200 `already-running`；宿主不可达/拉起失败=stderr 留痕，事件仍受理。
+
+### 15.3 判据（机读）
+
+- `corectl loop` 后 `GET /v1/events?type=LoopRequested` 命中，且 `GET /v1/agents/wakes` 出现 `agent=root,type=LoopRequested`；
+- 宿主日志出现 `wake 桥已拉起自循环 ... spawned` 或 `already-running`；
+- 停掉外部 ignite（不手工启动 dsh core-headless）后，重复 `corectl loop` 仍能拉起/续跑循环；已有循环时进程数不增加（单飞）；
+- `corectl` 的 apply/event 请求体主体与桌面一致；缺 role=拒绝；无 cored 直连 DB/文件；
+- 事件载荷中的任何字符串不进入宿主命令（spawn 参数恒空数组）；`CORE_SYSTEM_WAKE_ADDR` 缺席时 cored 仅落投影零出站；
+- CLI 无 `--server`/`CORED_ADDR` 时能从 `~/.dsh/cored.addr` 读到地址；文件 0600。
+
+### 15.4 可行性
+
+| 风险 | 等级 | 缓解 |
+|---|---|---|
+| 随机端口导致 CLI 不可用 | ⚠️中 | 宿主写地址文件；CLI 三级发现 |
+| 重复拉起循环 | ❗高 | pgrep 单飞 + `already-running`；事件 dedup |
+| 命令注入 | ❗高 | 固定命令、参数空数组、载荷只进日志 |
+| 桥不可用/宿主重启 | ⚠️中 | 显式 503/日志；下一事件重试；过渡期保留外部 ignite 到桥验收 |
+| 权限旁路 | ❗高 | 与桌面同一主体判定；部署侧可覆写受限 role |
+| 循环在跑时新事件 | ✅ 低 | 返回 already-running，不杀不重启；由 running loop 自行完成 |
+
+**结论：可行。CLI=既有控制面的薄客户端；事件点火复用既有事件总线/路由/唤醒面，新增仅宿主唤醒桥与部署侧命令配置；零新写路径、零新权限模型。**
