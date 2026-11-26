@@ -788,6 +788,23 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 
 **队列余量对账（下轮顺延候选）**：object 触发声明面（随 connector watch 声明面扩展顺延——零变化判定维持）；watch-only 自监控闭环/developer-system 代码化调用（红线 a 域维持 declared）；E5a 冷会话空窗（declared 维持）；编辑器域余量=无（历史 tab 判据链完整——L67-07 词形活体复核通过零回归）；docsRoot 清场=已执行（后续轮残留断言=每轮探针 P-02 判据位——回潮即红）。
 
+### 1.42 对账轮增量：清场常态化首拍 + cored-bridge.md §2 桥契约机械对账复核 + 删除后快照两态分立新实证（2026-11-26，loop-69 轮——标准对账选点轮：队列顺延+零 Go 零 plugin 改动）
+
+**核验选点（对账——点火队列顺序执行）**：队列 1 余量现势复核三项全**零变化判定维持顺延**——①object 触发声明面：spec.triggers 在 flowbind 仍零词形命中（grep 实证零变化，L69-06a）∧ dispatch 订阅集合=表驱动（`/v1/triggers` types=["*"] 活体在运——connector watch 声明面现势零变化，升格评估不触发）；②watch-only 自监控闭环/developer-system 代码化调用（workflow-runtime.md §11.2 余量行——红线 a 域，spawn wired 恒 false 机械锚在位=approval.go 单点 grep 实证 L69-06b）；③E5a 冷会话空窗（宿主读面现势零变化——§1.37 评估维持 declared）。队列 2 两件：①**清场常态化首拍**（P-02 残留断言判据位首次常态化执行）=四清场域对象清单零探针残留词形（现势：agents=仅 core-headless/proposals=0/workflows@global=2 件业务对象/connector-ops@systems=0——零回潮零清场动作）；②**cored-bridge.md §2 桥契约机械对账复核**（loop-68 补记后完整性复核）=代码路由集（apiserver HandleFunc 注册 43 条）↔ §2 端点行集（43 行）逐条对应零缺多（L69-05c 双向差集机械判定——「同范式随行补记」不触发，§2 清单完整）。队列 3：submodule pin=d3b6930=workservice@6853803（workservice 本轮零提交=维持零改动）。
+
+**现势发现（判据词形随行校准）**：①**core-headless 载体已自然换代**——点火台账注记「载体持旧代 exe（deleted）」已过时：/proc 精确遍历三 cored 子进程（core-system/kube-inner/core-headless 载体）exe sha 全=b1fe639b01922d23=v0.63 在运代（L69-01a）——三 web 同代零换代在运；②**l68 判据锚对象面已由巡检移除**（docsRoot git log `ed974c7` 探针对象不入权威文档库）——ops DB 账本行不删∧rv=1 历史快照恒可达：l68-face-sweep-c 现势 objects 404 ∧ rev-content rv=1 快照 200 两态分立（§1.41 结构发现①的**新实证形态**——删除后快照两态分立判据自此有活体锚恒可复验，后续轮判据锚）∧ history 账本行 count=1 在账（L69-03）；判据词形随行=「已清锚」域现势含 l68 锚（残留断言勿把 l68 锚对象缺席当异常——判据锚留账在判别面域=账本+快照，对象面现势缺席=预期）。
+
+**实现拓扑（零 Go 改动零 plugin 改动——纯读面验证拍+文档面增量）**：探针=prep 14 项（部署判据/清场残留断言/删除后快照两态分立/投影零回归/桥契约机械对账/队列 1 零变化机械面）+UI 5 项（编辑器活体/历史 tab 点行 diff 零回归/palette 零残留∧账本词形域在册/零 pageerror）=**19/19 终拍零 pageerror**（脚本与数据分离 `/home/friddle/probe/loop-69/`，node_modules 软链继承）；零写路径轮（无落稿无 apply——锚域借用 l68 留账锚作两态分立活体实证）；质量闸全绿（workservice go build/test/race + plugin npm 137 pass + personal-info 六仓 ✓ + mirror 基线 `files=18 findings=0 ok`）；零服务重启零 cookie 轮换（复用 loop-68 jar 恒有效）。
+
+**L69 验收线（探针=acceptance/loop-69.md；prep 14/14+UI 5/5=19/19 终拍）**：
+- L69-01 部署判据：三 cored 子进程 exe sha=v0.63 在运代（含 core-headless 载体——自然换代注记）∧ 既有对象读面零回归（rv=12）∧ rev-content 既有对象 rv=1 快照 200 source=git-backend。
+- L69-02 清场残留断言首拍：四清场域（agents/proposals/workflows@global/connector-ops@systems）对象清单零探针残留词形（probe/l5x/l6x 前缀）——零回潮=零清场动作（清场常态化 P-02 判据位机械执行）。
+- L69-03 删除后快照两态分立复核拍：l68 判据锚现势 404 ∧ rv=1 快照 200（rv 反写行在册）∧ history 账本行不删——历史不可变延伸新实证（巡检移除后形态）。
+- L69-04 清场零回归：聚合面 count=7 ∧ inbox count=61 ∧ triggers types=["*"] 投影面零回归。
+- L69-05 桥契约机械对账复核：§2 rev-content 行在册 ∧ §1 v0.63 注记在册 ∧ 代码路由集 43 条 ↔ §2 行集 43 行双向差集=0（零缺多——「同范式随行补记」不触发）。
+- L69-06 队列 1 零变化机械面：flowbind 零 spec.triggers 词形 ∧ wired 恒 false 机械锚在位（approval.go）∧ dispatch types 表驱动。
+- L69-07 UI 拍：既有对象历史 tab 14 行 ok 行可点（hist-diff）∧ diff 面板 r 词形+add/del 行 ∧ palette 对象行零残留∧历史 tab 账本 reasonRef 词形在册 ∧ 零 pageerror ∧ 截图 3 张（editor/history-diff/palette）。
+
 
 ## 4. 落地顺序（一轮一增量，映射 loop 起点）
 
@@ -826,6 +843,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 §1.39 | draft-only 稿 Apply 创建通路真落库执行拍（§1.38 余量首候选——判据集在案 once-only 执行）【实现拓扑与细化验收=§1.39（loop-66）：既有面执行拍零新代码（client 编辑器 apply dock+宿主 apply/drafts 路由+cored apply 写面——零 Go 改动零 plugin 改动）；专用锚 l66-apply-probe 域内三段=创建拍（缺席诚实→落稿 baseRV=0→dry-run rv=0 哨兵→**create rv=1**→DocApplied eventId 同源→apply_log r1 ok 判定行→稿清 rule 6→noop 复跑拍→ErrNoDraft 404）+UI 拍（编辑器活体→手动编辑落稿→弹窗三检查 r1 更新哨兵→**确认键真点**→真落库 toast）+终态复核（rv=2 恒∧apply_log 4 行 noop:r2\|ok:r2\|noop:r1\|ok:r1∧DocApplied=2 恒∧UI noop 结构守卫词形）；判据词形校准两件=落库正文∪rv 反写行∧UI 确认通路=dock 差异武装只产 update（noop 结构不可达——API 复跑拍承载）】 | create 拍 rv=1∧apply_log 判定行（create∧rv=1∧console fieldManager）∧DocApplied 事件行∧稿清归零∧幂等复跑（noop 恒值+ErrNoDraft 双分支在账）∧UI 确认活体+真落库 toast∧锚留账收尾（rv=2 对象在册不删=判别面域）∧零 pageerror∧UI 截图（细化=§1.39 执行拍实录三段） |
 | 对账轮 §1.40 | 历史 rv 正文读面（rev-content diff 面）——历史 tab「点行 diff 上一版」余量当轮收口【实现拓扑与细化验收=§1.40（loop-67）：三路评估判定②域内可实施——读半边 Go（workservice v0.63 `GitRepo.RevContent` 快照语义=最新携带该 rv 反写行的提交+blob 元数据 rv=唯一判据+ErrRevNotFound 分立+gitRaw 未修剪 stdout+`GET /v1/rev-content` 词形族+`WithRevContent` 口面+git 后端恒注入装配）+消费半边 plugin（v0.67 hydrateHistory ok 行可点 hist-diff+hist-diff-box diff 面板+起点词形+余量标注摘除——零缓存零写路径）；cored v0.62→v0.63 换代+gate 同步；判据词形校准=手编 docsRoot 通道快照语义裁决∧快照含文末换行】 | 既有对象 rv=1 快照 200∧锚缺席窗 404 分立词形∧create→快照逐字节恒等（文末换行在册）∧第二拍 update→rv=2 快照∧rv=1 恒（历史不可变）∧两版分立+rv 行各自 1/2∧noop 复跑 rv 恒+apply_log 3 行∧UI 点行 diff 活体（noop 不可点+面板词形+add/del）∧零 pageerror∧UI 截图（细化=L67-01…07） |
 | 对账轮 §1.41 | cored-bridge.md §2 随行补记 rev-content 读面+docsRoot 探针残留清场（§5 清场纪律执行）【实现拓扑与细化验收=§1.41（loop-68）：队列 1 三项零变化判定（object 触发声明面/watch-only 红线 a 域/E5a declared）+队列 2 文档面缺口当轮收口——cored-bridge.md §2 补 `GET /v1/rev-content` 行（词形族全量+快照语义+对象删除后历史快照恒可达注记）∧§1 v0.63 在运代注记（sha/rev 入部署台账不入公开仓）；docsRoot 43 件探针残留移除+手编通道 git commit（ops DB 账本不删=判别面域）；判据词形校准三件=落库正文判据词形（稿正文∪rv 反写行）∧删除后快照延伸两态分立∧清场后渲染面账本词形分立（残留断言勿扫事件账本词形域）；零 Go 零 plugin 改动】 | 部署判据（v0.63 读面在运）∧清场判据（零残留词形+已清锚 404∧快照 200 分立+history 行不删）∧桥契约增量零回归（词形族分立+宿主代理）∧文档机械面（§2 行+§1 注记）∧判据链复核（快照逐字节恒等）∧UI 零回归（点行 diff 活体+零 pageerror）∧UI 截图（细化=L68-01…07） |
+| 对账轮 §1.42 | 清场常态化首拍+cored-bridge.md §2 桥契约机械对账复核+删除后快照两态分立新实证【实现拓扑与细化验收=§1.42（loop-69）：队列 1 三项零变化判定维持顺延（object 触发声明面/watch-only 红线 a 域/E5a declared——connector watch 声明面现势零变化升格不触发）+队列 2 两件——①P-02 残留断言判据位常态化首拍（四清场域对象清单零探针残留词形，零回潮零清场动作）②§2 代码路由集 43 条↔行集 43 行双向差集=0（loop-68 补记后完整性复核——「同范式随行补记」不触发）；现势发现两件=core-headless 载体已自然换代（三 web 同代 v0.63）∧l68 判据锚对象面巡检移除（两态分立活体锚恒可复验——账本+快照在判别面域）；零 Go 零 plugin 改动】 | 部署判据（三 cored 子进程 sha=v0.63 含载体）∧清场残留断言首拍（四域零残留词形）∧删除后快照两态分立（l68 锚现势 404∧rv=1 快照 200∧history 行不删）∧投影面零回归（聚合/inbox/triggers）∧桥契约机械对账（§2 双向差集=0）∧队列 1 零变化机械面（flowbind 零 triggers 词形∧wired 锚在位）∧UI 零回归（点行 diff 活体+零 pageerror）∧UI 截图（细化=L69-01…07） |
 ## 5. 执行红线（对 loop 的约束）
 
 1. **不改文档面语义**：console 是观测/操作面，一切写操作（启停/编辑/批准/重跑）=Apply 走既有写路径；发现设计不合理→改文档先于改代码（acceptance 纪律）。
