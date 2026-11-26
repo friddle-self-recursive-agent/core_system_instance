@@ -899,6 +899,25 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 
 **队列余量对账（下轮顺延候选）**：object 触发声明面（升格判据三词形零变化维持顺延——随 connector watch 声明面扩展轮）；watch-only 自监控闭环（红线 a 域维持 declared）；E5a 冷会话空窗（declared 维持）；CTX 声明面（零运行时落点=同源顺延）；P-02 清场残留断言=第六拍通过零清场动作（判据位维持每轮必查）；§2 机械对账=解析器随行直测范式维持（每轮随行直测勿回退硬编码转录）；race 并发包清单=行首派生词形判据基准维持（P74-08 机械断言随行）。
 
+### 1.48 界面用户视角改造：R-UX-3/4/5 + console-ui.md §13 落地（2026-11-26 用户裁决，loop-75 轮——纯 client 面改动：文案人话化+渲染优先+系统视角首屏零 Go 改动）
+
+**权威依据**：core_design@c07bdcc rule.md R-UX-3（工程黑话禁入界面——「面」字族/E<n> 里程碑词形/「真数据」禁入一切界面文案；kind 降次级徽章；界面名+术语名双名制）+R-UX-4（内容展示渲染优先——markdown 默认视图、scheme/YAML 次级切换禁裸转储、结构化字段卡只读态、XSS 转义红线）+R-UX-5（视觉锚定 DeepSeek——dsh 原生 token 不自造第二套）；core_system_instance@2551756 console-ui.md §13（13.1 文案人话化/13.2 渲染优先/13.3 系统树=系统视角/13.4 判据）。
+
+**实现拓扑（纯 plugin/client 改动——零 Go 零 cored）**：①文案人话化=client/*.js 界面文案字符串域清零「面」字工程词（~51 处词形→人话：cored 读面→系统文档库/运行面→运行状态/文档面→文档/权限面→权限/触发面余量→暂未接线等）+零内部里程碑词形（E<n>/L<n>-/P-0x/真数据/declared-deferred 出界面；reasonRef 落账语汇 'console E5:'→'console:chat-session-create'——审计域词形随行）；屏幕 3 现势整改点全收（§13.1 列举三处旧实证词形零残留——P75-03b 机械断言）。②渲染优先=**client/console-md.js 新模块**（最小自写 markdown 渲染器：标题/列表/表格/代码块/链接/粗斜体/引用/行内代码，零网络依赖零外部库）+**XSS 红线**（esc() 转义先于一切结构化解析+safeHref 链接白名单（http(s)/agent/system/session/doc/goal/desc/report/rule 五族，javascript:/data: 拒绝降纯文本）+零原文直插 href）+yamlToCards 结构化字段卡（R-UX-2 只读态映射：顶层键卡+人话释义 gloss+嵌套子卡+行内数组逐项 chips——最小 YAML 读侧投影 parseSimpleYaml）+rawDisclosure 折叠次级（原文/YAML 恒 details 收起——首屏禁裸转储）+**编辑器屏双视图**（正文=渲染默认（markdown 文档类 renderMarkdown / 对象 spec=yamlToCards 字段卡；S.edView 内存态刷新回默认）∧原文=textarea 次级切换（ACTIONS ed-view 显隐容器零 S.ED 重建——编辑/草稿/Apply 通路零变更）；input 事件同步渲染视图=双视图同源零漂移）。③系统视角=screenSystem 重构（§13.3）：首屏系统卡（data-syscard：名称/健康度（实例相位 InSync→运行正常）/实例数/文档版本/作用域+goal 一句话（声明 summary/goal/description 现读缓存））→入口卡四张（data-ent：事件/指标/文档/权限——人话标签+计数徽章+SVG 图标+副标题）→服务分组（服务实例/工作流/连接与凭据源人话标题；对话入口=chat/<agent> 点入会话屏）→系统声明卡（字段卡默认态+「YAML」details 折叠次级）→文档清单退 details 折叠次级（data-docs-fold 默认收起）。④视觉=R-UX-5 锚定：md/syscard 样式块零新色值常量（只消费既有 --panel-2/--border-2/--text-2/--accent 等 dsh 原生 token——L75-07 机械断言禁自造色板）。⑤测试=console-ux.test.ts 新 8 锚（§13.4 判据机械断言入 npm test）+既有锚词形随行人话化（live/inbox/scenario 三文件 7 处——机制锚零变更）；npm **145 pass 0 fail**（137 既有回归+8 新增）。⑥部署=dist 随行重建（pnpm link 软链即时生效——零重启零 patch）；docsRoot scheme 镜像随行同步（core_design@7cf6410/d9005aa/429c3b5 权威字节——lint mirror 闸 findings 1→0 mirror=ok 基线恢复，commit a0246bd）。
+
+**L75 验收线（探针=acceptance/loop-75.md；prep 16/16+UI 11/11=27/27 终拍零 pageerror）**：
+- L75-01 部署判据：三 cored 子进程 exe sha=v0.63 在运代（pids=3，八连轮零换代）∧ 既有对象读面 rv=13 ∧ rev-content rv=1 快照 200 source=git-backend。
+- L75-02 清场残留断言第七拍：四清场域对象清单零探针残留词形∧docsRoot fs 直扫文件名域零残留∧l68 活体锚两态分立（现势 404∧rv=1 快照 200）。
+- L75-03 §13.1 机械断言（双拍=npm L75-01/02+prep P75-03 同源独立复核）：dist/client.js 字符串域零违禁词形（面族+E<n>/L<n>-/P-0x/真数据/declared-deferred 命中=0）∧屏幕 3 旧实证词形零残留。
+- L75-04 §13.2 渲染器机械断言：__CC.md 入 bundle∧esc 转义先于 renderMarkdown∧safeHref 白名单∧yamlToCards+rawDisclosure('YAML'/'原文') 双次级在册。
+- L75-05 §13.3 系统视角机械断言：data-syscard/data-ent-cards/data-docs-fold 三词形在册∧入口卡人话标签（事件/指标/文档/权限）四卡在册。
+- L75-06 投影零回归：聚合 count=7∧inbox=61∧types=["*"]∧events 面活体。
+- L75-07 探针纪律：全链宿主同源/loopback——零外部端点零写路径零锚落库（KI-001）。
+- L75-08 UI 拍（活体 DOM）：系统卡三 kv（健康度/实例数/文档版本）∧入口卡四张 ents=[docs,events,metrics,permissions]∧文档折叠次级默认收起∧对话入口 chat∧声明字段卡 count=5 默认态∧「YAML」details 收起∧首屏无裸 pre 转储∧编辑器默认渲染视图（render 可见 raw 隐藏 chip 正文高亮）∧渲染正文注入+原文折叠在册∧原文切换 textarea 可编辑（编辑能力零变更）∧Welcome 屏活体文本零违禁词形∧零 E<n> 命中∧零 pageerror∧截图 4 张（system-card/sys-decl-cards/doc-render/doc-raw-toggle）。
+
+**判定**：§13.4 判据四项全绿（机械断言回潮即红入 npm test 常态化+活体 DOM+截图）；R-UX-3/4/5 落地零 Go 改动零 cored 改动（纯 client 面——任务红线维持）；kind 名降次级徽章（系统声明副注记+chip kind）主标题=用户词（服务实例/工作流/连接与凭据源/系统卡标题=系统名）；053dd1a 提案屏×上下文对照卡=余量项不阻塞（§13 主线收口后余力再做）。
+
+
 ## 4. 落地顺序（一轮一增量，映射 loop 起点）
 
 
@@ -943,6 +962,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 对账轮 §1.45 | 队列 1 三项+CTX 零变化判定维持顺延（第三连拍）+清场残留断言第四拍（双域）+§2 解析器范式随行直测【实现拓扑与细化验收=§1.45（loop-72）：六仓零新提交=CTX 与队列 1 同源零变化基线第三连拍+队列 1 三项零变化判定维持（object 触发声明面升格判据三词形全数复验/watch-only 红线 a 域 wired 恒 false/E5a declared）+CTX 声明面零变化同源顺延第三连拍（conventions.context∧R-CTX-1..6 在册∧运行时零落点）+队列 2 三判据位随行拍全绿（P-02 第四拍双域零残留+l68 锚两态分立复核；§2 解析器随行直测 43↔43 双向差集=0 未回退硬编码转录；P-01 personal-info 六仓 ✓ 零回潮）；零 Go 零 plugin 改动零文档面语义变更，零锚落库零写路径】 | 部署判据（三 cored 子进程 sha=v0.63 五连轮零换代）∧清场残留断言第四拍（对象清单面+docsRoot fs 直扫面双域零残留+l68 活体锚两态分立）∧队列 1 判据面三词形零变化∧桥契约解析器随行直测双向差集=0∧投影零回归∧CTX 零变化判定∧探针纪律零外发∧UI 零回归（点行 diff 活体+零 pageerror）∧UI 截图（细化=L72-01…08） |
 | 对账轮 §1.46 | 队列 1 三项+CTX 零变化判定维持顺延（第四连拍）+清场残留断言第五拍（双域）+§2 解析器范式随行直测【实现拓扑与细化验收=§1.46（loop-73）：六仓零新提交=CTX 与队列 1 同源零变化基线第四连拍+队列 1 三项零变化判定维持（object 触发声明面升格判据三词形全数复验/watch-only 红线 a 域 wired 恒 false/E5a declared）+CTX 声明面零变化同源顺延第四连拍（conventions.context∧R-CTX-1..6 在册∧运行时零落点）+队列 2 三判据位随行拍全绿（P-02 第五拍双域零残留+l68 锚两态分立复核；§2 解析器随行直测 43↔43 双向差集=0 未回退硬编码转录；P-01 personal-info 六仓 ✓ 零回潮）+race 闸并发包清单现势校准复核（goroutine 派生词形全仓扫描=清单 7 包完备零调整）；零 Go 零 plugin 改动零文档面语义变更，零锚落库零写路径】 | 部署判据（三 cored 子进程 sha=v0.63 六连轮零换代）∧清场残留断言第五拍（对象清单面+docsRoot fs 直扫面双域零残留+l68 活体锚两态分立）∧队列 1 判据面三词形零变化∧桥契约解析器随行直测双向差集=0∧投影零回归∧CTX 零变化判定∧探针纪律零外发∧UI 零回归（点行 diff 活体+零 pageerror）∧UI 截图（细化=L73-01…08） |
 | 对账轮 §1.47 | 队列 1 三项+CTX 零变化判定维持顺延（第五连拍）+清场残留断言第六拍（双域）+§2 解析器范式随行直测+race 并发包清单现势校准复核【实现拓扑与细化验收=§1.47（loop-74）：六仓零新提交=CTX 与队列 1 同源零变化基线第五连拍+队列 1 三项零变化判定维持（object 触发声明面升格判据三词形全数复验/watch-only 红线 a 域 wired 恒 false/E5a declared）+CTX 声明面零变化同源顺延第五连拍（conventions.context∧R-CTX-1..6 在册∧运行时零落点）+队列 2 三判据位随行拍全绿（P-02 第六拍双域零残留+l68 锚两态分立复核；§2 解析器随行直测 43↔43 双向差集=0 未回退硬编码转录；P-01 personal-info 六仓 ✓ 零回潮）+race 闸并发包清单现势校准复核（行首派生词形全仓扫描=清单内 watchsrc=1/workflow=2/metricsrc=1/repository=4 与 loop-73 台账逐包一致∧清单外包零行首派生=清单完备零调整；行内 `go func` 词形四包假阳性域识别——判据词形基准=行首派生，P74-08 机械断言入探针常态化）；零 Go 零 plugin 改动零文档面语义变更，零锚落库零写路径】 | 部署判据（三 cored 子进程 sha=v0.63 七连轮零换代）∧清场残留断言第六拍（对象清单面+docsRoot fs 直扫面双域零残留+l68 活体锚两态分立）∧队列 1 判据面三词形零变化∧桥契约解析器随行直测双向差集=0∧race 清单校准（清单外包零行首派生）∧投影零回归∧CTX 零变化判定∧探针纪律零外发∧UI 零回归（点行 diff 活体+零 pageerror）∧UI 截图（细化=L74-01…09） |
+| 界面用户视角 §1.48 | R-UX-3/4/5+§13 落地（loop-75）：文案人话化（字符串域零「面」族+零里程碑词形——双拍机械断言）+渲染优先（console-md.js 渲染器+XSS 红线+字段卡/YAML 次级+编辑器双视图）+系统视角首屏（系统卡+入口卡四张+文档退折叠次级）+dsh 原生 token（零新色值断言）【实现拓扑与细化验收=§1.48；纯 plugin/client 零 Go 零 cored】 | §13.4 判据四项全绿（npm 145 pass+prep 16/16+UI 11/11 零 pageerror+截图 4 张）∧mirror 基线 files=18 findings=0 ok（镜像随行同步 commit a0246bd）∧探针零外发零锚落库 |
 ## 5. 执行红线（对 loop 的约束）
 
 1. **不改文档面语义**：console 是观测/操作面，一切写操作（启停/编辑/批准/重跑）=Apply 走既有写路径；发现设计不合理→改文档先于改代码（acceptance 纪律）。
