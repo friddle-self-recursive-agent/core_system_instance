@@ -63,10 +63,10 @@ checker 接线：core_design `lint/max-file-lines.sh`（type=lint，R-ENG-7）�
 验收报告机械门新增（Verify 相位前置；任一不满足=该项 unverified 不许 PASS）：
 
 1. **lint 全绿含 max-file-lines**：metadatainfo/personal-info/max-file-lines 三 checker 全 exit 0，才可出 PASS。
-2. **截图强制**：UI 轮无截图=该项 unverified 不许 PASS（截图是视觉验证凭据，DOM 断言不替代）。
+2. **截图强制**：UI 轮无截图=该项 unverified 不许 PASS（截图是视觉验证凭据，DOM 断言不替代）。报告侧机械断言已落地：`acceptance/audit/probes/report-audit.mjs`（UI 类 pass 无截图引用/「无图像输入」类豁免话术/截图不在盘 → 强制 unverified，见 acceptance/audit/independence.md §2）。
 3. **端到端点击链路探针**：点按钮→路由跳转→数据出现 **三断言成链**，不许只测 DOM 节点存在。
-4. **清场断言扩到 ops DB**：`l<N>-` 前缀探针对象+心跳行+ApprovalNeeded 孤儿行归零（清场不只清文档面，DB 侧残留同样算脏）。
-5. **connectops-code-audit 在 Verify 相位强制执行**并作为出报告前置门（R-TYPE-3：unbound/非空 error findings=不出报告，显式失败不静默放行）。
+4. **清场断言扩到 ops DB**：`l<N>-` 前缀探针对象+心跳行+ApprovalNeeded 孤儿行归零（清场不只清文档面，DB 侧残留同样算脏）。机械断言已落地：`acceptance/audit/probes/cleanup-audit.mjs`（残留正则 `^l[0-9]+-` 归零+approval 孤儿引用+fail-closed：库打不开/无受检表=unverified 不当干净）。
+5. **connectops-code-audit 在 Verify 相位强制执行**并作为出报告前置门（R-TYPE-3：unbound/非空 error findings=不出报告，显式失败不静默放行）。五闸与探针资产的总映射表见 `acceptance/audit/independence.md` §2。
 
 ## 4. 可行性与风险
 
