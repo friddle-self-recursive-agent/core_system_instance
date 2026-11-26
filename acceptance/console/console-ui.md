@@ -1016,3 +1016,67 @@ corectl loop
 | 流程顺畅度 | ⚠️中 | intake→generate→apply→run 三跳跨面 | 全深链+patch 增量+过渡态显式 |
 
 **结论：可行。数据面零后端改动（runs/intake/apply 契约全在册）；新增全部在读侧投影与可视化层。**
+
+## 19. 全页可用性批（2026-11-26 用户裁决：「每个页面走下，基本上还是不能用——要么没做，要么就是不能用」）
+
+**背景**：控制台 v2 骨架/主题/导航已立，但逐页活体审计（CT116 现场走查 13+ 面）暴露一批「没做」与「不能用」。本批=把每一页修到**个人日常可用**：真实数据、动作可点、死路消灭、终态显式。
+
+### 19.1 逐页审计结论（现场证据）
+
+| 页面 | 判定 | 现场证据 |
+|---|---|---|
+| 总览 #/ | ⚠️半可用 | 大屏立；但 2 个 AwaitingApproval run 未作为「需你批准」可动作项出现；底部连接灯恒「连接中…」（侧栏双 footer 覆写竞态）；面包屑=裸 route 词「welcome」；~15 条 400 噪声 |
+| 审批 #/approvals | ❌不能用 | **核心死路**：ApprovalNeeded 事件行只有「忽略」无「批准/驳回」——run#1/#2 全控制台无一处可批准 |
+| Workflows #/workflows | ❌不能用 | 「暂无在册工作流」假空态——registry 明明 7 条（快照无 workflows 键，页面没读 GET /v1/workflows）；runs 表缺席；模板区没做 |
+| 会话 #/chat/root-agent | ❌不能用 | session 下拉零选项（快照无 sessions 键，页面没读 GET /v1/sessions——后端 5 会话在册）；单窄列，无 session 列表 |
+| 文档库 #/docs | ❌崩溃 | 屏保持上一页内容——docsScreen 引用未导入的 `syncBadge`（ReferenceError，screenOf 中断=面包屑/导航高亮全停） |
+| 任务 #/tasks | ⚠️半可用 | 分组投影正常；卡住任务（状态未知）无「取消」动作；已知活体 bug「空 status 不调度」页面无逃生动作 |
+| 关注报告 #/report | ⚠️半可用 | 关注项卡标题三重重复（一般+ApprovalNeeded+ApprovalNeeded）；卡不可点无去处理；AwaitingApproval runs 不入报告；导航双高亮（关注报告+任务中心同亮） |
+| 需求提案 #/proposals | ⚠️半可用 | 列表有行但卡片不可展开（要素/验收不可读）、无批准/驳回入口 |
+| 系统树 #/tree | ⚠️半可用 | 全折叠+窄列——逐个点小箭头才见对象；ServiceDesc 不深链 service 大屏 |
+| 对象工作台 #/obj | ⚠️半可用 | 六片布局立；但内容/规则面板恒「现读中…」（=api.object global-scope 缺 ?scope= → 400）；scheme 聚合缺席注记 |
+| 连接 #/connectors | ✅可用 | 四族清单+工作台深链正常 |
+| 编辑器 #/doc/... | ⚠️半可用 | 三 tab+Apply 吸底立；正文拉取失败恒「注水中…」无终态（同 400 根因） |
+| 业务控制台 #/biz | ✅占位（裁决内） | 显式占位不装假 |
+
+### 19.2 根因（一刀多果）
+
+| 根因 | 爆点 | 修 |
+|---|---|---|
+| R1 `api.object` scope=global 时省略 `?scope=` → cored 400「需显式 scope」 | ~15 条/页 console 400；对象工作台正文卡死；编辑器注水不停；文档库 tag 列全 — | 恒带 `?scope=`（缺省 global）——api.js 一行 |
+| R2 misc.js 引用未导入 `syncBadge` | #/docs 整屏失明（渲染中断） | 补导入（或内联）——一行 |
+| R3 人工批闸通路缺失（引擎语义：run 挂起=等 `ApprovalGranted`/`ApprovalRejected` 事件，involved=Workflow 锚寻径——workflows 规则 13） | run#1/#2 永挂；审批页/运行页/总览均无「批准继续」 | 审批页事件行+运行详情 hero 加「批准继续/驳回终止」→ POST /core-console/event-publish（白名单扩 ApprovalGranted/ApprovalRejected/TaskCancelRequested）→ cored /v1/events（source=human 服务端强制） |
+| R4 页面读死快照键（workflows/sessions/inbox 快照缺席即空白） | workflows 假空态、chat 下拉零选项、收件箱 — | 换活体面：GET /v1/workflows、GET /v1/sessions、（inbox 保持诚实缺席注记） |
+| R5 main.js 三小病 | 面包屑裸词、双高亮（report→tasks 映射残留）、双 footer 连接灯覆写 | 标签映射+删映射+去重 footer 且 nav 重绘后重放连接态 |
+
+### 19.3 逐页落地清单
+
+| 页 | 项 |
+|---|---|
+| 总览 | 审批区行=挂起 run 一等公民（批准继续/驳回终止按钮就位）；Agent 区显示会话活性（GET /v1/sessions 投影）；「触发事件」接 event-publish 通路；收件箱卡缺席时隐藏不显示 — |
+| 审批 | 事件行加「批准（发 ApprovalGranted）/驳回（发 ApprovalRejected）」（确认弹窗→发布→行消隐+快照重读）；批准后 run 在 Workflows 屏可见续行 |
+| Workflows | registry 区（GET /v1/workflows 7 条+触发器词形）；runs 表（GET /v1/workflows/runs 全窗口+相位 chip+深链）；模板区首批三模板卡（bug 生命周期/dev-delivery/文档收敛——只读呈现+「设计见 workflow.md §9b」深链；实例化待 Template kind 落册，诚实置灰） |
+| 会话 | session 下拉+左侧列表双源 GET /v1/sessions（state/phase/lastAction chip）；双列 DeepSeek 式布局（列表|线程+composer）；点行=选用进 composer 并挂上下文面板 |
+| 文档库 | R2 修复复活；新建文档入口=「对话提需求」词形引导（文档创建走对话+Apply——裁决口径）；designdoc 工作台入口保留 |
+| 任务 | 行级「取消」按钮（确认→TaskCancelRequested 发布）；详情页动作同源；状态未知行显式「调度器未见 status——已知活体 bug 台账 BUG-013」注记 |
+| 关注报告 | 卡去重（severity 徽一次）；挂起 runs 入卡+批准直达；全卡可点 |
+| 提案 | 卡点开=要素 expand（title/summary/acceptance/impact/proposer）；行尾「去审批」深链 |
+| 系统树 | 默认展开对象数 ≤3 的 kind；列宽自适应；ServiceDesc 行加「Service 大屏」深链（#/service/:name 同构大屏） |
+| 对象工作台 | R1 复活正文/规则；scheme 聚合缺席词形保留 |
+| 编辑器 | 拉取失败终态词形（重试按钮），不再恒「注水中」 |
+| 事件 | 行尾 copy-id（写剪贴板）；involved 三段可点深链；raw 引号词形清理 |
+
+### 19.4 转正（同批落地）
+
+1. **入口**：gate（dsh-web-gate）token 命中后 302 → `/core-console/v2`——控制台=默认落地页；dsh 原生界面降级为「agent 节点深查窗」（会话屏 iframe/新窗口按钮仍可达 `/?embedded=1`）。
+2. **载体毛刺**：`/core-console/v2/`（尾斜杠）404 → 同壳响应（dsh 前缀匹配语义 url===path||path+'/'——注册词形补齐）；favicon data-URI 注入壳页（消 404 噪声）。
+3. **口径**：dsh=agent 运行面（会话权威轨迹+sessionController.prompt 通路）；cored=控制面；本控制台=唯一日常 UI——与 goal「企业级内置 agent 系统」定位一致。
+
+### 19.5 判据（机械）
+
+- [ ] 逐页复验截图 13 面零「恒注水中/假空态/无动作死路」
+- [ ] console 噪声：对象 400 归零
+- [ ] run#2 从审批页「批准继续」→ 相位机续行（Executing 亮起）全程截图
+- [ ] #/docs 渲染文档清单（syncBadge 修复实证）
+- [ ] `?token=` 落地直达 `/core-console/v2`；尾斜杠 200
+- [ ] web npm test 全绿；plugin npm test 全绿
