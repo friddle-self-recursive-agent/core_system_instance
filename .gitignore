@@ -9,3 +9,5 @@ acceptance/*
 !acceptance/console/**
 !acceptance/bugs/
 !acceptance/bugs/**
+!acceptance/audit/
+!acceptance/audit/**
