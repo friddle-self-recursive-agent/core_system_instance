@@ -1,0 +1,7 @@
+# 元数据侧车（R-DOC-6）：正文以同名 .md 为准；导出/GitHub 镜像保留
+tags:
+  - {tag: acceptance, tag_type: doc}
+  - {tag: chat, tag_type: domain}
+  - {tag: console, tag_type: surface}
+  - {tag: loop, tag_type: domain}
+importance: 92
