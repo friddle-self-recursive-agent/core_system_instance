@@ -467,6 +467,17 @@ spec:
       [返回修改] [确认提交（草稿→Apply）]
 ```
 
+**提案×上下文对照卡（2026-11-26 用户裁决；proposal.md §4.6）**：提交节点跑 `context.pack`（四族 tag 检索）后在对话区以**独立卡片明确展示**：
+
+| 卡片 | 内容 | 交互 |
+|---|---|---|
+| 冲突卡（conflicts） | 逐条列出与现有文档冲突的结论：`ref`（<repo>/<path>#<anchor>）+ `hash` + why | 点开=展开原文片段核对；用户可回对话改提案或标注"已知取舍"（进 approval_log） |
+| 补充卡（supplements） | 需要补充/更新的现有文档清单（ref+hash+why） | 一键加入提案 supplements 随行；派工后作为 docsUpdate 的起点清单 |
+
+- 对照失败降级 `degraded:true` 卡片可见（不阻断提交、不静默）；同 tagSig 0.9 复用缓存不重复装配；
+- 审批屏（人审）与自动批准判定同屏携带该对照；**派工载荷带 docsUpdate 义务（缺省 true）**——执行体按 supplements 清单随行更新受影响文档，不回写不得 landed；
+- 提案入口不限本屏：agent 节点（autoLevel=all 可全自动走完含 approve）、API/CLI 同产同卡（对话卡片在 console 会话页可见）。
+
 ### 规则
 
 1. **默认对话**：进入提案屏即对话；「直接填表」作为显式降级入口（LLM 不可用自动降级并可提示）；
@@ -495,6 +506,7 @@ spec:
 
 - 从零到可提交：≤6 轮对话完成字段齐全（判据=字段卡全绿）；
 - 生成对象过 spec 准入 + R-PUB lint；dry-run 失败时定位到字段；
+- **对照卡三态必现其一**（conflicts / supplements / degraded:true），冲突卡引用可展开且 hash 一致；
 - 确认后 Proposal rv=1、status=submitted；高危提案产 ApprovalNeeded；
-- 「直接填表」路径仍可用（回归不掉）；UI 截图（对话态/预览态）入报告。
+- 「直接填表」路径仍可用（回归不掉）；UI 截图（对话态/预览态/对照卡）入报告。
 
