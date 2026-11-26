@@ -944,6 +944,18 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 **新代际随行注记**：本轮开局实证交接档基线多处过期——cored 已换代（45d79a068cff77c2，05:10 sqlite 重启窗；v0.63 b1fe639b 九连轮纪录止）；R-DOC-7 新代际三仓并行落库（core_design@98c9bd6→1a31dbc 含 512efbc/R-TYPE-3 规则验证、instance@43c5963、workservice@4aad073）；docsRoot scheme.yaml 处于未提交修改态（LoopRequested+importance 0-100+storage.docs sqlite 三处——内容已前移至 core_design@98c9bd6 口径、双 sha 一致 30d9c496+lint files=18 findings=0 mirror=ok 绿；按纪律不代收不代提交=上游部署侧收口中）；attention 端点仍 405（v1/attention 未注册——R-UX-6/7 换代判据未解锁，首屏改轮继续顺延）；docs-index 计数 103（loop-76 报 102 已过期）。
 
 
+### 1.51 通用对象工作台：R-UX-7 + console-ui.md §14.5 落地（2026-11-26 用户裁决，loop-78 轮——纯 client 面改动：六片工作台+首屏取代零 Go 改动；R-UX-6 报告首屏=attention 端点 405 顺延，工作台为 §14.5 内不依赖 attention 的先行面）
+
+**模块（console-obj.js 新增）**：六片纯函数+渲染——`tagGroups()`（tagType 词表归组，未分组殿后不冒充）+ `rulesFor()`（规则确定性命中：kind/scope/tag/正文引用四路来源显式列 `why[]`；零命中=空数组「无适用规则」不装假；索引缺席=degraded 可见）+ `sectionCompletion()`（DocType requiredSections 结构段完成度——预留）+ `ctxSummary()`（会话装配摘要人话化）+ `kindRegYaml()`（/v1/scheme/kinds 载荷行→声明卡 yaml，`md.yamlToCards` 同一渲染核）+ 六片渲染 `tagPanel/rulePanel/ctxPanel/opsPanel/schemePanel/contentPanel`（零 HTML 直插，缺片显式「无」）。规则文档族/tagType 词表=宿主注入 loader（同 console-ctx 范式：120s 缓存失败降级零直接网络依赖——规则文档族全文现读 design-docs `rule/` 前缀 + `*.metadatainfo` tag 词表）。
+
+**屏本体（screenObjWorkbench）**：路由三形——`#/obj/:kind/:scope/:name`（三段主形）+ `#/obj/:kind`（kind 别名=该 kind 首个对象；首装未就绪=LIVE.ensure 后解析）+ `#/obj`（裸词=缺省对象首屏落地）；左=对象清单（tag 点选联动过滤器 `S.objFilter`，标识符全可点）+ 中=身份条（名称/kind 徽章/scope/rev/相位 chip）+六片 + 右=对话栏（一等片：活跃会话计数投影+「就地开聊」深链 `chat/<agent>` 携带对象引用——内嵌输入窗=报告主界面轮同体量项，诚实余量不画假）。规则片引用深链=设计文档工作台 `designdoc/:repo/:path`（path 整段单次编码 %2F——involvedRoute 同词形）。首屏取代（§14.0）：entry.js 面板 route=`#/obj`（空段/裸词重定向工作台）+ console-data 侧栏首位=「对象工作台」；`#/welcome` 保留为旧路由别名域（§14.0 取代表逐位落地）。css `.obj-layout` 布局块（dsh 原生 token 零新色值）。测试 +L78-01（模块直测：分组殿后/命中来源显式/零命中不装假/降级显式/%2F 深链词形/六片空态词形/声明投影）+L78-02（接线在册：三路由/loader 注入/六片挂载词形/动作处理器/拼接序 console-md 后 console-live 前）+L36-03 锚随行（#/obj 入口锚）；npm 155 pass 0 fail。
+
+**UI 拍（loop-78，e78-ui.mjs 7/7 零 pageerror）**：①工作台模块在册+路由活（#/obj 三段落身份条 kind 徽章）；②首屏落地活体（`#/`→空段重定向→`#/obj`→缺省对象→工作台 `#/obj/Workflow/global/deploy-system-workflow`，viewLen 14504）；③六片齐全+对话栏（tags/rules/ctx/ops/content/scheme+chatrail 七挂载词形全在 DOM）；④tag 点选联动在册（本窗对象无 tag 声明=联动词形活体+诚实空态注记）；⑤规则片活体（规则文档族 8 份现读、Workflow 对象命中 6 条、来源 chips 7 个显式）；⑥对象互跳（规则原文可点→designdoc 深链可达 `rule%2Frule_type.md` 编辑器在册）；⑦全程零 pageerror。
+
+**根因修复随行（页面级 error 一次，缺陷即修收口）**：首屏取代的空段重定向词形冲突——entry 面板首挂 `panelForHash(hash)!==nav → location.hash=nav.route` 强写 `#/welcome`，与 app render 空段 `location.replace(objRoute(...))` 互搏产生「读 'kind' of undefined」错误面；收口=面板 route 与 console 空段重定向统一 `#/obj` 词形（面板归位与 console 重定向零互搏）+ 裸 `#/obj` 由 route 处理器自身落缺省对象（挂载时序内自洽不依赖 onChange）。
+
+**新代际随行注记（如实）**：attention 端点三实例 GET/POST 全 405（本轮开局复测 45797/44171/41189——现行 cored 代 45d79a06 仍未含，R-UX-6 报告首屏解锁判据缺席=顺延第 2 轮）；cored 三进程 sha=45d79a068cff77c2 零换代；docsRoot scheme.yaml 未提交态第 2 连拍（双 sha 30d9c496 一致+lint files=18 findings=0 mirror=ok 绿——按纪律不代收不代提交，连 3 拍则询问部署侧裁决）；docs-index 103 现读。
+
 ## 4. 落地顺序（一轮一增量，映射 loop 起点）
 
 
@@ -991,6 +1003,7 @@ console v2 不自造这些交互，模块 id 直接引用（rc 期只锁交互�
 | 界面用户视角 §1.48 | R-UX-3/4/5+§13 落地（loop-75）：文案人话化（字符串域零「面」族+零里程碑词形——双拍机械断言）+渲染优先（console-md.js 渲染器+XSS 红线+字段卡/YAML 次级+编辑器双视图）+系统视角首屏（系统卡+入口卡四张+文档退折叠次级）+dsh 原生 token（零新色值断言）【实现拓扑与细化验收=§1.48；纯 plugin/client 零 Go 零 cored】 | §13.4 判据四项全绿（npm 145 pass+prep 16/16+UI 11/11 零 pageerror+截图 4 张）∧mirror 基线 files=18 findings=0 ok（镜像随行同步 commit a0246bd）∧探针零外发零锚落库 |
 | 提案×上下文对照卡 §1.49 | 053dd1a+§4.6 落地（loop-76）：console-ctx.js 对照模块（确定性检索 conflicts/supplements+ref+hash）+提交节点随行（intake-generate/prop-submit 双入口）+对话区独立卡（冲突可展开/补充一键随行）+审批屏同屏携带（折叠次级+缺位降级可见）+degraded 不阻断+sig 复用【实现拓扑与细化验收=§1.49；纯 plugin/client 零 Go 零 cored】 | §12 机读判据全绿（三态必现其一+hash 一致+一键加入+审批屏同屏+rv=1+截图+零 pageerror——UI 11/11）∧npm 151 pass（+4 L76 锚）∧mirror files=19 findings=0 ok（开局修复镜像漂移 commit c069f1e）∧P-02 第八拍 CLEAN-OK（探针 l76 清场 commit 991dc82） |
 | 降级重试+R-UX-8 活体 §1.50 | 053dd1a 余量③+console-ui.md §15（loop-77）：对照卡降级重试（ctx-retry 按钮+refresh/yamlOf+cxs 盖戳+precheckFields 单源化）+R-UX-8 §15.3 六条活体对账（本轮自身=wake 桥拉起证据链+cli-rule-verify 运行中到达单飞 pending 持久化）+新代际随行对账（cored 45d79a06/R-DOC-7 三仓/attention 405 顺延）【实现拓扑与细化验收=§1.50；纯 plugin/client 零 Go 零 cored】 | npm 153 pass（+L77-01；e2e 夹具补 --docs-backend git 兼容）∧UI 拍 6/6 零 pageerror（降级→重试→恢复活体链路+103 份现读）∧R-UX-8 判据①②④⑤ 活体+③⑥ 机械面替代注记∧mirror files=18 findings=0 ok（双 sha 30d9c496）∧P-01 六仓 ✓∧P-02 第九拍 CLEAN-OK（四域基线一致零残留） |
+| 通用对象工作台 §1.51 | R-UX-7+console-ui.md §14.5（loop-78）：console-obj.js 新模块（六片同一套——tagType 分组/规则确定性命中四路来源显式/结构段完成度/ctx 摘要/kinds 载荷声明投影 kindRegYaml/六片渲染纯函数）+screenObjWorkbench 屏本体（#/obj/:kind/:scope/:name+kind 别名两段+裸词缺省对象三路由；左清单 tag 联动/中六片/右对话栏——对话=一等片深链带对象引用）+loader 注入（规则文档族全文现读+metadatainfo tagType 词表，120s 缓存失败降级）+首屏取代 Welcome（§14.0：entry 面板 route=#/obj+空段/裸词重定向+侧栏首位）+css 布局块零新色值【实现拓扑与细化验收=§1.51；纯 plugin/client 零 Go 零 cored——R-UX-6 报告首屏（#/v1/attention）仍 405 顺延，工作台=§14.5 内不依赖 attention 的先行面】 | npm 155 pass（+L78-01/L78-02+L36-03 锚随行）∧UI 拍 7/7 零 pageerror（六片齐全/规则 8 份现读命中 6/规则原文 designdoc 深链可达/首屏 #/obj→缺省对象活体）∧mirror files=18 findings=0（双 sha 30d9c496——scheme 未提交态沿用）∧P-01 六仓 ✓∧P-02 第十拍 CLEAN-OK |
 ## 5. 执行红线（对 loop 的约束）
 
 1. **不改文档面语义**：console 是观测/操作面，一切写操作（启停/编辑/批准/重跑）=Apply 走既有写路径；发现设计不合理→改文档先于改代码（acceptance 纪律）。
