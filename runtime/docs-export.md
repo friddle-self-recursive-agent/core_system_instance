@@ -24,13 +24,18 @@ sqlite docs DB（权威）
 | 手动 | 运维命令/`corectl export`（下一段；v1 先由部署脚本承担） |
 | 失败 | 告警日志 + 非 0 退出；不回滚 DB、不改写面；下次重试 |
 
-## 3. 导出布局
+## 3. 导出布局与独立导出配置（数据库驱动，默认不导出运行时文档）
 
 沿用 git 布局（**导入导出格式**），不发明第二套：
 
 - 对象路径由 `Scheme.kinds[].storage` 模板决定（`systems/<s>/system.yaml`、`global/agents/<name>.yaml` 等；与 `SeedFromLayout` 同一解析口径）；
 - 文件内容=sqlite `doc.content` 原文（逐字节，不重排/不格式化）；
-- 删除：DB 中不存在的对象，在导出工作树中删除（`git rm`）；删除只在导出提交中体现；
+- **文档导出是一个单独的数据库配置项目（`docs_export_config` 表，绝不在 Go 代码中硬编码过滤）**：
+  - `scheme.yaml` 的 `docTypes[]` 声明 `category: design|runtime` 与 `exportDefault: true|false`（其中运行期文档 `BugDoc`、`DriftReport`、`PlanDoc`、`SessionLog` 声明为 `category: runtime, exportDefault: false`）；
+  - sqlite docs DB 维护独立的 `docs_export_config` 配置表（首次启动从 `scheme.docTypes[].exportDefault` 派生种子初值：`include_runtime_docs=false`、`exclude_doc_types=["BugDoc","DriftReport","PlanDoc","SessionLog"]`）；
+  - 暴露 `GET /v1/docs-export/config` 与 `PUT /v1/docs-export/config` 读写接口，并在控制台提供独立「文档导出配置」面板供用户随时开关是否导出 `BugDoc` 等运行时文档；
+  - `Exporter.enumerate()` 在每次导出拍动态读取数据库中的 `docs_export_config` 过滤文档，不写死任何 `docType` 字符串；
+- 删除：DB 中不存在（或被导出配置排除）的对象，在导出工作树中删除（`git rm`）；删除只在导出提交中体现；
 - 可选附带：`README`/`MANIFEST`（rv 高水位、导出时刻、对象计数）——不替代正文；`*.md.metadatainfo` 侧车按 R-DOC-6 随行（若导出范围含设计文档仓）。
 
 ## 4. 提交与推送

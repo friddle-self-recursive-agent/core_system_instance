@@ -1094,14 +1094,24 @@ corectl loop
 3. **修复**：事件全链增可选 `run` 序号（eventbus.Event / eventpub.Request / apiserver eventsRequest / TriggerRecord.TargetRun）；`ResumeSignal` 优先按 `TargetRun` 定向（不存在=零动作，绝不回落最新）；web 三处批闸 payload 携带 run，plugin event-pub 顶层透传。
 4. **活体证据**：run #11 `AwaitingApproval` → `Executing`，history 行 `{from:AwaitingApproval,on:ApprovalGranted,to:Executing}`（2026-11-27T07:46:59Z）；驳回同链路由单测双锚覆盖（#1 驳回落 Failed、#2 不受影响）。
 
-### 19.8 Workflow 真实详情（定义/编辑/节点/任务/会话，2026-11-27）
+### 19.8 Workflow 真实详情、以人为本配置工作台、`OpenAIProvider` 点击即配与文档导出配置（2026-11-27）
 
-1. **入口词形**：`#/wf/:name` 直接现读三源——`GET /v1/workflows`（定义/执行绑定/ConnectorOps 骨架）、`GET /v1/workflows/runs`（运行/相位轨迹/session 锚）、`GET /v1/tasks`（任务标题/phase）；不再依赖快照 `workflows` 键。`bug-workflow` 作为 `bug-lifecycle` 的兼容别名（页面显式标注，不伪造第二个 workflow）。
-2. **编辑**：object 源 Workflow → 既有 Workflow 编辑器/对象工作台；builtin 源 → `workflow.md` 与 `core/scheme.yaml` 设计文档工作台（builtin 高敏，不在 UI 伪造对象表单）。
-3. **节点**：相位链来自 `workflows.phases`；运行统计/当前节点来自真实 runs+history；执行节点来自 `executionFlow`（ConnectorOps 骨架）。`apply-workflow` 当前 `execution.state=unbound`、`runsTotal=0`，页面明确显示「执行面未绑定/暂无运行」，不再空白。
-4. **任务**：run.involved=`Task/<scope>/<name>` 反查 `/v1/tasks` 真实 Task 行；任务卡显示标题/phase/关联 runs/任务深链。零关联=不渲染假任务。
-5. **Session（真实）**：旧 `Task.status.agentSession` 实际是 taskId（spawn 桥 sessionHint），**不是 dsh sessionId**。新增 plugin `GET /core-console/task-sessions?taskIds=...`：从宿主 sessionController 的真实 journal 反查用户消息 `taskId:`，返回 `session-*`；同 Task 多次重跑按 run.startedAt 与任务卡首条消息时刻最近匹配。节点会话来源显式标注：`history.sessionId`（节点）→ `run.sessionId`（运行）→ Task journal（任务）；全空=「会话未记录」，不编造。
-6. **运行详情**：`#/wf/:name/r/:n` 增加会话卡与逐节点会话表；runs face 刷新时同步更新 status/sessionId/history，陈旧异步请求按 detail stamp 丢弃。
+1. **双内置基座与入口词形**：内置为 **`core-system-developer-loop`**（出厂默认 `enabled: false`，`core-system` 实例自我迭代显式开启；不可删除、不可增删主干节点）与 **`default-task`**（内置通用任务相位状态机，`session`/`agent` 节点支持 `globalRuleRefs` 引用全局规则）；其余旧名（`core-workflow`/`bug-workflow`/`bug-lifecycle`/`dev-delivery`/`apply-workflow`/`simple-shot`/`watch-only`）作为 Scheme Adapter 兼容别名自动映射。`#/wf/:name` 直接现读 `GET /v1/workflows`、`GET /v1/workflows/runs`、`GET /v1/tasks`。
+2. **以人为本全节点可视化配置（保存即 Apply 落 `Workflow` 文档对象）**：
+   - **总控与基础环境**：一键启停（`enabled` 开关）、锁定徽章（内置不可删除/主干节点不可删改）、全局规则引用（`globalRuleRefs`）、`developer-system` 与 `deploy-system` 绑定方式逐层询问（`default` 默认开源习惯：`agent/<name>` 分支、`worktrees/<repo>/<slug>`、`tmp/`、≤800行 / `install` 模板安装 / `import` 导入外部系统）。
+   - **节点 1（监听日志与 Event / `Idle`）**：可配置监听事件类型、最低日志级别、Service/关键词过滤、定时周期，以及**日志收集 `ConnectorOps`**；若所选 `ConnectorOps` 缺失或处于 `skeleton` 骨架态，直接提供 **「拉出代码开发任务（开发/编辑此 ConnectorOps）」** 按钮。
+   - **节点 2（Agent 判断 / `Analyzing`）**：可配置判断准则（`criteria`，如判断运行 Bug 是否值得修复或产出临时 `BugDoc`）、引用全局规则（`globalRuleRefs`）与高智商模型（`tier: high`）。
+   - **节点 3（审批 / 自动判断审批 / `AwaitingApproval`）**：前端直接可视化编辑切换 `human`（人工审批）/ `agent`（Agent 规则自动判断审批，可编辑 `autoCriteria` 与风险阈值）/ `auto`（全自动放行）。
+   - **节点 4（Doc Apply 多入口汇聚 / `Planning`）**：配置**第二触发入口（用户对话修改设计文档，或发现 Bug 不改设计直接触发临时 `BugDoc` 的 `DocApplied` 直接从本节点切入）**及匹配 `docTypes`，跳过前 3 步直奔 `developer-system → 验收 → deploy-system`。
+   - **节点 6（验收 / `Verifying`）**：可编辑**怎么验收**（`both` 代码+Agent / `code` 代码审核 / `agent` 规则验收 / `human` 人工）与**验收条件清单**（支持自由勾选、编辑、新增、删除验收条件条目及失败回退策略）。
+   - **总结最后一步（`Reporting` 相位 / 通用解释器收尾动作 `postActions`）**：遵循「Workflow+Scheme 为声明层、代码为通用解释器」，原独立的「临时 BugDoc 闭环」概念失效；对临时 `BugDoc` 的收尾动作默认在节点 8 的 `postActions` 列表中预置，用户可在前端**自由添加/删除该动作项**，或切换策略为 **`invalidate`（标记失效归档）/ `delete`（删除文档触发 `DocDeleted`）/ `keep`（保留不删除）**，并按声明将 `ServiceInstance` 状态回写为 **`InSync`**。
+3. **默认 `OpenAIProvider` 点击即配 + 不同任务/不同 `ConnectorOps` 智商分级模型映射**：
+   - 每个 `Session`、`ConnectorOps`、`Workflow` 节点均显示当前绑定的 `Provider` 徽章（默认 `openai-default`）与模型档位（`low` 低智商重复性任务 / `standard` 标准任务 / `high` 高智商设计性任务）；
+   - **点击任意 `Provider` 徽章或「配置 OpenAIProvider」按钮**，原地弹出 `OpenAIProvider` 配置面板：可直接编辑账号/密钥引用（`secret:...` / `env:...`）、Base 地址（`baseUrl`）、模型清单（`models`），以及不同任务/不同 `ConnectorOps`/不同节点的模型映射表，一键 Apply 保存。
+4. **独立文档导出配置面板（`GET/PUT /v1/docs-export/config`）**：
+   - 文档导出作为单独配置项存储在数据库 `docs_export_config` 表（初值取自 `scheme.yaml` 的 `docTypes[].exportDefault`，默认不导出 `BugDoc`、`DriftReport`、`PlanDoc`、`SessionLog` 等运行时文档，非代码硬编码）；用户可在界面直接勾选/调整哪些文档类型参与 Git 导出。
+5. **四大设计表与 YAML 定义直查**：页面同屏展示 ① 多入口触发与日志过滤表、② 节点与跨系统交互设计表（含 Provider、模型档位、GlobalRuleRefs）、③ 状态迁移分支表、④ 完整 YAML 文档声明。
+6. **任务与真实 Session**：run.involved=`Task/<scope>/<name>` 反查 `/v1/tasks` 与 `/core-console/task-sessions`；节点会话来源显式标注 `history.sessionId` → `run.sessionId` → Task journal。
 
 ## 20. 全页深度扫描与整改方案（2026-11-26）
 

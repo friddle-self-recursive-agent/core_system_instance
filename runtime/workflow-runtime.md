@@ -256,6 +256,29 @@ watchdog 自愈第一动作（注入固定 prompt「继续」）的真实执行�
 - **判定权威=apply_log 行**：进程内投影环（批准投影）重启归零后，`workflow:approve` 判定行在账即可重放声明（apply_log 账本事实投影单点真相——重启后重物化同拍挂 pending、判定行重扫即再现声明）；真实拉起段落地时改写 `wired` 的唯一入口=agent-session 域接线实现轮（本面无写路径）。
 - **红线**：不 enable workflow、不自动执行代码、不新增自动任务——声明面只投影「已批准的接线意图」，真实执行仍 observe。
 
+### 11.8 双内置基座（`core-system-developer-loop` + `default-task`）、Scheme 通用解释器、临时 `BugDoc` 可配收尾与 `OpenAIProvider` 模型分级（2026-11-27 用户裁决）
+
+1. **「Workflow + Scheme = 声明层，代码 = 通用解释器」与双内置基座**：
+   - 引擎代码只做通用解释器（Interpreter），按 Workflow 文档与 Scheme Adapter 声明解释执行节点、触发器、审批策略、验收条件与收尾动作（`postActions`），绝不在代码中硬编码专用业务闭环；原先单独设立的「临时 BugDoc 闭环（`bug-lifecycle`）」失效作废；
+   - `core-system-developer-loop`：管理自我迭代与研发发布闭环的主干工作流；
+   - `default-task`：内置通用任务相位状态机（`Idle → Analyzing → Planning → AwaitingApproval → Executing → Verifying → Reporting`），其中 `session` / `agent` 节点支持通过 `globalRuleRefs` 引用相应的 `global` 规则（如 `rule/rule_eng`、`rule/rule_doc`、`rule/rule_ux`、`rule/rule_ctx`、`rule/rule_pub`）；
+   - 其余旧名（`core-workflow`/`bug-lifecycle`/`bug-workflow`/`dev-delivery`/`apply-workflow`/`simple-shot`/`watch-only`）在 `scheme.yaml` 的 `runtime.workflows.aliases` 中做 Scheme Adapter 兼容映射，不再独立占册。
+2. **出厂默认不启动（`enabled: false`）与核心保护（`undeletable: true`, `immutableNodes: true`）**：
+   - 出厂（如 `sybran` 等对外项目）默认 `enabled: false`；`core_system` 实例因自我迭代显式在 `global/workflows/core-system-developer-loop.yaml` 置 `enabled: true`；
+   - `DELETE /v1/objects` 拒绝删除内置工作流；`Apply` 锁定主干节点拓扑不可删改，但全节点参数与环境绑定可配置。
+3. **标准主干节点、多入口触发（`entryPoints`）与临时 `BugDoc` 可增删收尾策略**：
+   - 主干：`1. 监听日志与 Event (Idle)` → `2. Agent 判断 (Analyzing)` → `3. 审批/自动审批 (AwaitingApproval)` → `4. Doc Apply (Planning)` → `5. developer-system (Executing)` → `6. 验收 (Verifying)` → `7. deploy-system (Deploying)` → `8. 总结归档 + 回写 InSync (Reporting)`；
+   - **入口 1（日志/Event/定时）**：命中节点 1 `Idle`，推进至 `Analyzing`；支持日志过滤与 `ConnectorOps` 收集指定日志（若 `ConnectorOps` 缺失/骨架态，可一键拉出代码开发任务由 `developer-system` 实现）；
+   - **入口 2（对话修改设计文档，或发现 Bug 不改设计直接触发临时 `BugDoc` 的 `DocApplied`）**：命中节点 4 `Planning`（`doc-apply`）的 `entryPoints`，run **直接从 `Planning` 切入并推进至 `Executing (developer-system)`**，走 `developer-system → 验收 → deploy-system → 总结归档`；
+   - **总结最后一步（`Reporting` 相位通用解释器动作 `postActions`）**：默认预置可自由**添加/删除**的 `BugDoc` 收尾动作项，且策略可选 **`invalidate`（标记失效归档）/ `delete`（删除文档触发 `DocDeleted`）/ `keep`（保留不删除）**，同时按声明将 `ServiceInstance.status.phase` 修改回 **`InSync`**（清零 drift）；`BugDoc` 作为运行时文档（`category: runtime, exportDefault: false`），由数据库独立配置项 `docs_export_config` 控制默认不导出。
+4. **默认 `OpenAIProvider` 点击即配与按任务/ConnectorOps 智商分级模型映射**：
+   - 所有 `session`、`connectOps`、`workflow` 均绑定默认 Provider（`openai-default`）；控制台点击任意 Provider 徽章即可弹出 **`OpenAIProvider` 配置抽屉**（配置账号/密钥引用、`baseUrl`、模型列表）；
+   - 支持不同任务与不同 `ConnectorOps`/节点绑定不同智商档位模型（`low` 重复性/日志清洗任务用轻量高性价比模型、`standard` 常规研发任务用标准模型、`high` 架构设计与复杂根因评审任务用高智商推理模型），可在界面自由修改映射并 Apply。
+5. **Scheme Adapter 配置面（前端可视化直编直落 YAML）**：
+   - 节点 3 审批模式支持 `human | agent | auto`（`agent` 模式按 `autoCriteria`/`maxRiskLevel` 自动判断审批）；
+   - 节点 5/7 系统绑定支持 `developer-system` 与 `deploy-system` 的 `default（默认开源习惯）| install（模板安装）| import（导入外部系统）` 逐层询问配置；
+   - 节点 6 验收支持 `mode: both | code | agent | human` 与自定义验收条件清单 `conditions[]` 增删改。
+
 ## 12. 可行性
 
 | 风险 | 等级 | 说明 | 缓解 |
