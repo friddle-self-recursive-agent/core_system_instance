@@ -49,9 +49,9 @@ Task 对象（docs DB / sqlite）
   - 端点：`POST /task/spawn`（127.0.0.1，随机端口；cored env `CORE_SYSTEM_TASK_SPAWN_ADDR` 回填）。
   - 载荷：`{taskId, taskPath, workspace:{mode,path,branch}, agent}`；**不拼 shell**，只把 `taskPath` 作为 stdin 输入给固定命令。
   - 单飞：`pgrep -f` 任务标识或锁文件；同任务不重复拉起。
-  - 拉起：`dsh --profile core-headless --permission-mode danger-full-access --approval-policy never - < taskPath`（部署侧配置命令/参数，公开仓只写机制）。
+  - 拉起：`dsh --profile <p> --permission-mode <mode> --approval-policy <ap> - < taskPath`——**权限档=显式配置非宿主脚本隐式全权**（2026-11-27 用户裁定）：mode 来自任务文件 `permissionMode` 字段（default-dsh-agent/v1 契约 spawn-agent 参数，`systems/builtin/connector/interfaces/default-dsh-agent.yaml`；缺省 danger-full-access、白名单校验后使用），approvalPolicy 缺省 never（headless 无人值守）；部署侧配置命令模板，公开仓只写机制。
   - 回执：`{ok,status:spawned|already-running,sessionHint}`；会话 ID 由执行体心跳/`Task.status.agentSession` 回填。
-- 任务文件 `taskPath` 由调度器生成（Task.spec + acceptance + touches + worktree + 验证要求），落部署侧临时目录；不进入公开仓。
+- 任务文件 `taskPath` 由调度器生成（Task.spec + acceptance + touches + worktree + 验证要求 + permissionMode），落部署侧临时目录；不进入公开仓。
 
 ## 5. 工作区隔离与落地
 
