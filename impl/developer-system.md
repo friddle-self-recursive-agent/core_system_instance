@@ -20,7 +20,7 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-developer-system}]
 | scm / watch | gitfs（本地 git 仓；本地 commit→Event，本地 hook/巡检兜底） | onedev-driver（远程 SCM adopt：webhook+2m 巡检） |
 | checkout | 本地 git fetch（同机路径） | onedev-driver.checkout（REST+git） |
 | build | exec-local（本机 dsh，命令白名单） | exec-local（目标机）/ 其他 executor |
-| artifact | storage-system（本地目录/OSS） | oss-driver（远程归档） |
+| artifact | storage-system（本机 files/ 目录，digest） | oss-driver（可选外接：远程归档） |
 | gate / notify | 本地红线脚本 + 本地通知 | 公司渠道（build-status 回写、gate-status 抽查） |
 
 **这是"意图在文档、现实在外部、Workflow 拉齐"的节点级应用**：service/connectorOps 绑定写在节点声明里
@@ -37,7 +37,7 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-developer-system}]
    Workflow(developer-main) → Agent(dsh 基座) → TaskScheme(build-and-verify)
         ├─ checkout：本地 git fetch（同机）
         ├─ build：exec-local ./gradlew build+test（本机）
-        ├─ artifact：storage-system 本地目录/OSS put（digest）
+        ├─ artifact：storage-system files/ 本地目录 put（digest）
         └─ gate/notify：本地红线（test+lint）+ 本地通知
         ▼
    verify（重跑探针+Metrics 复测）→ Status 追平 → Event(DriftFixed)
@@ -68,7 +68,7 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-developer-system}]
 
 ## 4. 如何开发（落地顺序；builtin 先行）
 
-1. **本地链路**（builtin 首圈，零外部依赖）：gitfs 本地仓 + exec-local build + storage 本地/OSS + 本地通知——先跑通 §5 走查。
+1. **本地链路**（builtin 首圈，零外部依赖）：gitfs 本地仓 + exec-local build + storage 本地 files/ + 本地通知——先跑通 §5 走查。
 2. **TaskScheme `build-and-verify`**：先手工跑通五步（execution-model.md §3 模板），再入库过审。
 3. **Workflow(developer-main)**：watch 事件 + 2m 巡检。
 4. **scm connector 契约测试**：五 op conformance（首跑/重跑幂等/失败路径）；builtin=gitfs 本地实现先行。

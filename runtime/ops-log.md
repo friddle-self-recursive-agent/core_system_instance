@@ -83,7 +83,7 @@ draft        (kind, scope, name, content, field_manager, reason_ref, base_rv, cr
 
 - Apply 成功 = 同一事务语义的两笔：先 DB（apply_log）后 git commit；Core 崩溃恢复时对账：有 DB 无 git → 回放该 commit；有 git 无 DB → 补记（带 recover 标记）。
 - 每日自动对账任务（TaskScheme `verify` 模板的一个探针）：`apply_log.count ≈ git log count`，差异生成 DriftReport（这就是 self-recursive-core Goal.A3）。
-- ops DB 自身备份：随 storage-system 的 NAS 层（每日快照）；DB 不是权威——**可丢弃可重建**（从 git+审计重建大部分），这是它敢用 SQLite 的原因。
+- ops DB 自身备份：storage-system 每日快照落本机 snapshots/（builtin 无 NAS/OSS，远端=外接 connector 后部署自配）；DB 不是权威——**可丢弃可重建**（从 git+审计重建大部分），这是它敢用 SQLite 的原因。
 
 ## 4. 查询入口
 
@@ -97,4 +97,4 @@ draft        (kind, scope, name, content, field_manager, reason_ref, base_rv, cr
 |---|---|---|
 | SQLite 写并发 | ⚠️ 低 | 单写者（Core 串行队列已保证）；WAL 模式 |
 | 双写不一致窗口 | ⚠️ 中 | 恢复对账 + 每日对账探针（把不一致本身当成 drift 管理——本系统主场） |
-| DB 膨胀 | ⚠️ 低 | 分区滚动（90d 热数据）+ 冷数据归档 OSS |
+| DB 膨胀 | ⚠️ 低 | 分区滚动（90d 热数据）+ 冷数据归档（可选外接 oss connector；内置仅本机） |

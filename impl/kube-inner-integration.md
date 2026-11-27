@@ -55,7 +55,7 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-deploy-system}]
 |---|---|---|---|
 | 业务管理系统 | 46 | 用户中心（SSO 底座）、AI 通道管理、设备与运营后台、BI 报表、技术支持/社区后台 | 每系统=WorkService；每环境实例=Instance 或 Ref |
 | 运维系统 | 21 | 日志/指标/链路追踪、K8s 管理面板、缓存/DB 管理入口 | 多数并入 kube-inner/监控栈的六面体（它们是同一批外部系统的 UI），**不重复注册** |
-| 账号与存储 | 14 | LDAP/SSO/Keycloak、网盘、NAS | 账号类=权限系统/user-system 的对接 IdP（WorkService）；存储类=storage-system 的既有纳管 |
+| 账号与存储 | 14 | LDAP/SSO/Keycloak、网盘、NAS | 账号类=权限系统/user-system 的对接 IdP（WorkService）；存储类=本机存储是 builtin 缺省（builtin 无 NAS/OSS），既有 NAS 等外部存储=部署版 connector 纳管，非内置范围 |
 | 内部业务系统 | 6 | 订单/激活码/售后、Bug/工单、反馈中心、版本管理 | 每系统=WorkService；反馈中心与工单=feedback-workflow 的事件源（第一优先） |
 | 开发工具 | 3 | 跳板机、公司 git（OneDev）、网盘聚合 | 跳板=通道基础设施（Provider 连接面）；OneDev=developer-system 既有设计 |
 

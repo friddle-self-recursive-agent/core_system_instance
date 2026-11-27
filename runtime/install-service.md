@@ -36,7 +36,7 @@
 3. 无 digest 不装；asks 未答完不装；无人确认不装（模板再"安全"也过一遍人）。
 4. **逐层下探**：按 `chain` 层序执行；跨层要求自动下探对应层模板；已解析项跨层不重问。
 5. 安装幂等：装第二遍=no-op（deploy-system Goal.A2）；组件级幂等由 Connector 契约保证。
-6. 镜像地址默认 OSS（storage-system Archive 层）；无 OSS 走 resolver 降级链（nas/local——这是**要求降级**，留痕非静默）。
+6. 镜像地址默认 storage-system 本地 templates/（**local 是唯一内置源**）；部署方显式接了 nas/oss connector 才有远端源可选——选远端是配置决策非降级，缺源走 resolver 链显式降级回 local，留痕非静默。
 7. 恶意模板防线：来源限定本 org + digest + install 动作白名单 + 高危动作（exec/写系统路径）人审。
 8. 询问面复用 intake 引擎（`/v1/intake/*`，R-UX-1 六步）与 scheme 驱动控件（R-UX-2）；agent 节点（autoLevel=all）可自动答可解析项并自确认（同准入链留痕）。
 

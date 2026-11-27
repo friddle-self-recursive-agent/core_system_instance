@@ -33,7 +33,7 @@
 | `core_system`（self-recursive-core） | **最小 workflow 本身，带 event**——引擎+事件队列的最小闭环 |
 | `core_developer_system` | 研发系统（onedev 纳管 + 本地 build） |
 | `core_deploy_system` | 部署系统（当前机器执行器） |
-| `core_storage_system` | 存储系统（本地 git + NAS + OSS） |
+| `core_storage_system` | 存储系统（本机目录：docs/files/snapshots/templates；builtin 无 NAS/OSS） |
 
 core_system 可使用的**内置 operator**——**operator 就是 ConnectorOps**（concepts/connector.md，既有概念，非新物）：三个 builtin ConnectorOps 实例，默认就是当前机器；**core_system → operator 是 1-N，不是 1-1**（一个系统挂多个 ops）：
 

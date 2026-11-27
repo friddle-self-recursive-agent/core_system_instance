@@ -46,9 +46,9 @@ builtin 任务模板库（`global/templates/task/`，参数化；四操作=用/�
 
 | 模板（origin=builtin，不可删；可 fork 调整副本，含提示词段） | 触发 | 步骤骨架 |
 |---|---|---|
-| `build` | push/手动 | checkout → build(dsh exec) → gate → artifact(oss) → report |
+| `build` | push/手动 | checkout → build(dsh exec) → gate → artifact(storage files/) → report |
 | `verify` | 定时/手动 | 探针集（ConnectorOps.verify + Metrics 查询）→ DriftReport |
-| `sync` | 定时 | gitfs push NAS remote → 校验 → report |
+| `sync` | 定时 | gitfs 本地 fsck+快照核验 → 校验 → report（外接远端 connector 时 push，fork 副本可加） |
 | `report` | 定时（日/周） | 聚合 DriftReport/Event → 周报文档（现实压缩回文档） |
 | `install` | InstallRequested | 模板发现 → asks 询问 → 三段安装 → 纳管登记 |
 

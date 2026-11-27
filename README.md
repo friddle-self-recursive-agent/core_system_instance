@@ -9,7 +9,7 @@
 | systems/builtin/self-recursive-core | [impl/self-recursive-core.md](impl/self-recursive-core.md) | workservice: cmd/cored, cmd/igniter |
 | systems/builtin/developer-system | [impl/developer-system.md](impl/developer-system.md)（**首个设计对象**：如何利用 onedev/如何开发/如何满足循环） | workservice: connectors/onedev-driver |
 | systems/builtin/deploy-system | [impl/deploy-system.md](impl/deploy-system.md) | workservice: plugins/exec-local |
-| systems/builtin/storage-system | [impl/storage-system.md](impl/storage-system.md)（NAS+OSS） | workservice: connectors/gitfs, nas, oss |
+| systems/builtin/storage-system | [impl/storage-system.md](impl/storage-system.md)（本机目录存储；nas/oss=部署方可选外接 connector，非内置） | workservice: connectors/gitfs |
 | （无独立 Desc：core-workflow 系 Workflow 实例，A56） | [impl/feedback-workflow.md](impl/feedback-workflow.md)（反馈修复闭环：报错→agent→提议→批准→pull→发布→验收） | —（设计，未开工） |
 | （挂 deploy-system，A58） | [impl/kube-inner-integration.md](impl/kube-inner-integration.md)（内网集群纳管 + 页面功能模块划分） | —（设计，未开工） |
 | systems/builtin/user-system | [impl/user-system.md](impl/user-system.md)（接入 LDAP 认证+目录同步 / 飞书账号映射，A59） | —（设计，未开工） |
@@ -42,7 +42,7 @@
 - [runtime/builtin-flows.md](runtime/builtin-flows.md)：内置能力流程总表（研发/发布/备份/认证/事件/指标/workflow 生命周期）
 - [runtime/bootstrap.md](runtime/bootstrap.md)：自举（bootstrap）设计
 - [layout.md](layout.md)：目录即对象规范（文档库物理布局）
-- [feasibility.md](feasibility.md)：可行性报告（含 onedev / NAS+OSS / dsh / sqlite 专项，R1.6 指定放本仓）
+- [feasibility.md](feasibility.md)：可行性报告（含 onedev / 本地存储 / dsh / sqlite 专项，R1.6 指定放本仓）
 - [examples/](examples/)：developer-system 走查示例
 
 ## MVP：dsh-core-agent（第一版可运行形态）

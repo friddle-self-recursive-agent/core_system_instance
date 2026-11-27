@@ -65,7 +65,7 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-self-recursive-core}]
     pull 修复分支/补丁到本地                        preview → prod（deploy-system
   ② exec-local 本地 build+test                    的 ConnectorOps：集群 deployments
     （红线：test/lint 全绿才产物）                   patch/回滚，分批+健康门槛）
-  ③ oss-driver.put 产物（digest）                ⑤ build-status 回写 OneDev
+  ③ storage files/ 本地 put 产物（digest）        ⑤ build-status 回写 OneDev
         └────────────────────┬───────────────────────┘
                              ▼
               Verifying：探针复测（错误率归零？健康检查？）

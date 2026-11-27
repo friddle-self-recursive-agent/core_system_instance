@@ -23,12 +23,14 @@ Event(push/需求) → Analyze → Gate（红线：test/lint 全绿才产物）
 
 prod 档位强制人批（feedback-remediation 约束）；每业务 VerifyDoc.probes 出验收探针。
 
-## 3. storage-system：三层备份/恢复
+## 3. storage-system：本机目录存储（2026-11-27 裁定：builtin 无 NAS/OSS）
 
 ```
-备份：文档库（git push 远端）→ ops DB（sqlite 快照）→ 大产物（OSS digest 归档）
-     每层 Rule 声明节奏（默认：git 实时、DB 日更、OSS 按产物）
-恢复：git 层恢复目录 → DB 回放 → OSS 按 digest 取回 → 对账 Workflow 校验差异
+内置：storage root 本机目录——docs/（git 文档库权威）+ files/（产物 digest）
+     + snapshots/（ops DB 每日快照）+ templates/（install 镜像）
+恢复：snapshots/ 回放 + docs/ checkout 任意提交 → 对账 Workflow 校验差异
+外接（可选）：部署方接 nas/oss connector 后，远端 sync/归档=部署配置的 Task/Workflow；
+     不接则系统完整可用（builtin 零外部依赖）
 ```
 
 ## 4. user-system：认证 + 目录同步（impl/user-system.md）

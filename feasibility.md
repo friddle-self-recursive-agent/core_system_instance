@@ -74,14 +74,14 @@
 
 **结论：可行。首圈循环（core_system Goal.A4）不被任何 onedev 短板阻塞。**
 
-## 6. NAS + OSS 三层存储
+## 6. 本机目录存储（2026-11-27 裁定：builtin 无 NAS/OSS）
 
 | 项 | 评级 | 说明 |
 |---|---|---|
-| NAS 作 git remote | ✅ | NFS 挂载点放 bare repo，零新组件 |
+| 本机目录+git（docs/files/snapshots/templates） | ✅ | workservice gitfs+sqlite 已有实现形态，零新组件、零外部依赖 |
 | sqlite 文件快照 | ✅ | WAL checkpoint 后文件级拷贝即一致快照 |
-| OSS 镜像分发 | ✅ | 分段上传+digest；带宽是唯一变量，NAS 可作局域缓存 |
-| 断 NAS 可用性 | ✅ | 权威在本地，sync 挂起重试不阻塞写 |
+| digest 校验链 | ✅ | 写入/取件两端各算一次比对，纯代码 |
+| 远端外接（nas/oss connector） | ✅ | connector 模式已验证（onedev-driver 同构）；接与不接都不改内置契约，sync/归档=部署的 Task/Workflow |
 | 季度恢复演练 | ⚠️ 纪律 | 排进 scheduling.yaml，忘记=drift 可见 |
 
 **结论：可行，无新组件（全部是现成技术拼装）。**
@@ -159,7 +159,7 @@
 ## 12. 更新后的落地顺序（覆盖 §4，含 v0.2）
 
 1. workservice 骨架 → igniter+cored 最小可跑（git 后端+ops DB）
-2. storage-system 三层（NAS remote+OSS bucket+sync 模板）
+2. storage-system 本机目录（docs/files/snapshots/templates；nas/oss=部署方可选外接）
 3. onedev adopt 纳管 + onedev-driver 五 op → **跑通首圈循环（core_system Goal.A4）**
 4. console TUI 两层视角
 5. TaskScheme 模板库补全 + install 流程（prometheus-template 首装）
