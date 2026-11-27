@@ -39,7 +39,7 @@ core-system-developer-loop
 
 ## 3. 落地形态
 
-无专属 workflow 对象。部署侧按需 **fork `core-system-developer-loop` 副本**调整绑定：事件源 service、developer/deploy 渠道绑定值、审批档位（human/agent/auto）；主干 `undeletable+immutableNodes` 不动。平台级声明示例见 `examples/workflows/`（`gh-issue-triage`、`agent-release`——同构：入口触发→agent→审批→文档→构建→验收→发布）。
+无专属 workflow 对象。部署侧按需 **fork `core-system-developer-loop` 副本**调整绑定：事件源 service、developer/deploy 渠道绑定值、审批档位（human/agent/auto）；主干 `undeletable+immutableNodes` 不动。平台级声明示例见 `examples/workflows/`（`gh-issue-trigger`、`agent-release`——同构：入口触发→agent→审批→文档→构建→验收→发布）。
 
 ## 4. 可行性
 

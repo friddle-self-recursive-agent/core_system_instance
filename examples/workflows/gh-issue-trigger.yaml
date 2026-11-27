@@ -1,7 +1,7 @@
 apiVersion: core/v1
 kind: Workflow
 metadata:
-  name: gh-issue-triage
+  name: gh-issue-trigger
   scope: global
   labels:
     core/origin: custom
@@ -25,6 +25,7 @@ spec:
       verify:           {tier: low,      model: "flash-tier"}
       gh-release:       {tier: low,      model: "flash-tier"}
       report-archive:   {tier: low,      model: "flash-tier"}
+      issue-feedback:   {tier: low,      model: "flash-tier"}
   globalRuleRefs: [rule/rule_eng, rule/rule_doc, rule/rule_ux, rule/rule_pub]
   logSource:
     events: [GhIssueEvent]
@@ -87,11 +88,12 @@ spec:
     - {name: gh-issue-fetch,   phase: Idle,             title: "1. 拉取待整理 Issue（issue-list）",   unit: connectops, connector: connectops-gh, op: issue-list, provider: openai-default, modelTier: low,      entryEvents: [GhIssueEvent]}
     - {name: agent-judge,      phase: Analyzing,        title: "2. Agent 判断（bug/文档/需求/噪声）", unit: agent,      op: judge-issue, provider: openai-default, modelTier: high, globalRuleRefs: [rule/rule_eng, rule/rule_doc]}
     - {name: approval-gate,    phase: AwaitingApproval, title: "3. 审批 / 自动判断审批",              unit: gate,       op: approval-check, provider: openai-default, modelTier: high}
-    - {name: doc-apply,        phase: Planning,         title: "4. Doc Apply（结论/BugDoc 落稿）",    unit: session,    op: apply-doc,   provider: openai-default, modelTier: standard, globalRuleRefs: [rule/rule_doc], entryEvents: [DocApplied]}
+    - {name: doc-apply,        phase: Planning,         title: "4. Doc Apply（结论/BugDoc 落稿）",    unit: agent,      op: apply-doc,   provider: openai-default, modelTier: standard, globalRuleRefs: [rule/rule_doc], entryEvents: [DocApplied]}
     - {name: developer-system, phase: Executing,        title: "5. 修复/文档更新（build 走 gh）",     unit: agent,      connector: connectops-developer, op: develop, provider: openai-default, modelTier: high, globalRuleRefs: [rule/rule_eng, rule/rule_ux, rule/rule_pub], service: developer-system}
     - {name: verify,           phase: Verifying,        title: "6. 验收（CI+规则审核）",              unit: connectops, connector: connectops-code-audit, op: audit, provider: openai-default, modelTier: low}
     - {name: gh-release,       phase: Deploying,        title: "7. github release 发版",              unit: connectops, connector: connectops-gh, op: release-create, provider: openai-default, modelTier: low}
-    - {name: report-archive,   phase: Reporting,        title: "8. 回评 Issue + 归档收尾",            unit: session,    op: archive-report, provider: openai-default, modelTier: low}
+    - {name: report-archive,   phase: Reporting,        title: "8. 归档收尾（报告/Status 回写）",      unit: agent,      op: archive-report, provider: openai-default, modelTier: low}
+    - {name: issue-feedback,   phase: Reporting,        title: "9. Issue 反馈闭环（回评修复结果+关闭）", unit: connectops, connector: connectops-gh, op: issue-comment, provider: openai-default, modelTier: low}
   transitions:
     - {from: Idle,             on: advance,          to: Analyzing}
     - {from: Idle,             on: "entry:GhIssueEvent", to: Analyzing}
