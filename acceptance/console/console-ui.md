@@ -1068,8 +1068,8 @@ corectl loop
 
 ### 19.4 转正（同批落地）
 
-1. **入口**：gate（dsh-web-gate）token 命中后 302 → `/core-console/v2`——控制台=默认落地页；dsh 原生界面降级为「agent 节点深查窗」（会话屏 iframe/新窗口按钮仍可达 `/?embedded=1`）。
-2. **载体毛刺**：`/core-console/v2/`（尾斜杠）404 → 同壳响应（dsh 前缀匹配语义 url===path||path+'/'——注册词形补齐）；favicon data-URI 注入壳页（消 404 噪声）。
+1. **入口**：gate（dsh-web-gate）token 命中后 302 → `/core-console/`——控制台=默认落地页；dsh 原生界面降级为「agent 节点深查窗」（会话屏 iframe/新窗口按钮仍可达 `/?embedded=1`）。**2026-11-27 用户裁决：不再叫 v2——v1 旧 client 载体（plugin/client 前端巨石）整体删除，`/core-console/` 即正式入口；`/core-console/v2` 仅保留 302 兼容。**
+2. **载体毛刺**：`/core-console/`（尾斜杠）与无斜杠同壳 200（dsh 前缀匹配语义 url===path||path+'/'——注册词形补齐）；`/core-console/v2` 与 `/core-console/v2/` 302 → `/core-console/`（历史书签兼容）；favicon data-URI 注入壳页（消 404 噪声）。
 3. **口径**：dsh=agent 运行面（会话权威轨迹+sessionController.prompt 通路）；cored=控制面；本控制台=唯一日常 UI——与 goal「企业级内置 agent 系统」定位一致。
 
 ### 19.5 判据（机械）
@@ -1078,7 +1078,7 @@ corectl loop
 - [ ] console 噪声：对象 400 归零
 - [ ] run#2 从审批页「批准继续」→ 相位机续行（Executing 亮起）全程截图
 - [ ] #/docs 渲染文档清单（syncBadge 修复实证）
-- [ ] `?token=` 落地直达 `/core-console/v2`；尾斜杠 200
+- [ ] `?token=` 落地直达 `/core-console/`；尾斜杠 200；`/core-console/v2` 302 → `/core-console/`
 - [ ] web npm test 全绿；plugin npm test 全绿
 
 ## 20. 全页深度扫描与整改方案（2026-11-26）
