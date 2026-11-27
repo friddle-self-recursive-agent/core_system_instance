@@ -33,8 +33,8 @@
 │  ┌───────────────────────────────────────────────┐  ┌─────────────┐
 │  │ 角色：内网接入运行时                               │◄─│ core plugin │
 │  │  挂 core plugin（Apply/Event/Workflow/Scheme/权限）│  │ （宿主内）  │
-│  │  开始 onedev + 内网集群纳管（impl/kube-inner-      │  └─────────────┘
-│  │  integration.md）                                 │
+│  │  开始 onedev + 内网集群纳管（设计已迁公司 git       │  └─────────────┘
+│  │  sybran-deploy-system docs/kube-inner-integration.md）│
 │  └───────────────────────────────────────────────┘         │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -54,7 +54,7 @@ T0 Igniter 点火 → SelfRecursiveCore（临时/最小形态）
 T1 core-system profile 上电：developer-system 闭环接管 core_system 三仓
 T2 首个任务：core plugin v0（Apply/Event/Workflow 引擎最小集）
 T3 产物链验证：build→gate→digest→发布（OneDev agent_pool 仓留痕）
-T4 kube-inner profile 挂载 plugin v0 → onedev/集群纳管（impl/kube-inner-integration.md K0）
+T4 kube-inner profile 挂载 plugin v0 → onedev/集群纳管（公司 git sybran-deploy-system docs/kube-inner-integration.md K0）
 T5 循环：kube-inner 侧发现的缺陷 → Event → core-system profile 修复 → 新版 plugin → T4 重放
 ```
 

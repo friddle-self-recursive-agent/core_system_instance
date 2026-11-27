@@ -167,7 +167,7 @@
 
 ## 17. R14 增补：反馈闭环 / 内网集群 / agent_pool 机器
 
-> 详见 impl/feedback-workflow.md、impl/kube-inner-integration.md、runtime/agent-pool-machine.md（公司实物信息只在公司 git 的 agent_pool 报告仓，A55）。
+> 详见 impl/feedback-workflow.md、runtime/agent-pool-machine.md（公司实物信息只在公司 git 的 agent_pool 报告仓，A55；内网集群接入设计已迁公司 git sybran-deploy-system docs/kube-inner-integration.md——2026-11-27 用户裁定：kube-inner=sybran 运行面，设计归业务仓不放公开仓）。
 
 | 项 | 评级 | 关键约束 |
 |---|---|---|

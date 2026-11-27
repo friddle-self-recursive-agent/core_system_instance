@@ -11,7 +11,7 @@
 | systems/builtin/deploy-system | [impl/deploy-system.md](impl/deploy-system.md) | workservice: plugins/exec-local |
 | systems/builtin/storage-system | [impl/storage-system.md](impl/storage-system.md)（本机目录存储；nas/oss=部署方可选外接 connector，非内置） | workservice: connectors/gitfs |
 | （无独立 Desc：core-workflow 系 Workflow 实例，A56） | [impl/feedback-workflow.md](impl/feedback-workflow.md)（反馈修复闭环：报错→agent→提议→批准→pull→发布→验收） | —（设计，未开工） |
-| （挂 deploy-system，A58） | [impl/kube-inner-integration.md](impl/kube-inner-integration.md)（内网集群纳管 + 页面功能模块划分） | —（设计，未开工） |
+| （挂 deploy-system：集群接入设计） | 已迁公司 git sybran-deploy-system docs/kube-inner-integration.md（2026-11-27 用户裁定：kube-inner=sybran 运行面，设计归业务仓不放公开仓） | — |
 | systems/builtin/user-system | [impl/user-system.md](impl/user-system.md)（接入 LDAP 认证+目录同步 / 飞书账号映射，A59） | —（设计，未开工） |
 | （挂 deploy-system：部署渠道矩阵） | [impl/deploy-system.md](impl/deploy-system.md) §5-6（kube / ssh-host / onedev-ci 三渠道，每业务 DeployDesign 声明） | —（设计，未开工） |
 
