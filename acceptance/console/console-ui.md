@@ -1081,6 +1081,12 @@ corectl loop
 - [ ] `?token=` 落地直达 `/core-console/`；尾斜杠 200；`/core-console/v2` 302 → `/core-console/`
 - [ ] web npm test 全绿；plugin npm test 全绿
 
+### 19.6 首页=对话（DeepSeek chat 模式，2026-11-27 用户裁决）
+
+1. **默认首页 `#/` = 对话 landing**：居中 hero + 大圆角 composer（真实示例 chips / 图片附加 / 圆形品牌蓝发送）+ 最近会话（真实 sessions 清单，空=不渲染）；发送链路=宿主 `chatFaces.create` 建会话 → `send`（queue 落投）→ 进入 `#/session/<id>` 看真实转录。
+2. **总览大屏移到 `#/welcome`**：导航第一项「对话」=首页，第二项「总览」=原大屏（统计/循环卡/审批/Workflows/Agent）；总览顶部 composer 与首页同版型（`screens/home.js` 单点，旧 `cc-composer` 版型退场）。
+3. **不摆假开关**：DeepSeek 的 DeepThink/Search 是能力位，本系统无对应真通路——底栏左侧只放真实可发示例 chips + 图片上传（真走 `chat-upload`），不做假 toggle。
+
 ## 20. 全页深度扫描与整改方案（2026-11-26）
 
 全量 34 屏活体扫描、16 端点与 21 个在册对象核对结论（含 P0 崩溃/失明修复、以人为本主线收束、布局修复、假数据清理清单及 `core_design` 真实 Scheme/概念文档纠偏），见独立文档：[console-audit-2026-11-26.md](console-audit-2026-11-26.md)。
