@@ -1140,3 +1140,12 @@ corectl loop
 ## 23. 会话屏通信与视觉重建（2026-11-26）
 
 chat 批：通信病灶实测（steer 闲置/无停止/无活体反馈/整屏重绘/requestId 丢弃）+ 视觉重建（DeepSeek 对话版型三段式/零 inline style/chat.css 拆分）——C-01..C-11 逐项判据，见独立文档：[chat.md](chat.md)。
+
+## 24. Session 新三段式（彻底改造，2026-11-27 用户裁决——权威=core_design concepts/session.md）
+
+> 需求原话要点：「第一段获得上下文：LLM 描述、分析命令 tag 与缓存、注入工具使用/service 描述及 tag/global index 及 tag、调用 builtin rag 查询、查找类似 session、经 developer_system 找代码仓库、层层整理出背景默认最多 5k 字每块有明确标识是哪个资源哪个文件点击可对应上下文。第二段执行这个命令可以反复沟通 ask 询问，执行到更新文档上，能做的永远是文档预更新，反复询问[没有命令。记住命令都到 workflow 的 agent 节点执行的 agent]，用户查看文档更新，需要时让用户 apply，apply 后进第三段。第三段看过程中哪些文档 ref 的属性 tag 的属性和重要程度以及哪些 metainfo 需要更改，还是 LLM，默认自动更新这些属性。」
+
+1. **第一段·背景装配面**：会话发起后背景逐块呈现，**每块带资源/文件标识（如 `[Doc rule/rule_eng.md]`、`[ServiceDesc/systems/x/system.yaml]`、`[Repo <repo>#<path>]`），点击跳转对应上下文**；背景总字数显示且默认 ≤5k（超限按相关性截断提示）。
+2. **第二段·预更新面**：会话产出的文档更新一律以 **draft 预更新卡**呈现（diff 可见、可跳转文档编辑器）；**会话面无任何命令执行入口**——用户要求执行时话术引导落 draft 并说明真执行走 workflow agent 节点；apply 按钮走人审闸。
+3. **第三段·属性回整可见**：apply 后回整结果在文档详情/`#/tags` 面可见（ref/tag/importance/metainfo 变更逐条列出「自动回整」来源标记）；内容类变更永不自动。
+4. **诚实态**：类似 session 检索、developer_system 仓库自动定位、第三段回整器未实现环节在会话面显式标注缺口，不冒充（session.md §9 现状账同口径）。
