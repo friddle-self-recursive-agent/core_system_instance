@@ -1094,6 +1094,15 @@ corectl loop
 3. **修复**：事件全链增可选 `run` 序号（eventbus.Event / eventpub.Request / apiserver eventsRequest / TriggerRecord.TargetRun）；`ResumeSignal` 优先按 `TargetRun` 定向（不存在=零动作，绝不回落最新）；web 三处批闸 payload 携带 run，plugin event-pub 顶层透传。
 4. **活体证据**：run #11 `AwaitingApproval` → `Executing`，history 行 `{from:AwaitingApproval,on:ApprovalGranted,to:Executing}`（2026-11-27T07:46:59Z）；驳回同链路由单测双锚覆盖（#1 驳回落 Failed、#2 不受影响）。
 
+### 19.8 Workflow 真实详情（定义/编辑/节点/任务/会话，2026-11-27）
+
+1. **入口词形**：`#/wf/:name` 直接现读三源——`GET /v1/workflows`（定义/执行绑定/ConnectorOps 骨架）、`GET /v1/workflows/runs`（运行/相位轨迹/session 锚）、`GET /v1/tasks`（任务标题/phase）；不再依赖快照 `workflows` 键。`bug-workflow` 作为 `bug-lifecycle` 的兼容别名（页面显式标注，不伪造第二个 workflow）。
+2. **编辑**：object 源 Workflow → 既有 Workflow 编辑器/对象工作台；builtin 源 → `workflow.md` 与 `core/scheme.yaml` 设计文档工作台（builtin 高敏，不在 UI 伪造对象表单）。
+3. **节点**：相位链来自 `workflows.phases`；运行统计/当前节点来自真实 runs+history；执行节点来自 `executionFlow`（ConnectorOps 骨架）。`apply-workflow` 当前 `execution.state=unbound`、`runsTotal=0`，页面明确显示「执行面未绑定/暂无运行」，不再空白。
+4. **任务**：run.involved=`Task/<scope>/<name>` 反查 `/v1/tasks` 真实 Task 行；任务卡显示标题/phase/关联 runs/任务深链。零关联=不渲染假任务。
+5. **Session（真实）**：旧 `Task.status.agentSession` 实际是 taskId（spawn 桥 sessionHint），**不是 dsh sessionId**。新增 plugin `GET /core-console/task-sessions?taskIds=...`：从宿主 sessionController 的真实 journal 反查用户消息 `taskId:`，返回 `session-*`；同 Task 多次重跑按 run.startedAt 与任务卡首条消息时刻最近匹配。节点会话来源显式标注：`history.sessionId`（节点）→ `run.sessionId`（运行）→ Task journal（任务）；全空=「会话未记录」，不编造。
+6. **运行详情**：`#/wf/:name/r/:n` 增加会话卡与逐节点会话表；runs face 刷新时同步更新 status/sessionId/history，陈旧异步请求按 detail stamp 丢弃。
+
 ## 20. 全页深度扫描与整改方案（2026-11-26）
 
 全量 34 屏活体扫描、16 端点与 21 个在册对象核对结论（含 P0 崩溃/失明修复、以人为本主线收束、布局修复、假数据清理清单及 `core_design` 真实 Scheme/概念文档纠偏），见独立文档：[console-audit-2026-11-26.md](console-audit-2026-11-26.md)。
