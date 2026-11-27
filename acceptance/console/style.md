@@ -85,6 +85,13 @@
 - **空态/骨架**：维持现有诚实词形纪律，仅换 token。
 - **导航**：侧栏玻璃底；active 项 --accent-dim 底 + --accent 字（禁渐变蓝底 `linear-gradient(135deg,#1d3a68,#3b82f6)` 现存违例）。
 
+### 3.3 弹窗与提示（2026-11-28 用户裁决「不要用系统弹窗……要用标准的 deepseek style 实现弹窗。默认请用 modal」）
+
+- **原生弹窗全站禁用**：`window.confirm` / `window.alert` / `window.prompt` 一律不得出现（grep 判据=src 内三个调用清零）——原生框不受 token 体系管、无法带品牌语义、且阻断样式不可控。
+- **确认类交互=modal**（默认形态）：复用 `.chat-modal` 族（mask rgba(0,0,0,.45) + panel 卡 + head 标题 + body 正文 + acts 按钮）——确认动作=主操作变体（破坏性=ghost 形 --danger 字），取消=次操作；Esc/点 mask=取消；Promise 语义（`confirmModal({title, body, confirmText, danger}) → boolean`），调用点不嵌回调地狱。
+- **结果/错误提示=toast**（非阻断）：右上浮层 `.chat-toast`（panel 底+shadow+语义色左条），3.5s 自动消散；失败类 error 语义条 --danger、成功 accent——不抢主操作焦点，不打断流程。
+- **判据**：任一屏触发确认/错误提示，视觉=DeepSeek 组件（同 token 同 radius 同字阶），截图无浏览器原生框。
+
 ## 四、落地批（S-01..S-06，机械迁移判据）
 
 | # | 动作 | 判据 |

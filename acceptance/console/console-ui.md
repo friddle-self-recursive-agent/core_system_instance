@@ -1149,7 +1149,7 @@ corectl loop
 
 ## 22. 统一样式规范（2026-11-26）
 
-全站 style 混乱整治（字号 15 档半像素混用/40+ 裸色值两蓝并存/radius 10 档六成绕过 token/按钮无变体体系）——以 DeepSeek 实测 token 体系为基准定版：--ds token 全表+按钮四变体+S-01..S-06 机械迁移判据，见独立文档：[style.md](style.md)。
+全站 style 混乱整治（字号 15 档半像素混用/40+ 裸色值两蓝并存/radius 10 档六成绕过 token/按钮无变体体系）——以 DeepSeek 实测 token 体系为基准定版：--ds token 全表+按钮四变体+S-01..S-06 机械迁移判据，见独立文档：[style.md](style.md)。**弹窗与提示（2026-11-28 裁决「不要用系统弹窗……要用标准的 deepseek style 实现弹窗。默认请用 modal」）**：原生 `confirm/alert/prompt` 全站禁用（src 内 grep 清零判据）——确认类=DeepSeek `.chat-modal` 组件（Promise 语义），结果/错误=toast 非阻断浮层；规则细则见 style.md §3.3。
 
 ## 23. 会话屏通信与视觉重建（2026-11-26）
 
