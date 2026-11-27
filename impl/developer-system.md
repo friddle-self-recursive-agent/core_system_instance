@@ -7,8 +7,8 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-developer-system}]
 # ImplDoc — builtin-developer-system 设计（非实现；本地内置，与部署目标无关）
 
 > **builtin 就是 builtin（2026-11-26 用户裁决）**：内置开发系统=**本地目录 + 本地 git 仓库（可配置 push 远程）+ 本地部署**，
-> 零外部依赖起步，**与 sybran（或任何部署目标）无关**。部署实例（如公司 OneDev adopt）= workflow 节点绑定替换，
-> 设计落 `sybran-developer-system` 仓（private）。
+> 零外部依赖起步，**与 业务实例（或任何部署目标）无关**。部署实例（如私域 SCM adopt）= workflow 节点绑定替换，
+> 设计落 `业务侧开发实例仓` 仓（private）。
 > R1.6 的原问题（如何利用 onedev）由此降格为**一个可插拔变体**，不再是前置条件。
 
 ## 0. 通用抽象：workflow 节点可配置不同 service + connectorOps
@@ -21,7 +21,7 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-developer-system}]
 | checkout | 本地 git fetch（同机路径） | onedev-driver.checkout（REST+git） |
 | build | exec-local（本机 dsh，命令白名单） | exec-local（目标机）/ 其他 executor |
 | artifact | storage-system（本机 files/ 目录，digest） | oss-driver（可选外接：远程归档） |
-| gate / notify | 本地红线脚本 + 本地通知 | 公司渠道（build-status 回写、gate-status 抽查） |
+| gate / notify | 本地红线脚本 + 本地通知 | 部署侧渠道（build-status 回写、gate-status 抽查） |
 
 **这是"意图在文档、现实在外部、Workflow 拉齐"的节点级应用**：service/connectorOps 绑定写在节点声明里
 （对齐 workflow.md 节点流转实现面=ConnectorOps），deployed 实例=另一组绑定值，不是另一份设计。
@@ -64,7 +64,7 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-developer-system}]
 
 **不做的**：不用外部 CI 配置面当"构建定义的唯一真相"——**唯一真相是 TaskScheme 文档**（buildspec 是投影，
 对账探针把外部侧漂移当 drift 管）。onedev-driver（含 REST/git 实测契约）的实例绑定见
-`sybran-developer-system` 仓 `docs/developer-variant.md`（private）。
+`业务侧开发实例仓` 仓 `docs/developer-variant.md`（private）。
 
 ## 4. 如何开发（落地顺序；builtin 先行）
 
@@ -72,7 +72,7 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-developer-system}]
 2. **TaskScheme `build-and-verify`**：先手工跑通五步（execution-model.md §3 模板），再入库过审。
 3. **Workflow(developer-main)**：watch 事件 + 2m 巡检。
 4. **scm connector 契约测试**：五 op conformance（首跑/重跑幂等/失败路径）；builtin=gitfs 本地实现先行。
-5. **变体接入**（可选升级）：onedev/远程渠道按节点绑定替换接入，绑定值与实测契约落 `sybran-developer-system` 仓。
+5. **变体接入**（可选升级）：onedev/远程渠道按节点绑定替换接入，绑定值与实测契约落 `业务侧开发实例仓` 仓。
 6. **验收对账**：Goal.A1–A5 每条挂一个探针（A1=pickup p95；A2=红线 100%；A3=产物 digest 抽验；A4=通知演练；A5=本循环自身）。
 
 ## 5. 首圈走查（"开始的循环"；builtin 形态）

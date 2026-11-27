@@ -1,7 +1,7 @@
 # runtime/business-system — 企业业务系统层落地口径（独立项目 / 独立 cored / 账本与事件总线分离）
 
 > 概念依据：core_design `concepts/business-system.md` + `systems/common-business-system/`（R-BIZ-1..7、StateModel/Finance DocType、基词表）。本篇是机读落地口径（R-DOC-5 双仓承载）。
-> 用户裁决（2026-11-26）：① **business-system 不在最外层 `core_system` 根项目中，单独设计**；每个业务系统实例（如 `sybran`）运行**自己独立的第二个 `cored` 进程与独立的 SQLite `docs DB`**（每个 `cored` 只挂载单个 `docsRoot/docs DB`）；② **业务内部流水/账本与外部控制面事件严格区分**：业务高频交易、会计分录（Ledger Entry）与逐笔对账由**业务代码承接，自己走自己的内部事件与账本**；外层控制面 `cored` 事件总线**只承接系统级别事件、报警事件、以及对账失败事件**。
+> 用户裁决（2026-11-26）：① **business-system 不在最外层 `core_system` 根项目中，单独设计**；每个业务系统实例（如 `业务实例`）运行**自己独立的第二个 `cored` 进程与独立的 SQLite `docs DB`**（每个 `cored` 只挂载单个 `docsRoot/docs DB`）；② **业务内部流水/账本与外部控制面事件严格区分**：业务高频交易、会计分录（Ledger Entry）与逐笔对账由**业务代码承接，自己走自己的内部事件与账本**；外层控制面 `cored` 事件总线**只承接系统级别事件、报警事件、以及对账失败事件**。
 
 ## 1. 五域 → 运行时承接（业务代码内部流 vs 控制面三类事件）
 
@@ -26,9 +26,9 @@ checker 落点待定（core_design lint/ 或实例侧，见 open-questions.md#bu
 
 ## 3. 实例落地路径（双 `cored` 物理分离）
 
-- **独立项目与独立 `cored`**：最外层 `core_system` 的 `cored`（`core_agent`）只挂载根项目的单个 `docs DB`；业务实例（首个=`sybran-business-system`）在 `sybran agent` 上运行**自己独立的 `cored` 实例**，挂载 `sybran` 自己的 SQLite `docs DB`（单 `cored` 单 `docs DB` 契约不变）。
+- **独立项目与独立 `cored`**：最外层 `core_system` 的 `cored`（`core_agent`）只挂载根项目的单个 `docs DB`；业务实例（首个=`业务系统实例仓`）在 `业务侧 agent` 上运行**自己独立的 `cored` 实例**，挂载 `业务实例` 自己的 SQLite `docs DB`（单 `cored` 单 `docs DB` 契约不变）。
 - 实例以**引用继承**本层规则：实例仓只放特化物（对象清单/科目树/指标口径/节点绑定），零控制面机制重造。
-- 实例设计仓=公司 OneDev 私有仓（`sybran-*` 前缀，R-PUB 占位：`<公司 OneDev>`；实址在部署侧决策台账）；运行面=sybran 侧独立 agent + 独立 `cored` 部署，与 core agent **物理分离**。
+- 实例设计仓=私域 SCM 私有仓（`业务侧-*` 前缀，R-PUB 占位：`<私域 SCM>`；实址在部署侧决策台账）；运行面=业务侧独立 agent + 独立 `cored` 部署，与 core agent **物理分离**。
 - 实例投产顺序建议：状态域（对象入册）→ 流域（内部账本流 vs 控制面事件流声明）→ 监控（指标+阈值）→ 财务（科目+闸门+对账失败上报循环）——先有观测再有钱闸，避免盲区上线（R-BIZ-5 先于 R-BIZ-3 生效）。
 
 ## 4. 与既有 runtime 的关系

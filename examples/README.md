@@ -2,7 +2,7 @@
 
 演示 layout.md 的完整用法（文件均为示意片段）。
 
-层级判例（A53）：**System=deploy_system（ServiceDesc）→ 实例=sybran 开发实例（ServiceInstance）→ WorkService=jenkins/onedev/bug-management**。本目录的 developer-system 示例同构。
+层级判例（A53）：**System=deploy_system（ServiceDesc）→ 实例=业务域开发实例（ServiceInstance）→ WorkService=jenkins/onedev/bug-management**。本目录的 developer-system 示例同构。
 
 ```
 examples/

@@ -28,7 +28,7 @@
 - **默认=sqlite + 本地 storage**：新建部署与 root（core_system）固定 sqlite docs DB，root 启动参数不得出现 `--docs-backend git`；
 - **git=导出/公开（output/public）**：不再作为写路径权威。按规则**定时**从 sqlite 导出 git 工作树 → commit → push 远程；git 历史=导出快照，**不是逐次写账本**；导出失败只告警，不回滚 sqlite 写；频率/分支/远程目标=部署侧配置；
 - **迁移**：`--docs <旧 git 布局根>` 对空库一次性种子导入，保留各对象 `resourceVersion`；非空库不导入（幂等）；
-- **兼容期**：非 root 部署可显式 `--docs-backend git`（kube-inner 等），迁移后同上；root 不允许；
+- **兼容期**：非 root 部署可显式 `--docs-backend git`（第二实例等），迁移后同上；root 不允许；
 - **逐次正文历史**：sqlite 后端当前无逐次内容快照，`GET /v1/rev-content` 返回 503 诚实降级；`apply_log` 仍有操作流水（谁/何时/rv/结果）。`doc_history` 或等价读面为下一段（不得用周期 git 快照冒充逐次历史）。
 
 ## 2. ops DB 表（v1）

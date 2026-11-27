@@ -31,7 +31,7 @@
 - **仓**：部署侧 fork（私有），不进公开核心六仓；LICENSE(MIT)+THIRD_PARTY_NOTICES 保留。
 - **分支**：`upstream/master` 只读跟踪 + `locked` 分支承载单一补丁面；每季度 rebase 上游（或季度 tag）。
 - **补丁面最小化**：优先加 feature flag（`ui.features.plugins=false`、`ui.workspace.mode=service`、`session.new=disabled`），UI 条件渲染 + 服务端命令闸；不重构内核。
-- **构建**：pnpm workspace 构建（需镜像/native 依赖评估）；产物 digest 入账；部署到 CT116/sybran 的 dsh 安装前缀，profile 不变。
+- **构建**：pnpm workspace 构建（需镜像/native 依赖评估）；产物 digest 入账；部署到 部署目标机 的 dsh 安装前缀，profile 不变。
 - **验收**：与 console-ui.md §11 + §1.23 同一判据；额外验证上游同步演练（取下一个 upstream tag 能 rebase 成功）。
 - **红线**：fork 代码不含真实凭据/内网信息；不破坏既有 profile/plugin 契约（我们的 core_system 插件必须零改动可用）。
 

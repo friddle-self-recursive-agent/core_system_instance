@@ -10,10 +10,10 @@
 | systems/builtin/developer-system | [impl/developer-system.md](impl/developer-system.md)（**首个设计对象**：如何利用 onedev/如何开发/如何满足循环） | workservice: connectors/onedev-driver |
 | systems/builtin/deploy-system | [impl/deploy-system.md](impl/deploy-system.md) | workservice: plugins/exec-local |
 | systems/builtin/storage-system | [impl/storage-system.md](impl/storage-system.md)（本机目录存储；nas/oss=部署方可选外接 connector，非内置） | workservice: connectors/gitfs |
-| （无独立 Desc：core-workflow 系 Workflow 实例，A56） | [impl/feedback-workflow.md](impl/feedback-workflow.md)（反馈修复闭环：报错→agent→提议→批准→pull→发布→验收） | —（设计，未开工） |
-| （挂 deploy-system：集群接入设计） | 已迁公司 git sybran-deploy-system docs/kube-inner-integration.md（2026-11-27 用户裁定：kube-inner=sybran 运行面，设计归业务仓不放公开仓） | — |
+| （无独立 Desc：反馈闭环=入口形态，2026-11-27 裁定） | [impl/feedback-workflow.md](impl/feedback-workflow.md)（反馈修复闭环=core-system-developer-loop 入口 1 形态，无专属 workflow 对象） | — |
+| （挂 deploy-system：集群接入设计） | 已迁业务侧部署实例仓（私域）——2026-11-27 用户裁定：集群接入设计归业务仓不放公开仓 | — |
 | systems/builtin/user-system | [impl/user-system.md](impl/user-system.md)（接入 LDAP 认证+目录同步 / 飞书账号映射，A59） | —（设计，未开工） |
-| （挂 deploy-system：部署渠道矩阵） | [impl/deploy-system.md](impl/deploy-system.md) §5-6（kube / ssh-host / onedev-ci 三渠道，每业务 DeployDesign 声明） | —（设计，未开工） |
+| （挂 deploy-system：渠道=部署侧变体） | [impl/deploy-system.md](impl/deploy-system.md) §5（builtin=本地启动；kube/ssh-host/scm-ci=变体词表） | — |
 
 ## 运行时设计与验收基线（R1.2 / R1.4 / R1.5）
 
@@ -29,7 +29,7 @@
 | [runtime/docs-export.md](runtime/docs-export.md) | 文档库导出：sqlite→git 工作树→commit→push（output/public；快照非逐次历史） |
 | [runtime/task-scheduler.md](runtime/task-scheduler.md) | 多任务并发调度：Task DAG/写集/上限、宿主 /task/spawn、worktree/合并、状态回写 |
 | [runtime/install-service.md](runtime/install-service.md) | install 流程：GitHub org 找 template→WorkServiceTemplate→询问→安装 |
-| [runtime/agent-pool-machine.md](runtime/agent-pool-machine.md) | agent_pool 机器与双 dsh profile 分工（core-system 自举 / kube-inner 接入） |
+| [runtime/bootstrap-machine.md](runtime/bootstrap-machine.md) | 自举机与双 dsh profile 分工（core-system 自举 / 第二 profile 接入） |
 | [runtime/event-bus.md](runtime/event-bus.md) | 内置 Event 分发扩展：Kafka 总线（通知用，非真相源）+ 飞书通知到账号（A59） |
 | [runtime/cross-agent.md](runtime/cross-agent.md) | dsh 跨 agent 调用（ctx.agents / typert 网关）+ 跨 Agent 协议 v0.1（ConnectorOps agent-comm：最小信封+四原语） |
 

@@ -264,7 +264,7 @@ watchdog 自愈第一动作（注入固定 prompt「继续」）的真实执行�
    - `default-task`：内置通用任务相位状态机（`Idle → Analyzing → Planning → AwaitingApproval → Executing → Verifying → Reporting`），其中 `session` / `agent` 节点支持通过 `globalRuleRefs` 引用相应的 `global` 规则（如 `rule/rule_eng`、`rule/rule_doc`、`rule/rule_ux`、`rule/rule_ctx`、`rule/rule_pub`）；
    - 其余旧名（`core-workflow`/`bug-lifecycle`/`bug-workflow`/`dev-delivery`/`apply-workflow`/`simple-shot`/`watch-only`）在 `scheme.yaml` 的 `runtime.workflows.aliases` 中做 Scheme Adapter 兼容映射，不再独立占册。
 2. **出厂默认不启动（`enabled: false`）与核心保护（`undeletable: true`, `immutableNodes: true`）**：
-   - 出厂（如 `sybran` 等对外项目）默认 `enabled: false`；`core_system` 实例因自我迭代显式在 `global/workflows/core-system-developer-loop.yaml` 置 `enabled: true`；
+   - 出厂（如 `业务实例` 等对外项目）默认 `enabled: false`；`core_system` 实例因自我迭代显式在 `global/workflows/core-system-developer-loop.yaml` 置 `enabled: true`；
    - `DELETE /v1/objects` 拒绝删除内置工作流；`Apply` 锁定主干节点拓扑不可删改，但全节点参数与环境绑定可配置。
 3. **标准主干节点、多入口触发（`entryPoints`）与临时 `BugDoc` 可增删收尾策略**：
    - 主干：`1. 监听日志与 Event (Idle)` → `2. Agent 判断 (Analyzing)` → `3. 审批/自动审批 (AwaitingApproval)` → `4. Doc Apply (Planning)` → `5. developer-system (Executing)` → `6. 验收 (Verifying)` → `7. deploy-system (Deploying)` → `8. 总结归档 + 回写 InSync (Reporting)`；

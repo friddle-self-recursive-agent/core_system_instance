@@ -27,7 +27,7 @@ Notification 实例（一 Scheme 一 Instance，A28 不变）
 Event(level=error, involved=某业务系统)
   │ Notification 规则命中（minLevel≥warn）
   ├─► kafka channel：序列化 → topic: core-events.<scope>（key=dedupKey，分区按 involved）
-  │      └─ 下游：其它 agent_pool 机器的 core plugin 订阅 → 本地 Event 入队（跨机协同）
+  │      └─ 下游：其它 自举机的 core plugin 订阅 → 本地 Event 入队（跨机协同）
   └─► feishu channel：involved → 账号映射 → 飞书卡片（含 console 链接）
          ├─ 映射命中 → 私聊该账号（"上 account"）
          ├─ 无映射 / owner 是 root → 飞书群（挂载 role 的持有者）
@@ -39,7 +39,7 @@ Event(level=error, involved=某业务系统)
 | 项 | 设计 |
 |---|---|
 | 部署位 | 集群 middleware 命名空间（与 mariadb/redis/rabbitmq 同域） |
-| 安装路径 | 受限部署 SA **无 create 权限** → 安装走公司既有发布管道（deploy-system C3 渠道登记状态），不做直装 |
+| 安装路径 | 受限部署 SA **无 create 权限** → 安装走部署侧既有发布管道（deploy-system C3 渠道登记状态），不做直装 |
 | topic 规划 | `core-events.<scope>`（scope=global/system-x）；保留与分区按量起步（3 分区/7 天） |
 | 凭据 | SASL/ACL 凭据 → Provider.auth.secret（A40），不入库 |
 | 可靠性 | 内置队列是真相：Kafka 发布失败重试→失败降级为本地分发+Event(warn)；不阻塞事件主路径 |
@@ -50,7 +50,7 @@ Event(level=error, involved=某业务系统)
 |---|---|---|
 | N0 | feishu Provider + userid-lookup（依赖 impl/user-system.md U3 映射） | 测试事件私聊送达指定账号 |
 | N1 | ApprovalNeeded/Escalate 接飞书卡片（深链回 console） | 一次真实审批在飞书完成 |
-| N2 | Kafka 安装（走公司管道）+ kafka channel 发布 | 内置事件在 topic 可见，宕机重放无丢序 |
+| N2 | Kafka 安装（走部署侧管道）+ kafka channel 发布 | 内置事件在 topic 可见，宕机重放无丢序 |
 | N3 | 跨机订阅（第二台机器消费） | 两机事件面一致 |
 
 ## 5. 可行性分析（逐组件）
@@ -59,7 +59,7 @@ Event(level=error, involved=某业务系统)
 |---|---|---|---|
 | feishu Provider 发消息 | ✅ | 既有应用与凭据侧已就绪；API 限流 | 限流令牌桶+聚合（同类事件 5m 窗口合并，A28 通知聚合） |
 | 账号映射路由 | ⚠️ 有条件 | 映射覆盖率<100%（花名/英文名不一致） | 未映射→群兜底+warn；映射修正走 user-system 人工绑定 |
-| Kafka on 集群 | ⚠️ 有条件 | 受限 SA 不能 create → 依赖公司发布管道排期；middleware 资源余量 | C3 渠道登记+运维协作；先单机版（KRaft）小资源起步 |
+| Kafka on 集群 | ⚠️ 有条件 | 受限 SA 不能 create → 依赖部署侧发布管道排期；middleware 资源余量 | C3 渠道登记+运维协作；先单机版（KRaft）小资源起步 |
 | 深链回 console | ⚠️ 有条件 | 飞书外链→浏览器→dsh token 信任门 | 已配域名转发（tokened URL 模式）；卡片链接带一次性 token |
 | 事件风暴 | ⚠️ 有条件 | 大面积故障时飞书轰炸 | ingest 聚合（dedupKey 分组 max）+ minLevel 门槛 + 渠道级熔断（≥N 条/分切群摘要） |
 

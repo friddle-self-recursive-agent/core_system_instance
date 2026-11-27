@@ -16,3 +16,7 @@ acceptance/*
 tmp/
 /*.jpeg
 /*.png
+
+# loop 自循环交接散文（运行时状态文档，含部署侧运行锚点——R-PUB-2 不入公开仓；本地保留供 loop 使用）
+loop-next.md
+loop-next.md.metadatainfo

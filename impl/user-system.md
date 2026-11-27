@@ -6,14 +6,14 @@ ownerRefs: [{kind: ServiceDesc, name: builtin-user-system}]
 ---
 # ImplDoc — builtin-user-system 接入 LDAP 与飞书（R14.8.1）
 
-> 设计，不实现。公司实物（LDAP 管理面地址、同步通道、飞书应用凭据）见公司 git 报告仓 evidence（A55）。
+> 设计，不实现。部署侧实物（LDAP 管理面地址、同步通道、飞书应用凭据）见私域 SCM 报告仓 evidence（A55）。
 
 ## 0. 已验证现状（泛化表述）
 
 | 事实 | 对设计的影响 |
 |---|---|
-| 公司有 ldap 管理面（HTTP API：认证/当前用户两组端点，门户客户端在用） | user-system 的**认证**可走该 API（Provider 形态），不必直连 LDAP 协议 |
-| 公司有 LDAP 同步通道（389/636 端口的中转容器在入口宿主） | **目录同步**（用户/组全量+增量）走 LDAP 协议直连该通道 |
+| 部署侧有 ldap 管理面（HTTP API：认证/当前用户两组端点，门户客户端在用） | user-system 的**认证**可走该 API（Provider 形态），不必直连 LDAP 协议 |
+| 部署侧有 LDAP 同步通道（389/636 端口的中转容器在入口宿主） | **目录同步**（用户/组全量+增量）走 LDAP 协议直连该通道 |
 | 飞书已在使用（lark-cli 等工具在现有机器装好，应用凭据存在既有配置侧） | 飞书 Provider 的凭据来源=既有应用，不新造应用 |
 
 ## 1. 架构

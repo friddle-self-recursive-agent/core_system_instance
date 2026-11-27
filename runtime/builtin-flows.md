@@ -21,7 +21,7 @@ Event(push/需求) → Analyze → Gate（红线：test/lint 全绿才产物）
 | C2 ssh-host | docker inspect→比较→restart/compose up→容器健康命令 | 断链=Event(warn)；失败→undo+告警 |
 | C3 onedev-ci | build-status 回写+gate 只读抽查+产物登记 | 状态不符=drift |
 
-prod 档位强制人批（feedback-remediation 约束）；每业务 VerifyDoc.probes 出验收探针。
+prod 档位强制人批（core-system-developer-loop 审批闸约束）；每业务 VerifyDoc.probes 出验收探针。
 
 ## 3. storage-system：本机目录存储（2026-11-27 裁定：builtin 无 NAS/OSS）
 

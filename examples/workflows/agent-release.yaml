@@ -1,7 +1,7 @@
 apiVersion: core/v1
 kind: Workflow
 metadata:
-  name: sybran-agent-release
+  name: agent-release
   scope: global
   labels:
     core/origin: custom
@@ -10,7 +10,7 @@ spec:
   undeletable: false
   connector: connector-ops/connectops-gh
   services:
-    involved: [sybran, developer-system, deploy-system]
+    involved: [developer-system, deploy-system]
     mode: act
   llm:
     provider: openai-default
@@ -29,8 +29,8 @@ spec:
   logSource:
     events: [DocApplied, TaskStateChanged]
     minLevel: info
-    services: [sybran, developer-system]
-    keywordMatch: "sybran-agent"
+    services: [developer-system]
+    keywordMatch: "agent-release"
     timer:
       enabled: true                  # 入口 2：定时巡检是否有待发布构建
       interval: 6h
@@ -38,7 +38,7 @@ spec:
     collector:
       connector: connectops-gh
       op: release-list
-      query: "repo:sybran-agent draft:true"
+      query: "repo:<部署侧仓> draft:true"
       autoDevelopOnMissing: true
   triggers:
     events:
@@ -50,7 +50,7 @@ spec:
       interval: 6h
       cron: "0 */6 * * *"
   entryPoints:
-    - {node: build-check, phase: Idle, enabled: true, events: [DocApplied], docTypes: [ImplDoc, VerifyDoc], description: "入口 1：sybran-agent 相关代码合并/文档落库（DocApplied）即检查构建"}
+    - {node: build-check, phase: Idle, enabled: true, events: [DocApplied], docTypes: [ImplDoc, VerifyDoc], description: "入口 1：业务 agent 相关代码合并/文档落库（DocApplied）即检查构建"}
   ingest:
     dedup: {window: 15m}
     group: {by: repo, max: 10}
@@ -74,7 +74,7 @@ spec:
       service: deploy-system
       resolution: default
       connector: connectops-deploy
-      op: rollout                    # sybran/k8s 侧默认 http 模式（connectops-deploy spec.mode=http）
+      op: rollout                    # 部署侧 k8s 侧默认 http 模式（connectops-deploy spec.mode=http）
   verification:
     mode: both
     connector: connectops-code-audit
@@ -82,7 +82,7 @@ spec:
     onFail: block
     conditions:
       - {id: artifact-digest, kind: probe, title: "构建产物 digest 与源码一致（P4 幂等入账）", command: "connectops-gh/check-runs", required: true}
-      - {id: smoke-probe, kind: agent, title: "sybran agent 冒烟探针（http 健康检查）", command: "agent-verify", required: true}
+      - {id: smoke-probe, kind: agent, title: "业务侧 agent 冒烟探针（http 健康检查）", command: "agent-verify", required: true}
       - {id: lint-rules, kind: code, title: "规则审核", command: "connectops-code-audit/audit", required: true}
   phases:
     - {name: build-check,    phase: Idle,             title: "1. 构建状态检查（gh check-runs）",   unit: connectops, connector: connectops-gh, op: check-runs, provider: openai-default, modelTier: low, entryEvents: [DocApplied]}
@@ -91,7 +91,7 @@ spec:
     - {name: plan,           phase: Planning,         title: "4. 升级批次与回滚预案",              unit: session,    op: plan-rollout, provider: openai-default, modelTier: standard, globalRuleRefs: [rule/rule_eng], entryEvents: [DocApplied]}
     - {name: build,          phase: Executing,        title: "5. 编译+产物 digest 入账（gh build）", unit: connectops, connector: connectops-gh, op: workflow-dispatch, provider: openai-default, modelTier: low}
     - {name: verify,         phase: Verifying,        title: "6. 冒烟探针+规则审核",               unit: connectops, connector: connectops-code-audit, op: audit, provider: openai-default, modelTier: low}
-    - {name: rollout,        phase: Deploying,        title: "7. sybran/k8s 滚动更新（http）",     unit: connectops, connector: connectops-deploy, op: rollout, provider: openai-default, modelTier: low, service: deploy-system}
+    - {name: rollout,        phase: Deploying,        title: "7. 部署侧 k8s 滚动更新（http）",     unit: connectops, connector: connectops-deploy, op: rollout, provider: openai-default, modelTier: low, service: deploy-system}
     - {name: report-archive, phase: Reporting,        title: "8. 归档+github release 同步",        unit: session,    op: archive-report, provider: openai-default, modelTier: low}
   transitions:
     - {from: Idle,             on: advance,          to: Analyzing}
