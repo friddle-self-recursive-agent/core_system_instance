@@ -1087,6 +1087,13 @@ corectl loop
 2. **总览大屏移到 `#/welcome`**：导航第一项「对话」=首页，第二项「总览」=原大屏（统计/循环卡/审批/Workflows/Agent）；总览顶部 composer 与首页同版型（`screens/home.js` 单点，旧 `cc-composer` 版型退场）。
 3. **不摆假开关**：DeepSeek 的 DeepThink/Search 是能力位，本系统无对应真通路——底栏左侧只放真实可发示例 chips + 图片上传（真走 `chat-upload`），不做假 toggle。
 
+### 19.7 审批按钮不是假数据——per-run 定向修复（2026-11-27）
+
+1. **真实通路**：总览/审批页/运行详情三处的「批准继续 / 驳回终止」= `POST /core-console/event-pub` → cored `POST /v1/events`（source=human 服务侧判定）→ TriggerHub `ResumeSignal` → run 沿声明表迁移（批准=闸锚 `ApprovalGranted` 续行；驳回=`ApprovalRejected` 到终点锚 Failed）。事件账/trigger 留痕均可见，不是前端假按钮。
+2. **实测根因（2026-11-27 用户点 #11 批准无动作）**：UI 按 run 行展示，但事件只带 `Workflow` 锚；引擎旧口径=**同锚最新挂起 run**——实际恢复的是 #19 而非 #11，UI 行与目标错位（看起来像假的）。
+3. **修复**：事件全链增可选 `run` 序号（eventbus.Event / eventpub.Request / apiserver eventsRequest / TriggerRecord.TargetRun）；`ResumeSignal` 优先按 `TargetRun` 定向（不存在=零动作，绝不回落最新）；web 三处批闸 payload 携带 run，plugin event-pub 顶层透传。
+4. **活体证据**：run #11 `AwaitingApproval` → `Executing`，history 行 `{from:AwaitingApproval,on:ApprovalGranted,to:Executing}`（2026-11-27T07:46:59Z）；驳回同链路由单测双锚覆盖（#1 驳回落 Failed、#2 不受影响）。
+
 ## 20. 全页深度扫描与整改方案（2026-11-26）
 
 全量 34 屏活体扫描、16 端点与 21 个在册对象核对结论（含 P0 崩溃/失明修复、以人为本主线收束、布局修复、假数据清理清单及 `core_design` 真实 Scheme/概念文档纠偏），见独立文档：[console-audit-2026-11-26.md](console-audit-2026-11-26.md)。
