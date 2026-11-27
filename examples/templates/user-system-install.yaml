@@ -1,0 +1,59 @@
+# Template user-system-install —— 用户体系一键安装向导（权威声明，user-system.md §6）
+# 机制=use-session 对话向导：控制台用户体系面板「一键安装」→ 创建 use-session（挂人）+ 本 Template run
+# → agent 按 asks 阶梯一路询问（每步带缺省可一路回车）→ 每步答案即时 apply → 完成=InSync
+apiVersion: core/v1
+kind: Template
+metadata:
+  name: user-system-install
+  scope: global
+spec:
+  appliesTo: servicedesc              # 模具作用于 user-system 的 ServiceDesc 层
+  provides:
+    capabilities: [user-directory, role-holders, contact-resolution]
+    category: user-system
+  mold:
+    system: builtin-user-system       # 目标系统（systems/builtin/user-system/）
+    builtinUser:                      # builtin 分支产物（缺省分支——一路回车即此）
+      user: {name: builtin-user, display: 内置用户, authMode: token, roles: [role/global/admin]}
+    ldapBranch:                       # ldap 分支产物清单（选 LDAP 时逐步 apply）
+      - kind: Provider, name: ldap-user-system            # 凭据全部 secret 引用式（R-PUB-1）
+      - kind: ConnectorOps, name: connectops-ldap         # 缺失/骨架态→一键「拉出代码开发」交 developer-system（connector.md 规则 6）
+      - kind: User, name: user-directory-projection       # 投影开关（syncedFrom: workservice/ldap-user-system，本地只读）
+    ssoBranch:                        # sso 分支产物清单（选 SSO 时逐步 apply）
+      - kind: WorkService, name: idp                      # OIDC IdP 纳管（六面体）
+      - kind: Provider, name: idp-oidc                    # clientId/clientSecret 走 secret 引用
+      - kind: User, name: idp-projection                  # 投影开关（syncedFrom: workservice/idp）
+    cacheBranch:                      # ldap/sso 分支追加问询：用户缓存策略（user-system.md 规则 7）
+      - {ttl: 15m, invalidateOn: [UserChanged, GroupChanged]}
+  asks:                               # 一路询问阶梯（每问必带缺省；R-UX-1：resolver 解析不了的才问）
+    - field: mode
+      question: "用户体系用哪种模式？（builtin 单用户 + token 授权 / LDAP / SSO）"
+      kind: enum
+      options: [builtin, ldap, sso]
+      default: builtin
+    - field: builtin.confirm
+      question: "确认内置单用户 builtin-user（token 授权，不可删除）？回车即完成。"
+      kind: string
+      default: confirm
+    - field: ldap.host
+      question: "LDAP 主机地址（部署侧真实值，落 Provider config 引用）"
+      kind: string
+      default: "ldap.internal:636"
+    - field: ldap.bindSecret
+      question: "bind 凭据引用名（secret:ldap/bind-password——只收引用名，对话不落明文）"
+      kind: provider-ref
+      default: "secret:ldap/bind-password"
+    - field: sso.issuer
+      question: "IdP issuer 地址（OIDC discovery URL）"
+      kind: string
+      default: "https://idp.example.com"
+    - field: sso.clientSecret
+      question: "client secret 引用名（secret:idp/client-secret）"
+      kind: provider-ref
+      default: "secret:idp/client-secret"
+    - field: cache.ttl
+      question: "用户缓存 TTL？（ldap/sso 分支才问）"
+      kind: enum
+      options: [5m, 15m, 1h]
+      default: 15m
+  chain: [servicedesc]                # 实例化下探层序（一层层问下去：ServiceDesc→确认卡）

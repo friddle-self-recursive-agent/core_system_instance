@@ -1113,6 +1113,17 @@ corectl loop
 5. **四大设计表与 YAML 定义直查**：页面同屏展示 ① 多入口触发与日志过滤表、② 节点与跨系统交互设计表（含 Provider、模型档位、GlobalRuleRefs）、③ 状态迁移分支表、④ 完整 YAML 文档声明。
 6. **任务与真实 Session**：run.involved=`Task/<scope>/<name>` 反查 `/v1/tasks` 与 `/core-console/task-sessions`；节点会话来源显式标注 `history.sessionId` → `run.sessionId` → Task journal。
 
+### 19.9 用户体系一键安装向导（use-session，2026-11-27 需求要求——方案与可行文档见 core_design concepts/user-system.md §6）
+
+> 需求原话要点：「这次 builtin 就一个用户。授权方式就是现在的 token 授权。这就是 builtin。默认的 agent 节点 bind 都 bind 内置的这个用户。后面实现 ldap/sso 的时候在有完整用户结构。用户缓存。其中界面可以 use-session 一键安装。然后一路询问具体配置或者安装一路下来能把用户体系搭建了。」
+
+1. **一键安装按钮**：用户体系入口存在「一键安装」按钮，一次点击=创建一个 **use-session**（对话会话挂人，与首页 chat 同形）+ 装配 `user-system-install` Template run（权威 YAML=`examples/templates/user-system-install.yaml`）——不是表单屏。
+2. **一路询问**：agent 按 Template `asks` 阶梯逐问（模式 builtin/LDAP/SSO → 分支配置 → 缓存策略），**每问必带缺省值，「一路回车」能走完 builtin 分支**；ldap/sso 分支每步答案即时 apply 落对象（Provider/ConnectorOps/User 投影/WorkService）。
+3. **凭据零明文**：密码/secret 类问题只收引用名（`secret:...`），会话不回显不落明文（R-PUB-1/运行时配置与真实值分离）。
+4. **缺口拉出开发**：所选 `ConnectorOps` 缺失或骨架态（如 connectops-ldap 未实现），向导内一键「拉出代码开发」交 developer-system（connector.md 规则 6 同款）。
+5. **可续**：向导中断后重进 use-session 接着问（Session 持久化）；收尾回写 InSync + 会话归档 SessionLog。
+6. **builtin 面语义**：界面明确显示「builtin=单用户 builtin-user + token 授权（不可删除）」「完整用户结构与用户缓存=ldap/sso 阶段才有」——不预埋半成品管理面。
+
 ## 20. 全页深度扫描与整改方案（2026-11-26）
 
 全量 34 屏活体扫描、16 端点与 21 个在册对象核对结论（含 P0 崩溃/失明修复、以人为本主线收束、布局修复、假数据清理清单及 `core_design` 真实 Scheme/概念文档纠偏），见独立文档：[console-audit-2026-11-26.md](console-audit-2026-11-26.md)。
