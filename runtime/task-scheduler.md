@@ -49,7 +49,7 @@ Task 对象（docs DB / sqlite）
   - 端点：`POST /task/spawn`（127.0.0.1，随机端口；cored env `CORE_SYSTEM_TASK_SPAWN_ADDR` 回填）。
   - 载荷：`{taskId, taskPath, workspace:{mode,path,branch}, agent}`；**不拼 shell**，只把 `taskPath` 作为 stdin 输入给固定命令。
   - 单飞：`pgrep -f` 任务标识或锁文件；同任务不重复拉起。
-  - 拉起：`dsh --profile <p> --permission-mode <mode> --approval-policy <ap> - < taskPath`——**权限档=显式配置非宿主脚本隐式全权**（2026-11-27 用户裁定）：mode 来自任务文件 `permissionMode` 字段（default-dsh-agent/v1 契约 spawn-agent 参数，`systems/builtin/connector/interfaces/default-dsh-agent.yaml`；缺省 danger-full-access、白名单校验后使用），approvalPolicy 缺省 never（headless 无人值守）；部署侧配置命令模板，公开仓只写机制。
+  - 拉起：`dsh --profile <p> --permission-mode <mode> --approval-policy <ap> - < taskPath`——**权限档=显式配置非宿主脚本隐式全权**（2026-11-27 用户裁定）：mode 取值优先级=**Task.spec.permissionMode 覆写 > scheme `runtime.dshAgent` 缺省（scheme 作为配置修改 dsh-agent 行为，改 scheme 零代码）> default-dsh-agent/v1 契约声明（danger-full-access）**；调度器按 scheme 缺省写任务文件 `permissionMode` 字段，宿主 spawn 桥读字段+`runtime.dshAgent.allowedModes` 同源白名单校验（白名单外回落缺省）；approvalPolicy 缺省 never（headless 无人值守）；部署侧配置命令模板，公开仓只写机制。
   - 回执：`{ok,status:spawned|already-running,sessionHint}`；会话 ID 由执行体心跳/`Task.status.agentSession` 回填。
 - 任务文件 `taskPath` 由调度器生成（Task.spec + acceptance + touches + worktree + 验证要求 + permissionMode），落部署侧临时目录；不进入公开仓。
 
