@@ -1122,6 +1122,10 @@ corectl loop
    - **审批卡信息面（批准前必读）**：待批行/卡**不得只有裸按钮**——批准前必须看到①**本 run 已更新文档清单**（窗口内 DocApplied 事件归集的文档 chips，可点进工作台）②**待 apply 文档稿清单**（草稿缓存关联行——批准将落哪些文档）③**闸前判断摘要**（ApprovalNeeded 事件 summary=agent 判定词形；缺席=诚实注记不编造）+ run 相位轨迹（history 最近迁移行）。docdiff 手动可算（稿 vs 落库值 diff 统计）；LLM 整理的判定语随事件词形携带，缺席不冒充。
    - **节点编辑=list+弹窗**：配置工作台**不再堆叠长卡**——设计表 list 行点击 → **弹窗编辑该节点细节配置**（unit 分型字段组：agent=LLM/refDocs/refRules/refTags/tagRules/tools、service=service/op/permissionRole/contextPassing、connectops=connector/op/modelTier、gate=op）；弹窗内保存/删除节点，改动随「保存并 Apply」落账。
    - **节点相位链=图**：相位链按**图**渲染（非线性表）——**多起点**（入口 1 log-event / 入口 2 doc-apply，入口徽章标注）、**中间分叉**（条件边带 `on` 判断词形标签：worth_fixing / ignore / retry-develop / entry:DocApplied / ApprovalGranted / ApprovalRejected——判断条件=LLM 写的分支输出），侧轨态 Failed 虚线节点；节点盒点击=同一弹窗编辑器；声明 transitions 与 YAML 迁移表同源联动。
+9. **service 节点执行=session（2026-11-27 四次裁决——「builtin 的 service 的 agent 可以用 session 来解决。突破下限制」workflow.md §1.3 同源）**：
+   - **run 落 unit=service 节点（developer-system / verify / deploy-system）→ 引擎为 service 的 agent 开一个执行 session**（`ServiceDesc.instances.agentRefs`），`contextPassing` 上一轮上下文作为首轮注入；run 挂起在该节点（status=suspended，history 行 `on: service-spawn`），**session 心跳终结 → run 沿表续行**，`history.sessionId` 回填真实会话锚。
+   - **拉起投影可查**：`GET /v1/workflows/service-spawns` 逐条投影（run/节点/服务/op/agent/上下文字段/受理时刻）；同 run·同节点幂等（单飞不重复拉起）。桥接拉起=plugin service-spawn 桥（与 task-spawn 桥同族：固定命令、载荷经 stdin、零 shell 拼接；部署侧命令缺席=503 诚实降级，投影仍在）。
+   - **验收判定**：workflow 详情页 run 轨迹可见 service 节点挂起行 + 会话锚回填；总览 runs 行 phase 停驻执行节点；控制台会话列表可见该执行 session（agent=service 的 agent，首轮=contextPassing 载荷摘要）。
 
 ### 19.9 用户体系一键安装向导（use-session，2026-11-27 需求要求——方案与可行文档见 core_design concepts/user-system.md §6）
 

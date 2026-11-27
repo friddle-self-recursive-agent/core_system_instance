@@ -15,8 +15,10 @@ spec:
   permissionRole: role/developer-system-ops   # 2026-11-27 用户裁决：builtin developer_system 权限随文档授予（P7；workflow systemBindings.developerSystem.permissionRole 同绑）
   # service 执行单元语义（workflow.md §1.3·2026-11-27 裁决）：core-system-developer-loop 的
   # developer-system / verify 节点 unit=service 调用本系统——执行节点是 service，service 内部
-  # 用 service 自己的 agent 来执行；调用方必须随调用提供上一轮详细上下文（contextPassing：
-  # judge 结论 / plan 与 diff / audit findings / 审批记录逐字段透传）。
+  # 用 service 自己的 agent 来执行；执行载体=session（2026-11-27 裁决「builtin 的 service 的
+  # agent 可以用 session 来解决。突破下限制」：run 落 service 节点 → 为 instances[].agentRefs
+  # 的 agent 开一个执行 session，contextPassing 上一轮详细上下文作为首轮注入——judge 结论 /
+  # plan 与 diff / audit findings / 审批记录逐字段透传；run 挂起等 session 心跳终结 → 沿表续行）。
   ops:
     - {op: develop, params: {context: map, repo: string, conventions: map}, idempotent: false}
     - {op: acceptance, params: {context: map, conditions: "[]map"}, idempotent: false}   # 验收=developer-system 的 Agent 验收 session（逐条解释执行 verification.conditions）
