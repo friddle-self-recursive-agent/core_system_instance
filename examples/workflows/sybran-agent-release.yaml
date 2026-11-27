@@ -1,0 +1,134 @@
+apiVersion: core/v1
+kind: Workflow
+metadata:
+  name: sybran-agent-release
+  scope: global
+  labels:
+    core/origin: custom
+spec:
+  enabled: false                    # 声明层模具——实例化后按需启用
+  undeletable: false
+  connector: connector-ops/connectops-gh
+  services:
+    involved: [sybran, developer-system, deploy-system]
+    mode: act
+  llm:
+    provider: openai-default
+    model: "reasoning-tier"
+    tier: high
+    nodeMapping:
+      build-check:      {tier: low,      model: "flash-tier"}
+      release-judge:    {tier: high,     model: "reasoning-tier"}
+      approval-gate:    {tier: high,     model: "reasoning-tier"}
+      plan:             {tier: standard, model: "standard-tier"}
+      build:            {tier: low,      model: "flash-tier"}
+      verify:           {tier: low,      model: "flash-tier"}
+      rollout:          {tier: low,      model: "flash-tier"}
+      report-archive:   {tier: low,      model: "flash-tier"}
+  globalRuleRefs: [rule/rule_eng, rule/rule_doc, rule/rule_pub]
+  logSource:
+    events: [DocApplied, TaskStateChanged]
+    minLevel: info
+    services: [sybran, developer-system]
+    keywordMatch: "sybran-agent"
+    timer:
+      enabled: true                  # 入口 2：定时巡检是否有待发布构建
+      interval: 6h
+      cron: "0 */6 * * *"
+    collector:
+      connector: connectops-gh
+      op: release-list
+      query: "repo:sybran-agent draft:true"
+      autoDevelopOnMissing: true
+  triggers:
+    events:
+      types: [DocApplied]
+      minLevel: info
+    timer:
+      resync: 6h
+      enabled: true
+      interval: 6h
+      cron: "0 */6 * * *"
+  entryPoints:
+    - {node: build-check, phase: Idle, enabled: true, events: [DocApplied], docTypes: [ImplDoc, VerifyDoc], description: "入口 1：sybran-agent 相关代码合并/文档落库（DocApplied）即检查构建"}
+  ingest:
+    dedup: {window: 15m}
+    group: {by: repo, max: 10}
+    filterLevels: [info, warn, error, fatal]
+  approval:
+    mode: agent
+    autoCriteria: "构建产物 digest 与源码一致、冒烟探针全绿且非 prod 环境时自动批准；prod 升级转人工"
+    maxRiskLevel: medium
+  systemBindings:
+    developerSystem:
+      service: developer-system
+      resolution: default
+      connector: connectops-gh
+      op: workflow-dispatch          # build 走 gh（workflow-dispatch 触发 CI 编译）
+      conventions:
+        branchPrefix: "agent/"
+        worktreeDir: "worktrees/"
+        tmpDir: "tmp/"
+        maxFileLines: 800
+    deploySystem:
+      service: deploy-system
+      resolution: default
+      connector: connectops-deploy
+      op: rollout                    # sybran/k8s 侧默认 http 模式（connectops-deploy spec.mode=http）
+  verification:
+    mode: both
+    connector: connectops-code-audit
+    op: audit
+    onFail: block
+    conditions:
+      - {id: artifact-digest, kind: probe, title: "构建产物 digest 与源码一致（P4 幂等入账）", command: "connectops-gh/check-runs", required: true}
+      - {id: smoke-probe, kind: agent, title: "sybran agent 冒烟探针（http 健康检查）", command: "agent-verify", required: true}
+      - {id: lint-rules, kind: code, title: "规则审核", command: "connectops-code-audit/audit", required: true}
+  phases:
+    - {name: build-check,    phase: Idle,             title: "1. 构建状态检查（gh check-runs）",   unit: connectops, connector: connectops-gh, op: check-runs, provider: openai-default, modelTier: low, entryEvents: [DocApplied]}
+    - {name: release-judge,  phase: Analyzing,        title: "2. Agent 判断（影响面/升级窗口）",   unit: agent,      op: judge-release, provider: openai-default, modelTier: high, globalRuleRefs: [rule/rule_eng, rule/rule_pub]}
+    - {name: approval-gate,  phase: AwaitingApproval, title: "3. 审批 / 自动判断审批",             unit: gate,       op: approval-check, provider: openai-default, modelTier: high}
+    - {name: plan,           phase: Planning,         title: "4. 升级批次与回滚预案",              unit: session,    op: plan-rollout, provider: openai-default, modelTier: standard, globalRuleRefs: [rule/rule_eng], entryEvents: [DocApplied]}
+    - {name: build,          phase: Executing,        title: "5. 编译+产物 digest 入账（gh build）", unit: connectops, connector: connectops-gh, op: workflow-dispatch, provider: openai-default, modelTier: low}
+    - {name: verify,         phase: Verifying,        title: "6. 冒烟探针+规则审核",               unit: connectops, connector: connectops-code-audit, op: audit, provider: openai-default, modelTier: low}
+    - {name: rollout,        phase: Deploying,        title: "7. sybran/k8s 滚动更新（http）",     unit: connectops, connector: connectops-deploy, op: rollout, provider: openai-default, modelTier: low, service: deploy-system}
+    - {name: report-archive, phase: Reporting,        title: "8. 归档+github release 同步",        unit: session,    op: archive-report, provider: openai-default, modelTier: low}
+  transitions:
+    - {from: Idle,             on: advance,          to: Analyzing}
+    - {from: Idle,             on: "entry:DocApplied", to: Planning}
+    - {from: Analyzing,        on: advance,          to: AwaitingApproval}
+    - {from: Analyzing,        on: worth_fixing,     to: AwaitingApproval}
+    - {from: Analyzing,        on: ignore,           to: Reporting}
+    - {from: AwaitingApproval, on: advance,          to: Planning}
+    - {from: AwaitingApproval, on: ApprovalGranted,  to: Planning}
+    - {from: AwaitingApproval, on: ApprovalRejected, to: Failed}
+    - {from: Planning,         on: advance,          to: Executing}
+    - {from: Executing,        on: advance,          to: Verifying}
+    - {from: Verifying,        on: advance,          to: Deploying}
+    - {from: Verifying,        on: retry-develop,    to: Executing}
+    - {from: Deploying,        on: advance,          to: Reporting}
+  onEscalate: {action: pause, notify: bind-role}
+  onFailed:
+    backoff: 60s*2^n
+    maxAttempts: 3
+    rollbackPolicy: by-step         # 滚动更新失败按 connectops-deploy rollback 声明回退
+    escalate: {to: root, notify: bind-role}
+  trustGate:
+    enabled: true
+    mode: code
+    verifierRef: "connectops-code-audit/verify-external"
+    onReject: ask
+  brakes:
+    cooldown: 10m
+    maxMutationsPerTick: 4
+    avoidRepeatFix: true
+  regression:
+    statusWriteback: true
+    bugDocPolicy: invalidate
+    cleanTempBugDoc: false
+    targetPhaseOnConverge: InSync
+    postActions:
+      - {id: bugdoc-lifecycle, kind: doc-lifecycle, targetDocType: BugDoc, action: invalidate, enabled: true, title: "临时 BugDoc 收尾处理（可增删/可改 delete / keep）"}
+      - {id: gh-release-sync,  kind: custom, targetDocType: "", action: "", enabled: true, title: "connectops-gh release-create 同步发布说明到 github"}
+      - {id: status-insync,    kind: status-writeback, targetPhase: InSync, enabled: true, title: "回写 ServiceInstance.status.phase = InSync"}
+    reports: [DriftReport, SessionLog]

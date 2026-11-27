@@ -1,0 +1,133 @@
+apiVersion: core/v1
+kind: Workflow
+metadata:
+  name: gh-issue-triage
+  scope: global
+  labels:
+    core/origin: custom
+spec:
+  enabled: false                    # 声明层模具——实例化（apply 到 docsRoot）后按需启用
+  undeletable: false
+  connector: connector-ops/connectops-gh
+  services:
+    involved: [self-recursive-core, developer-system, deploy-system]
+    mode: act
+  llm:
+    provider: openai-default
+    model: "reasoning-tier"
+    tier: high
+    nodeMapping:
+      gh-issue-fetch:   {tier: low,      model: "flash-tier"}
+      agent-judge:      {tier: high,     model: "reasoning-tier"}
+      approval-gate:    {tier: high,     model: "reasoning-tier"}
+      doc-apply:        {tier: standard, model: "standard-tier"}
+      developer-system: {tier: high,     model: "reasoning-tier"}
+      verify:           {tier: low,      model: "flash-tier"}
+      gh-release:       {tier: low,      model: "flash-tier"}
+      report-archive:   {tier: low,      model: "flash-tier"}
+  globalRuleRefs: [rule/rule_eng, rule/rule_doc, rule/rule_ux, rule/rule_pub]
+  logSource:
+    events: [GhIssueEvent]
+    minLevel: info
+    services: [self-recursive-core]
+    keywordMatch: ""
+    timer:
+      enabled: true                 # 入口 1：定时整理（每 1h 全量扫描未整理 Issue）
+      interval: 1h
+      cron: "0 * * * *"
+    collector:
+      connector: connectops-gh
+      op: issue-list
+      query: "state:open label:needs-triage"
+      autoDevelopOnMissing: true
+  triggers:
+    events:
+      types: [GhIssueEvent]
+      minLevel: info
+    timer:
+      resync: 1h
+      enabled: true
+      interval: 1h
+      cron: "0 * * * *"
+  entryPoints:
+    - {node: gh-issue-fetch, phase: Idle, enabled: true, events: [GhIssueEvent], description: "入口 2：connectops-gh watch 桥自产 GhIssueEvent（新开/重开 Issue）即时进入"}
+  ingest:
+    dedup: {window: 10m}
+    group: {by: issue, max: 50}
+    filterLevels: [info, warn, error, fatal]
+  approval:
+    mode: agent
+    autoCriteria: "Issue 分类明确、修复方案只涉及文档更新或非破坏性代码修改且测试全绿时自动批准；涉及删库/权限/生产配置转人工"
+    maxRiskLevel: low
+  systemBindings:
+    developerSystem:
+      service: developer-system
+      resolution: default
+      connector: connectops-developer
+      op: develop
+      conventions:
+        branchPrefix: "agent/"
+        worktreeDir: "worktrees/"
+        tmpDir: "tmp/"
+        maxFileLines: 800
+    deploySystem:
+      service: deploy-system
+      resolution: default
+      connector: connectops-gh
+      op: release-create            # 发版=github release（build 走 gh workflow-dispatch）
+  verification:
+    mode: both
+    connector: connectops-code-audit
+    op: audit
+    onFail: retry-develop
+    conditions:
+      - {id: lint-rules, kind: code, title: "代码 Lint 与规则审核", command: "connectops-code-audit/audit", required: true}
+      - {id: gh-ci-green, kind: test, title: "GitHub CI 全绿（gh 查 run 状态）", command: "connectops-gh/check-runs", required: true}
+  phases:
+    - {name: gh-issue-fetch,   phase: Idle,             title: "1. 拉取待整理 Issue（issue-list）",   unit: connectops, connector: connectops-gh, op: issue-list, provider: openai-default, modelTier: low,      entryEvents: [GhIssueEvent]}
+    - {name: agent-judge,      phase: Analyzing,        title: "2. Agent 判断（bug/文档/需求/噪声）", unit: agent,      op: judge-issue, provider: openai-default, modelTier: high, globalRuleRefs: [rule/rule_eng, rule/rule_doc]}
+    - {name: approval-gate,    phase: AwaitingApproval, title: "3. 审批 / 自动判断审批",              unit: gate,       op: approval-check, provider: openai-default, modelTier: high}
+    - {name: doc-apply,        phase: Planning,         title: "4. Doc Apply（结论/BugDoc 落稿）",    unit: session,    op: apply-doc,   provider: openai-default, modelTier: standard, globalRuleRefs: [rule/rule_doc], entryEvents: [DocApplied]}
+    - {name: developer-system, phase: Executing,        title: "5. 修复/文档更新（build 走 gh）",     unit: agent,      connector: connectops-developer, op: develop, provider: openai-default, modelTier: high, globalRuleRefs: [rule/rule_eng, rule/rule_ux, rule/rule_pub], service: developer-system}
+    - {name: verify,           phase: Verifying,        title: "6. 验收（CI+规则审核）",              unit: connectops, connector: connectops-code-audit, op: audit, provider: openai-default, modelTier: low}
+    - {name: gh-release,       phase: Deploying,        title: "7. github release 发版",              unit: connectops, connector: connectops-gh, op: release-create, provider: openai-default, modelTier: low}
+    - {name: report-archive,   phase: Reporting,        title: "8. 回评 Issue + 归档收尾",            unit: session,    op: archive-report, provider: openai-default, modelTier: low}
+  transitions:
+    - {from: Idle,             on: advance,          to: Analyzing}
+    - {from: Idle,             on: "entry:GhIssueEvent", to: Analyzing}
+    - {from: Analyzing,        on: advance,          to: AwaitingApproval}
+    - {from: Analyzing,        on: worth_fixing,     to: AwaitingApproval}
+    - {from: Analyzing,        on: ignore,           to: Reporting}
+    - {from: AwaitingApproval, on: advance,          to: Planning}
+    - {from: AwaitingApproval, on: ApprovalGranted,  to: Planning}
+    - {from: AwaitingApproval, on: ApprovalRejected, to: Failed}
+    - {from: Planning,         on: advance,          to: Executing}
+    - {from: Executing,        on: advance,          to: Verifying}
+    - {from: Verifying,        on: advance,          to: Deploying}
+    - {from: Verifying,        on: retry-develop,    to: Executing}
+    - {from: Deploying,        on: advance,          to: Reporting}
+  onEscalate: {action: pause, notify: bind-role}
+  onFailed:
+    backoff: 30s*2^n
+    maxAttempts: 3
+    rollbackPolicy: by-step
+    escalate: {to: root, notify: bind-role}
+  trustGate:
+    enabled: true                   # github=外部系统，内容先过检验门
+    mode: code
+    verifierRef: "connectops-code-audit/verify-external"
+    onReject: ask
+  brakes:
+    cooldown: 5m
+    maxMutationsPerTick: 8
+    avoidRepeatFix: true
+  regression:
+    statusWriteback: true
+    bugDocPolicy: invalidate        # 临时 BugDoc 默认标记失效；可改 delete / keep，或直接删除该动作项
+    cleanTempBugDoc: false
+    targetPhaseOnConverge: InSync
+    postActions:
+      - {id: bugdoc-lifecycle, kind: doc-lifecycle, targetDocType: BugDoc, action: invalidate, enabled: true, title: "临时 BugDoc 收尾处理（可选：invalidate / delete / keep，可增删此项）"}
+      - {id: issue-comment,    kind: custom, targetDocType: "", action: "", enabled: true, title: "connectops-gh 回评 Issue 处理结论（issue-comment）"}
+      - {id: status-insync,    kind: status-writeback, targetPhase: InSync, enabled: true, title: "回写 ServiceInstance.status.phase = InSync"}
+    reports: [DriftReport, SessionLog]
