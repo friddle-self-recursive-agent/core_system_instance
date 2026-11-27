@@ -1,11 +1,3 @@
-apiVersion: core/v1
-kind: Workflow
-metadata:
-  name: core-system-developer-loop
-  scope: global
-  labels:
-    core/origin: builtin
----
 # core-system-developer-loop 权威形态（concepts/workflow.md §3 同源种子文档——instance 仓库落位）。
 # 2026-11-27 用户裁决：执行单元三型 connectops/agent/service（gate=控制节点非执行单元；
 # 旧 session 词形退役）——agent=判断执行单元点进即配（LLM/refDocs/refRules/refTags/tagRules/tools）；
@@ -13,6 +5,13 @@ metadata:
 # permissionRole 权限随文档授予）。验收=developer-system 的 Agent 验收 session（op: acceptance）；
 # Report 也是 agent（随身工具）。节点拓扑可加删（immutableNodes: false）——加节点/删验收节点
 # 走 draft→apply。
+apiVersion: core/v1
+kind: Workflow
+metadata:
+  name: core-system-developer-loop
+  scope: global
+  labels:
+    core/origin: builtin
 spec:
   enabled: false                    # 出厂默认不启动；core-system 实例自我迭代时显式置 true
   immutableNodes: false             # 节点可加删（前端节点表加节点/删验收节点/改参数，draft→apply 落账）
