@@ -1,0 +1,14 @@
+apiVersion: core/v1
+kind: Role
+metadata:
+  name: deploy-system-ops
+  scope: global
+  labels: {domain: devtools}
+---
+# deploy-system 服务内 agent 的权限随文档授予（P7——systemBindings.deploySystem.permissionRole）。
+# 发布面权限：生产发布走 requireProdApproval 审批闸（workflow 级声明），此处授基础动作域。
+spec:
+  permissions:
+    - {scope: "core/*", actions: [read, call]}
+    - {scope: "systems/deploy-system/*", actions: [read, write, call]}
+    - {scope: "global/*", actions: [read]}

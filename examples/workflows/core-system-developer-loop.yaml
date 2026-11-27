@@ -1,0 +1,135 @@
+apiVersion: core/v1
+kind: Workflow
+metadata:
+  name: core-system-developer-loop
+  scope: global
+  labels:
+    core/origin: builtin
+---
+# core-system-developer-loop 权威形态（concepts/workflow.md §3 同源种子文档——instance 仓库落位）。
+# 2026-11-27 用户裁决：执行单元三型 connectops/agent/service（gate=控制节点非执行单元；
+# 旧 session 词形退役）——agent=判断执行单元点进即配（LLM/refDocs/refRules/refTags/tagRules/tools）；
+# service=调用目标系统且 service 内部用自己 agent 执行（contextPassing 必传上一轮详细上下文；
+# permissionRole 权限随文档授予）。验收=developer-system 的 Agent 验收 session（op: acceptance）；
+# Report 也是 agent（随身工具）。节点拓扑可加删（immutableNodes: false）——加节点/删验收节点
+# 走 draft→apply。
+spec:
+  enabled: false                    # 出厂默认不启动；core-system 实例自我迭代时显式置 true
+  immutableNodes: false             # 节点可加删（前端节点表加节点/删验收节点/改参数，draft→apply 落账）
+  undeletable: true                 # 内置核心工作流不可删除
+  connector: connector-ops/core-system-developer-loop
+  services:
+    involved: [core_system, developer-system, deploy-system]
+    mode: act
+  llm: {provider: openai-default, model: reasoning-tier, tier: high}
+  globalRuleRefs: [rule/rule_eng, rule/rule_doc, rule/rule_ux, rule/rule_ctx, rule/rule_pub]
+  triggers:
+    events:
+      types: [BugReport, MetricThreshold, ExternalChanged, ReconcileTick, LoopRequested, DocApplied]
+      minLevel: info
+    timer:
+      enabled: true
+      interval: 10m
+      resync: 10m
+  logSource:                        # 节点 1：监听日志 Event + ConnectorOps 收集过滤配置
+    events: [BugReport, MetricThreshold, ExternalChanged, ReconcileTick, LoopRequested]
+    minLevel: warn
+    services: [core_system]
+    keywordMatch: ""
+    timer: {enabled: true, interval: 10m}
+    collector:
+      connector: connectops-log-collector
+      op: collect-logs
+      query: "level>=error"
+      autoDevelopOnMissing: true    # 该 ConnectorOps 缺失/骨架态时拉出代码开发任务
+  entryPoints:                      # 多节点入口
+    - node: log-event
+      phase: Idle
+      enabled: true
+      events: [BugReport, MetricThreshold, ExternalChanged, ReconcileTick, LoopRequested]
+      description: "入口 1：运行期日志/异常事件/定时巡检触发，从头走 Agent 判断与审批"
+    - node: doc-apply
+      phase: Planning
+      enabled: true
+      events: [DocApplied]
+      docTypes: [Goal, Desc, Rule, WorkflowDesign, CodeDesign, DeployDesign, BugDoc, Workflow]
+      description: "入口 2：用户对话或控制台修改文档触发 DocApplied，直接切入 developer-system → 验收 → deploy-system"
+  approval:                         # 节点 3：审批 / Agent 自动判断审批
+    mode: agent
+    autoCriteria: "单模块非破坏性代码或文档修改、不涉及高敏权限与生产数据删除时自动批准；其余转人工审批"
+    maxRiskLevel: low
+  systemBindings:                   # 节点 5 & 7：研发与发布系统绑定（default|install|import 逐层询问）
+    developerSystem:
+      service: developer-system
+      resolution: default
+      connector: connectops-developer
+      op: develop
+      permissionRole: role/developer-system-ops   # builtin developer_system 权限随文档授予（P7）
+      conventions:
+        branchPrefix: "agent/"
+        worktreeDir: "worktrees/<repo>/<slug>"
+        tmpDir: "tmp/"
+        maxFileLines: 800
+    deploySystem:
+      service: deploy-system
+      resolution: default
+      connector: connectops-deploy
+      op: release
+      permissionRole: role/deploy-system-ops      # 同上：权限随文档授予
+      envs: [staging, prod]
+      requireProdApproval: false
+  verification:                     # 节点 6 验收配置（条件清单随验收 session 逐条解释执行）
+    mode: both
+    connector: connectops-code-audit
+    op: audit
+    onFail: retry-develop
+    conditions:
+      - {id: lint-rules, kind: code, title: "代码 Lint 与规则审核 (R-PUB-1 / R-DOC-6 / R-ENG-7 ≤800行)", command: "connectops-code-audit/audit", required: true}
+      - {id: unit-tests, kind: test, title: "后端与前端单元/集成测试全绿 (go test ./... & npm test)", command: "go test ./... && npm test", required: true}
+      - {id: live-probe, kind: agent, title: "活体探针与页面无假数据/无报错验证", command: "agent-verify", required: true}
+      - {id: bugdoc-clean, kind: agent, title: "临时 BugDoc 验证通过后清理 (R-DOC-10)", command: "doc-clean-check", required: false}
+  ingest: {dedup: {window: 5m}, group: {by: service, max: 20}, filterLevels: [warn, error, fatal]}
+  phases:                           # 执行单元三型：connectops|agent|service（gate=控制节点）
+    - {name: log-event,        phase: Idle,             title: "1. 监听日志与 Event",        unit: connectops, connector: connectops-log-collector, op: collect-logs, provider: openai-default, modelTier: low,      entryEvents: [BugReport, MetricThreshold, ExternalChanged, ReconcileTick, LoopRequested]}
+    - {name: agent-judge,      phase: Analyzing,        title: "2. Agent 判断（或产出 BugDoc）", unit: agent,      op: judge-issue,  provider: openai-default, modelTier: high,     refRules: [rule/rule_eng, rule/rule_doc]}
+    - {name: approval-gate,    phase: AwaitingApproval, title: "3. 审批 / 自动判断审批",     unit: gate,       op: approval-check}
+    - {name: doc-apply,        phase: Planning,         title: "4. Doc Apply（设计/BugDoc 切入点）", unit: agent, op: apply-doc,    provider: openai-default, modelTier: standard, refDocs: [goal], refRules: [rule/rule_doc, rule/rule_eng], refTags: [audit, fix], tagRules: [rule/tag_default], entryEvents: [DocApplied]}
+    - {name: developer-system, phase: Executing,        title: "5. developer-system 研发（service 内部 agent 执行）", unit: service, connector: connectops-developer, op: develop, service: developer-system, contextPassing: {previousRound: true, fields: [judge, plan, diff, approval]}, permissionRole: role/developer-system-ops}
+    - {name: verify,           phase: Verifying,        title: "6. 验收（developer-system Agent 验收 session）", unit: service, service: developer-system, op: acceptance, contextPassing: {previousRound: true, fields: [diff, verifyConditions]}}
+    - {name: deploy-system,    phase: Deploying,        title: "7. deploy-system 发版（service 内部 agent 执行）", unit: service, connector: connectops-deploy, op: release, service: deploy-system, contextPassing: {previousRound: true, fields: [verifyReport, release]}, permissionRole: role/deploy-system-ops}
+    - {name: report-archive,   phase: Reporting,        title: "8. 总结删 BugDoc + 回写 InSync", unit: agent, op: archive-report, provider: openai-default, modelTier: low, tools: [findings-read, doc-draft, tag-write]}
+  transitions:
+    - {from: Idle,             on: advance,          to: Analyzing}
+    - {from: Idle,             on: "entry:DocApplied", to: Planning}
+    - {from: Analyzing,        on: advance,          to: AwaitingApproval}
+    - {from: Analyzing,        on: worth_fixing,     to: AwaitingApproval}
+    - {from: Analyzing,        on: ignore,           to: Reporting}
+    - {from: AwaitingApproval, on: advance,          to: Planning}
+    - {from: AwaitingApproval, on: ApprovalGranted,  to: Planning}
+    - {from: AwaitingApproval, on: ApprovalRejected, to: Failed}
+    - {from: Planning,         on: advance,          to: Executing}
+    - {from: Executing,        on: advance,          to: Verifying}
+    - {from: Verifying,        on: advance,          to: Deploying}
+    - {from: Verifying,        on: retry-develop,    to: Executing}
+    - {from: Deploying,        on: advance,          to: Reporting}
+  onEscalate: {action: pause, notify: bind-role}
+  onFailed:
+    backoff: 30s*2^n
+    maxAttempts: 3
+    rollbackPolicy: by-step
+    escalate: {to: root, notify: bind-role}
+  trustGate:
+    enabled: true
+    mode: code
+    verifierRef: "connectops-code-audit/verify-external"
+    onReject: ask
+  brakes: {cooldown: 2m, maxMutationsPerTick: 10, avoidRepeatFix: true}
+  regression:
+    statusWriteback: true
+    bugDocPolicy: invalidate
+    cleanTempBugDoc: false
+    targetPhaseOnConverge: InSync
+    postActions:
+      - {id: bugdoc-lifecycle, kind: doc-lifecycle, targetDocType: BugDoc, action: invalidate, enabled: true, title: "临时 BugDoc 收尾处理（可标记失效/删除/保留，或删去此项）"}
+      - {id: status-insync,    kind: status-writeback, targetPhase: InSync, enabled: true, title: "回写 ServiceInstance.status.phase = InSync"}
+    reports: [DriftReport, SessionLog]

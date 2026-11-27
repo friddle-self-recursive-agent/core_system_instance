@@ -1096,7 +1096,7 @@ corectl loop
 
 ### 19.8 Workflow 真实详情、以人为本配置工作台、`OpenAIProvider` 点击即配与文档导出配置（2026-11-27）
 
-1. **双内置基座与入口词形**：内置为 **`core-system-developer-loop`**（出厂默认 `enabled: false`，`core-system` 实例自我迭代显式开启；不可删除、不可增删主干节点）与 **`default-task`**（内置通用任务相位状态机，`session`/`agent` 节点支持 `globalRuleRefs` 引用全局规则）；其余旧名（`core-workflow`/`bug-workflow`/`bug-lifecycle`/`dev-delivery`/`apply-workflow`/`simple-shot`/`watch-only`）作为 Scheme Adapter 兼容别名自动映射。`#/wf/:name` 直接现读 `GET /v1/workflows`、`GET /v1/workflows/runs`、`GET /v1/tasks`。
+1. **双内置基座与入口词形**：内置为 **`core-system-developer-loop`**（出厂默认 `enabled: false`，`core-system` 实例自我迭代显式开启；本体不可删除 `undeletable: true`，节点拓扑**可在前端加删** `immutableNodes: false`——2026-11-27 二次裁决「我要加节点或者我要去掉验收节点了？」）与 **`default-task`**（内置通用任务相位状态机，`agent` 节点支持 `globalRuleRefs` 引用全局规则）；其余旧名（`core-workflow`/`bug-workflow`/`bug-lifecycle`/`dev-delivery`/`apply-workflow`/`simple-shot`/`watch-only`）作为 Scheme Adapter 兼容别名自动映射。`#/wf/:name` 直接现读 `GET /v1/workflows`、`GET /v1/workflows/runs`、`GET /v1/tasks`。
 2. **以人为本全节点可视化配置（保存即 Apply 落 `Workflow` 文档对象）**：
    - **总控与基础环境**：一键启停（`enabled` 开关）、锁定徽章（内置不可删除/主干节点不可删改）、全局规则引用（`globalRuleRefs`）、`developer-system` 与 `deploy-system` 绑定方式逐层询问（`default` 默认开源习惯：`agent/<name>` 分支、`worktrees/<repo>/<slug>`、`tmp/`、≤800行 / `install` 模板安装 / `import` 导入外部系统）。
    - **节点 1（监听日志与 Event / `Idle`）**：可配置监听事件类型、最低日志级别、Service/关键词过滤、定时周期，以及**日志收集 `ConnectorOps`**；若所选 `ConnectorOps` 缺失或处于 `skeleton` 骨架态，直接提供 **「拉出代码开发任务（开发/编辑此 ConnectorOps）」** 按钮。
@@ -1112,6 +1112,12 @@ corectl loop
    - 文档导出作为单独配置项存储在数据库 `docs_export_config` 表（初值取自 `scheme.yaml` 的 `docTypes[].exportDefault`，默认不导出 `BugDoc`、`DriftReport`、`PlanDoc`、`SessionLog` 等运行时文档，非代码硬编码）；用户可在界面直接勾选/调整哪些文档类型参与 Git 导出。
 5. **四大设计表与 YAML 定义直查**：页面同屏展示 ① 多入口触发与日志过滤表、② 节点与跨系统交互设计表（含 Provider、模型档位、GlobalRuleRefs）、③ 状态迁移分支表、④ 完整 YAML 文档声明。
 6. **任务与真实 Session**：run.involved=`Task/<scope>/<name>` 反查 `/v1/tasks` 与 `/core-console/task-sessions`；节点会话来源显式标注 `history.sessionId` → `run.sessionId` → Task journal。
+7. **执行单元三型与节点可加删（2026-11-27 二次裁决——workflow.md §1.3 同源）**：
+   - **执行单元词形三型**：节点表「执行单元」列按 `connectops | agent | service` 展示（`gate`=控制节点非执行单元；旧 `session` 词形退役——doc-apply/report 归 agent，developer-system/verify/deploy 归 service）；
+   - **agent 节点点进即配**：点击 agent 节点行原地展开该 agent 的配置面——默认 LLM（`provider`/`model`/`modelTier`）、ref 的文档 `refDocs`、ref 的规则 `refRules`、默认 ref 的 tag `refTags`、tag 规则 `tagRules`、随身工具 `tools`；
+   - **service 节点配置面**：`service`/`op` + **上一轮详细上下文**（`contextPassing.previousRound` + 字段清单：judge 结论/plan 与 diff/audit findings/审批记录）+ `permissionRole`（builtin developer_system 权限随文档授予 P7）；
+   - **验收节点词形**：verify 节点 = developer-system 的 **Agent 验收 session**（unit: service, op: acceptance）；**Report 也是 agent**（unit: agent + `tools`：读 findings/写归档报告/打 tag）；
+   - **节点表可加删**：**「+ 添加节点」**按钮与每行**删除**按钮（如删验收节点）——节点增删改一律随「保存并 Apply 工作流配置」以 Workflow 文档对象落账（会话没有命令，draft→apply 同源）；YAML 声明区随节点表实时联动再生成。
 
 ### 19.9 用户体系一键安装向导（use-session，2026-11-27 需求要求——方案与可行文档见 core_design concepts/user-system.md §6）
 

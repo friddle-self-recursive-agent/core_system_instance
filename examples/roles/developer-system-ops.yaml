@@ -1,0 +1,15 @@
+apiVersion: core/v1
+kind: Role
+metadata:
+  name: developer-system-ops
+  scope: global
+  labels: {domain: devtools}
+---
+# developer-system 服务内 agent 的权限随文档授予（P7 权限随文档走——2026-11-27 用户裁决
+# 「给 builtin developer_system 的权限」；systemBindings.developerSystem.permissionRole 绑定）。
+# 零明文凭据：仓库凭据走 secret:/env: 引用（R-PUB-1）。
+spec:
+  permissions:
+    - {scope: "core/*", actions: [read, write, approve, call]}          # cored 资源域：文档读/draft→apply/审批闸/算子调用
+    - {scope: "systems/developer-system/*", actions: [read, write, call]}
+    - {scope: "global/*", actions: [read]}
