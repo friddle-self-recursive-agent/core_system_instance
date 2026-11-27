@@ -42,7 +42,6 @@
 - [runtime/builtin-flows.md](runtime/builtin-flows.md)：内置能力流程总表（研发/发布/备份/认证/事件/指标/workflow 生命周期）
 - [runtime/bootstrap.md](runtime/bootstrap.md)：自举（bootstrap）设计
 - [layout.md](layout.md)：目录即对象规范（文档库物理布局）
-- [feasibility.md](feasibility.md)：可行性报告（含 onedev / 本地存储 / dsh / sqlite 专项，R1.6 指定放本仓）
 - [examples/](examples/)：developer-system 走查示例
 
 ## MVP：dsh-core-agent（第一版可运行形态）

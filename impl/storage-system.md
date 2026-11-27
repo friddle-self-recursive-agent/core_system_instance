@@ -56,7 +56,7 @@ storage root（本机目录，随实例）
 - 大文件（镜像 tar）**不进 git**（.gitignore+LFS 白名单），落 files/——防文档库膨胀（H2 缓解）。
 - **远端是加分项不是承诺**：接了 nas/oss connector，sync/归档=部署的 Task/Workflow；没接，系统完整可用。旧版"文档库 10min push NAS"的 A1 承诺作废。
 
-## 6. 可行性（摘要，全文见 feasibility.md）
+## 6. 可行性
 
 | 项 | 评级 | 说明 |
 |---|---|---|

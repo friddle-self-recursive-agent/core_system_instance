@@ -1118,6 +1118,10 @@ corectl loop
    - **service 节点配置面**：`service`/`op` + **上一轮详细上下文**（`contextPassing.previousRound` + 字段清单：judge 结论/plan 与 diff/audit findings/审批记录）+ `permissionRole`（builtin developer_system 权限随文档授予 P7）；
    - **验收节点词形**：verify 节点 = developer-system 的 **Agent 验收 session**（unit: service, op: acceptance）；**Report 也是 agent**（unit: agent + `tools`：读 findings/写归档报告/打 tag）；
    - **节点表可加删**：**「+ 添加节点」**按钮与每行**删除**按钮（如删验收节点）——节点增删改一律随「保存并 Apply 工作流配置」以 Workflow 文档对象落账（会话没有命令，draft→apply 同源）；YAML 声明区随节点表实时联动再生成。
+8. **审批信息面·节点弹窗编辑·相位链图（2026-11-27 三次裁决——「批准啥？approve 至少要展示更新了哪些文档」「不能在 list 节点上弹窗让我编辑吗」「节点相位链能不能做到图的方式，很多时候不是一个起点有多个起点，中间也有分叉」）**：
+   - **审批卡信息面（批准前必读）**：待批行/卡**不得只有裸按钮**——批准前必须看到①**本 run 已更新文档清单**（窗口内 DocApplied 事件归集的文档 chips，可点进工作台）②**待 apply 文档稿清单**（草稿缓存关联行——批准将落哪些文档）③**闸前判断摘要**（ApprovalNeeded 事件 summary=agent 判定词形；缺席=诚实注记不编造）+ run 相位轨迹（history 最近迁移行）。docdiff 手动可算（稿 vs 落库值 diff 统计）；LLM 整理的判定语随事件词形携带，缺席不冒充。
+   - **节点编辑=list+弹窗**：配置工作台**不再堆叠长卡**——设计表 list 行点击 → **弹窗编辑该节点细节配置**（unit 分型字段组：agent=LLM/refDocs/refRules/refTags/tagRules/tools、service=service/op/permissionRole/contextPassing、connectops=connector/op/modelTier、gate=op）；弹窗内保存/删除节点，改动随「保存并 Apply」落账。
+   - **节点相位链=图**：相位链按**图**渲染（非线性表）——**多起点**（入口 1 log-event / 入口 2 doc-apply，入口徽章标注）、**中间分叉**（条件边带 `on` 判断词形标签：worth_fixing / ignore / retry-develop / entry:DocApplied / ApprovalGranted / ApprovalRejected——判断条件=LLM 写的分支输出），侧轨态 Failed 虚线节点；节点盒点击=同一弹窗编辑器；声明 transitions 与 YAML 迁移表同源联动。
 
 ### 19.9 用户体系一键安装向导（use-session，2026-11-27 需求要求——方案与可行文档见 core_design concepts/user-system.md §6）
 
