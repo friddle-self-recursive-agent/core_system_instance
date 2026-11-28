@@ -18,13 +18,13 @@ spec:
     tier: high
     nodeMapping:
       gh-issue-fetch:   {tier: low,      model: "flash-tier"}
-      agent-judge:      {tier: high,     model: "reasoning-tier"}
-      approval-gate:    {tier: high,     model: "reasoning-tier"}
+      batch-judge:      {tier: high,     model: "reasoning-tier"}
+      approval-gate:    {tier: low,      model: "flash-tier"}   # 自审批判决=ops_core_inner_agent 低档
       doc-apply:        {tier: standard, model: "standard-tier"}
       developer-system: {tier: high,     model: "reasoning-tier"}
       verify:           {tier: low,      model: "flash-tier"}
       gh-release:       {tier: low,      model: "flash-tier"}
-      report-archive:   {tier: low,      model: "flash-tier"}
+      merge-results:    {tier: standard, model: "standard-tier"}
       issue-feedback:   {tier: low,      model: "flash-tier"}
   globalRuleRefs: [rule/rule_eng, rule/rule_doc, rule/rule_ux, rule/rule_pub]
   logSource:
@@ -33,7 +33,7 @@ spec:
     services: [self-recursive-core]
     keywordMatch: ""
     timer:
-      enabled: true                 # 入口 1：定时整理（每 1h 全量扫描未整理 Issue）
+      enabled: true                 # 入口 1：定时整理（每 1h 批量全量扫描未 close Issue）
       interval: 1h
       cron: "0 * * * *"
     collector:
@@ -51,13 +51,13 @@ spec:
       interval: 1h
       cron: "0 * * * *"
   entryPoints:
-    - {node: gh-issue-fetch, phase: Idle, enabled: true, events: [GhIssueEvent], description: "入口 2：connectops-gh watch 桥自产 GhIssueEvent（新开/重开 Issue）即时进入"}
+    - {node: gh-issue-fetch, phase: Idle, enabled: true, events: [GhIssueEvent], description: "入口 2：connectops-gh watch 桥自产 GhIssueEvent（新开/重开 Issue）即时进入——单条入口不声明 fanout，一事件一 run"}
   ingest:
     dedup: {window: 10m}
     group: {by: issue, max: 50}
     filterLevels: [info, warn, error, fatal]
-  approval:
-    mode: agent
+  approval:                         # 2026-11-28 用户裁定：builtin workflow 自审批缺省（规则 23）
+    mode: agent                     # LLM 按 autoCriteria 自主判决+DocumentDiff 判决文档留痕；超 maxRiskLevel 回退人工
     autoCriteria: "Issue 分类明确、修复方案只涉及文档更新或非破坏性代码修改且测试全绿时自动批准；涉及删库/权限/生产配置转人工"
     maxRiskLevel: low
   systemBindings:
@@ -85,25 +85,32 @@ spec:
       - {id: lint-rules, kind: code, title: "代码 Lint 与规则审核", command: "connectops-code-audit/audit", required: true}
       - {id: gh-ci-green, kind: test, title: "GitHub CI 全绿（gh 查 run 状态）", command: "connectops-gh/check-runs", required: true}
   phases:
-    - {name: gh-issue-fetch,   phase: Idle,             title: "1. 拉取待整理 Issue（issue-list）",   unit: connectops, connector: connectops-gh, op: issue-list, provider: openai-default, modelTier: low,      entryEvents: [GhIssueEvent]}
-    - {name: agent-judge,      phase: Analyzing,        title: "2. Agent 判断（bug/文档/需求/噪声）", unit: agent,      op: judge-issue, provider: openai-default, modelTier: high, globalRuleRefs: [rule/rule_eng, rule/rule_doc]}
-    - {name: approval-gate,    phase: AwaitingApproval, title: "3. 审批 / 自动判断审批",              unit: gate,       op: approval-check, provider: openai-default, modelTier: high}
-    - {name: doc-apply,        phase: Planning,         title: "4. Doc Apply（结论/BugDoc 落稿）",    unit: agent,      op: apply-doc,   provider: openai-default, modelTier: standard, globalRuleRefs: [rule/rule_doc], entryEvents: [DocApplied]}
-    - {name: developer-system, phase: Executing,        title: "5. 修复/文档更新（build 走 gh）",     unit: agent,      connector: connectops-developer, op: develop, provider: openai-default, modelTier: high, globalRuleRefs: [rule/rule_eng, rule/rule_ux, rule/rule_pub], service: developer-system}
-    - {name: verify,           phase: Verifying,        title: "6. 验收（CI+规则审核）",              unit: connectops, connector: connectops-code-audit, op: audit, provider: openai-default, modelTier: low}
-    - {name: gh-release,       phase: Deploying,        title: "7. github release 发版",              unit: connectops, connector: connectops-gh, op: release-create, provider: openai-default, modelTier: low}
-    - {name: report-archive,   phase: Reporting,        title: "8. 归档收尾（报告/Status 回写）",      unit: agent,      op: archive-report, provider: openai-default, modelTier: low}
-    - {name: issue-feedback,   phase: Reporting,        title: "9. Issue 反馈闭环（回评修复结果+关闭）", unit: connectops, connector: connectops-gh, op: issue-comment, provider: openai-default, modelTier: low}
+    # —— 父链：批量合判 → 扇出 → 合并 → 回评 ——
+    - {name: gh-issue-fetch,   phase: Idle,             title: "1. 拉取待整理 Issue（issue-list 全量）", unit: connectops, connector: connectops-gh, op: issue-list, provider: openai-default, modelTier: low,      entryEvents: [GhIssueEvent]}
+    - {name: batch-judge,      phase: Analyzing,        title: "2. 批量合判（一次分析全部 Issue→执行计划 plan[N 修复项]）", unit: agent, op: judge-issues-batch, provider: openai-default, modelTier: high, globalRuleRefs: [rule/rule_eng, rule/rule_doc], planKey: plan}
+    - {name: approval-gate,    phase: AwaitingApproval, title: "3. 自审批（mode=agent 判决+DocumentDiff 留痕，超险回退人工）", unit: gate, op: approval-check, provider: openai-default, modelTier: low}
+    - {name: fanout-fixes,     phase: Planning,         title: "4. 扇出子 run（每条修复项一 run，parentRun 锚；父 run join 挂起）", unit: workflow, op: gh-issue-trigger, fanout: {from: plan, key: items}, entryNode: doc-apply, join: all, provider: openai-default, modelTier: low}
+    - {name: merge-results,    phase: Reporting,        title: "5. 合并子 run 结果（diff/发版/验证证据/失败原因）", unit: agent, op: merge-results, provider: openai-default, modelTier: standard}
+    - {name: issue-feedback,   phase: Reporting,        title: "6. 逐 Issue 回评+关闭（真发 issue-comment，回评作者=系统凭据）", unit: connectops, connector: connectops-gh, op: issue-comment, provider: openai-default, modelTier: low}
+    # —— 子链：单条修复项执行（子 run 从 doc-apply 受理，parentRun 锚回填父 run）——
+    - {name: doc-apply,        phase: Planning,         title: "S1. Doc Apply（结论/BugDoc 落稿）",   unit: agent,      op: apply-doc,   provider: openai-default, modelTier: standard, globalRuleRefs: [rule/rule_doc], entryEvents: [sub:plan-item]}
+    - {name: developer-system, phase: Executing,        title: "S2. 修复/文档更新（真 session 执行，build 走 gh）", unit: service, connector: connectops-developer, op: develop, provider: openai-default, modelTier: high, globalRuleRefs: [rule/rule_eng, rule/rule_ux, rule/rule_pub], service: developer-system, contextPassing: {fields: [planItem, judge]}}
+    - {name: verify,           phase: Verifying,        title: "S3. 验收（CI+规则审核）",              unit: connectops, connector: connectops-code-audit, op: audit, provider: openai-default, modelTier: low}
+    - {name: gh-release,       phase: Deploying,        title: "S4. github release 发版",              unit: connectops, connector: connectops-gh, op: release-create, provider: openai-default, modelTier: low}
   transitions:
+    # 父链
     - {from: Idle,             on: advance,          to: Analyzing}
     - {from: Idle,             on: "entry:GhIssueEvent", to: Analyzing}
     - {from: Analyzing,        on: advance,          to: AwaitingApproval}
     - {from: Analyzing,        on: worth_fixing,     to: AwaitingApproval}
-    - {from: Analyzing,        on: ignore,           to: Reporting}
+    - {from: Analyzing,        on: ignore,           to: Reporting}     # 噪声项合并直达回评归档
     - {from: AwaitingApproval, on: advance,          to: Planning}
     - {from: AwaitingApproval, on: ApprovalGranted,  to: Planning}
     - {from: AwaitingApproval, on: ApprovalRejected, to: Failed}
+    - {from: Planning,         on: fanout-complete,  to: Reporting}     # join：全部子 run 落终态后父 run 续行（部分失败不传染，merge 如实汇总）
+    # 子链（子 run 从 doc-apply 受理）
     - {from: Planning,         on: advance,          to: Executing}
+    - {from: Planning,         on: "entry:sub:plan-item", to: Planning}   # 子 run 受理锚：计划条目驱动
     - {from: Executing,        on: advance,          to: Verifying}
     - {from: Verifying,        on: advance,          to: Deploying}
     - {from: Verifying,        on: retry-develop,    to: Executing}
@@ -130,6 +137,5 @@ spec:
     targetPhaseOnConverge: InSync
     postActions:
       - {id: bugdoc-lifecycle, kind: doc-lifecycle, targetDocType: BugDoc, action: invalidate, enabled: true, title: "临时 BugDoc 收尾处理（可选：invalidate / delete / keep，可增删此项）"}
-      - {id: issue-comment,    kind: custom, targetDocType: "", action: "", enabled: true, title: "connectops-gh 回评 Issue 处理结论（issue-comment）"}
       - {id: status-insync,    kind: status-writeback, targetPhase: InSync, enabled: true, title: "回写 ServiceInstance.status.phase = InSync"}
     reports: [DriftReport, SessionLog]
