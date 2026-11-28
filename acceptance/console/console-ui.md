@@ -1243,3 +1243,15 @@ gate 浏览器实测：①`#/obj/Task/self-recursive-core/align-docs-reality-202
 ### 28.4 session-9bc0f53f「处理失败」真因修复（2026-11-28 用户令：看日志为什么失败，修复让这个能正常跑下去）
 
 排查链：会话账 zstd 解包（`~/.dsh/sessions/--home-friddle--/<id>/session.v4.jsonl.zstd`）——**turn 1=17:35 被我部署重启销毁（turn/end aborted/disposed，模型面零故障）；turn 2=后端 completed 且答案完整（reasoning 961+text 423），UI 却画「处理失败」**。真因=`turnTailOf` 对 turn/end reason **嵌套对象**（`{kind:'completed'}`|`{kind:'aborted',reason:{kind:'disposed'}}`）naive `String()` 成 `"[object Object]"`——不在完成词表→恒「处理失败」；aborted 族也全错画失败。修=`normalizeTurnReason`（取 kind 族词形）+turnTailOf 认 aborted/disposed 族=已停止（真 error 才失败）。workservice@7418e58（136 pass）、plugin pin@88ab8cc。活体（CT116 gate 实测）：turn1=已停止（中断合成 8 行归位）、turn2=已完成用时 4 秒、新发 turn3=已完成用时 5 秒端到端——会话正常跑下去。
+
+## 29. 原地对话修改批（2026-11-28 用户裁决三连：「页面评审下明显没有盖好」「工作台的LLM编辑按钮进行对话编辑的界面我点击也没有」「对象工作台最好不要跳转直接嵌入相应流程进行修改」）
+
+1. **评审补洞**：编辑器 markdown 渲染视图仍铺 frontmatter chips（R-UX-10 漏网）——退役，正文先行全域收口；objects.js 死 import 清理。
+2. **点击无效真因**：editor AI 面板依赖的 `__CC.chatFaces.docFix` 契约插件侧从未实现（chatfaces.ts 只有 send/stop/sessions/transcript/state/create/uploadImage）——跳转方案天然落空；且跳转本身违背「不跳转」裁决。
+3. **原地嵌入**：新 `screens/doc-chat.js`——「对话修改」按钮（对象工作台+`#/wf` 页）改开 htmlModal 宽体内嵌面板：chatFaces 真会话通路（create/send/transcript/state；SESSIONS[refKey] 同对象续跑同会话）、首条消息自带当前 YAML 全文+修改意图（buildEditPrompt 要求整块回 yaml）、助手回 ```yaml 块提取（extractYamlBlock）→diff 预览（hunks）→人审 Apply（rv 乐观锁，409 提示重试）→工作台缓存刷新原地重绘。docFix 死面板词形=诚实缺席词。
+4. **坑两枚**：①click 闭包 `let content = cached ? content : ''` 自引用阴影变量——esbuild 改名 content2 后 TDZ ReferenceError（改名 cur 修）；②CT116 父仓 pull 与他线 divergent——pull --rebase 收敛。
+5. **判据（机械）**：点「对话修改」路由不变（URL 停留对象页）+面板弹出含 composer；端到端=发送意图→助手回 yaml→「对比并 Apply」→diff→批准→`已 Apply(rv=N)` toast。
+
+### 29.1 活体验收（2026-11-28，CT116 submodule@1207924 dist sha=130bca05e608ec92 双端一致）
+
+gate 浏览器端到端实测（Provider gh）：点「对话修改」→原地弹面板（路由未变、composer 在位）→发送意图（加 note 字段）→助手回修改后 YAML（已完成）→「对比并 Apply」→diff「1 处变更」→批准→**已 Apply（rv=3）+toast「对话修改已 Apply」**；工作台内容片原地刷新到 rv=3。探测改动已清理（apply 回滚 rv=4，对象恢复原状）。npm 139 pass（+doc-chat 三组）。落账 workservice@1207924、plugin pin@3228a62。
