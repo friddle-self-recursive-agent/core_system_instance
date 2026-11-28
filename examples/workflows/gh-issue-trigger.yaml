@@ -24,6 +24,7 @@ spec:
       developer-system: {tier: high,     model: "reasoning-tier"}
       verify:           {tier: low,      model: "flash-tier"}
       gh-release:       {tier: low,      model: "flash-tier"}
+      self-update:      {tier: low,      model: "flash-tier"}
       merge-results:    {tier: standard, model: "standard-tier"}
       issue-feedback:   {tier: low,      model: "flash-tier"}
   globalRuleRefs: [rule/rule_eng, rule/rule_doc, rule/rule_ux, rule/rule_pub]
@@ -97,6 +98,7 @@ spec:
     - {name: developer-system, phase: Executing,        title: "S2. 修复/文档更新（真 session 执行，build 走 gh）", unit: service, connector: connectops-developer, op: develop, provider: openai-default, modelTier: high, globalRuleRefs: [rule/rule_eng, rule/rule_ux, rule/rule_pub], service: developer-system, contextPassing: {fields: [planItem, judge]}}
     - {name: verify,           phase: Verifying,        title: "S3. 验收（CI+规则审核）",              unit: connectops, connector: connectops-code-audit, op: audit, params: {target: "/home/friddle/Project/self-recursive-agent/core_system_workservice"}, provider: openai-default, modelTier: low}
     - {name: gh-release,       phase: Deploying,        title: "S4. docs git push + github release 发版（复合发布）", unit: connectops, connector: connectops-docs, op: release-publish, params: {repo: core_system_workservice}, provider: openai-default, modelTier: low}
+    - {name: self-update,      phase: Deploying,        title: "S4.5 自更新（下载最新产物+重启服务）",  unit: agent, op: self-update-restart, provider: openai-default, modelTier: low}
   transitions:
     # 父链
     - {from: Idle,             on: advance,          to: Analyzing}
