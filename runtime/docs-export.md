@@ -1,10 +1,11 @@
-# Runtime — 文档库导出（sqlite → git 工作树 → push 远程）
+# Runtime — 文档库导出（sqlite → git 工作树 → push 远程；2026-11-28 起挂 release 节点）
 
-> 概念依据：core_design R-DOC-7（`rule/rule_doc.md`）：默认 sqlite 权威，git=导出/公开（output/public）。本文只定义导出任务的运行时口径；实际频率/远端/凭据属部署侧（R-PUB-2，不入公开仓）。
+> 概念依据：core_design R-DOC-7（`rule/rule_doc.md`）：默认 sqlite 权威，git=导出/公开（output/public）。
+> **2026-11-28 用户裁决「git提交这个不是功能。删掉功能。做成workflow的一个节点。即gh-release包括git push/release[scheme调用]」**：本文从「常驻定时导出器」修订为「release 域 op 执行机制」——旧 Run 定时拍 / `docs_export_config` 表 / `GET/PUT /v1/docs-export/config` / 控制台导出配置面板**全部退役**；导出=connectops-docs 连接器的 op（git-push / release-publish），workflow 的 gh-release 节点执行时拍一发一。
 
 ## 1. 定位
 
-导出是**读侧派生任务**，不是写路径：它从 sqlite docs DB 取当前对象快照，按 git 布局写工作树，提交并推送远程公开仓。导出失败不回滚 sqlite 写，也不阻塞 cored；下一次重试或人工触发即可。
+导出是**读侧派生 op**（release 节点执行面），不是写路径也不是常驻任务：它从 sqlite docs DB 取当前对象快照，按 git 布局写工作树，提交并推送远程公开仓。导出失败=op 显式失败（run history `connectops-error` 行留痕），不回滚 sqlite 写、不崩 cored；重试=节点重跑/下一 run。
 
 ```
 sqlite docs DB（权威）
@@ -14,29 +15,28 @@ sqlite docs DB（权威）
   → push 远程（public/output；no force-push）
 ```
 
-## 2. 触发与调度
+## 2. 触发与执行
 
 | 项 | 口径 |
 |---|---|
-| 调度 | 部署侧 systemd timer / cron；缺省建议 10m 一次（可配），另提供手动命令 |
-| 变更判定 | 读取 `doc` 表 `(kind,scope,name,resource_version,updated_at)` 高水位；与上次导出水位相同=跳过（零提交） |
-| 并发 | 导出用 SQLite 读事务取一致性快照；cored 写入不阻塞导出，导出不阻塞写 |
-| 手动 | 运维命令/`corectl export`（下一段；v1 先由部署脚本承担） |
-| 失败 | 告警日志 + 非 0 退出；不回滚 DB、不改写面；下次重试 |
+| 触发 | workflow 节点执行（unit=connectops，`connector: connectops-docs`，op=`git-push` / `release-publish`）——节点执行时拍一发一；装配门=env `CORE_SYSTEM_CONNECTOPS_RUN=on` |
+| 变更判定 | 读取 `doc` 表高水位；与上次导出水位相同=跳过（零提交零推送，幂等） |
+| 并发 | Exporter 互斥锁串行化；导出只读不阻塞写 |
+| 手动 | 调试面 `POST /v1/connectops/connectops-docs/git-push`（同源 op） |
+| 失败 | op 显式失败（run history `connectops-error` + Note 原文）；不回滚 DB、不改写面 |
+| release-publish | 复合发布 op=①git-push ②委托 connectops-gh release-create（params 原样透传；`params.tag` 未声明=release 跳过显式注记不冒充） |
 
-## 3. 导出布局与独立导出配置（数据库驱动，默认不导出运行时文档）
+## 3. 导出布局与过滤
 
 沿用 git 布局（**导入导出格式**），不发明第二套：
 
 - 对象路径由 `Scheme.kinds[].storage` 模板决定（`systems/<s>/system.yaml`、`global/agents/<name>.yaml` 等；与 `SeedFromLayout` 同一解析口径）；
 - 文件内容=sqlite `doc.content` 原文（逐字节，不重排/不格式化）；
-- **文档导出是一个单独的数据库配置项目（`docs_export_config` 表，绝不在 Go 代码中硬编码过滤）**：
-  - `scheme.yaml` 的 `docTypes[]` 声明 `category: design|runtime` 与 `exportDefault: true|false`（其中运行期文档 `BugDoc`、`DriftReport`、`PlanDoc`、`SessionLog` 声明为 `category: runtime, exportDefault: false`）；
-  - sqlite docs DB 维护独立的 `docs_export_config` 配置表（首次启动从 `scheme.docTypes[].exportDefault` 派生种子初值：`include_runtime_docs=false`、`exclude_doc_types=["BugDoc","DriftReport","PlanDoc","SessionLog"]`）；
-  - 暴露 `GET /v1/docs-export/config` 与 `PUT /v1/docs-export/config` 读写接口，并在控制台提供独立「文档导出配置」面板供用户随时开关是否导出 `BugDoc` 等运行时文档；
-  - `Exporter.enumerate()` 在每次导出拍动态读取数据库中的 `docs_export_config` 过滤文档，不写死任何 `docType` 字符串；
-- 删除：DB 中不存在（或被导出配置排除）的对象，在导出工作树中删除（`git rm`）；删除只在导出提交中体现；
-- 可选附带：`README`/`MANIFEST`（rv 高水位、导出时刻、对象计数）——不替代正文；`*.md.metadatainfo` 侧车按 R-DOC-6 随行（若导出范围含设计文档仓）。
+- **导出过滤=scheme.yaml `docTypes` 声明唯一真相源（2026-11-28 用户裁决后零运行期可写口）**：
+  - `category: runtime`（或 `exportDefault: false`）的 docType 缺省排除（`BugDoc`、`DriftReport`、`PlanDoc`、`SessionLog` 等运行期文档不入公开快照）；
+  - `DefaultExportConfig(scheme)` 派生，无数据库配置表、无读写 API、无控制台面板（均已删）；
+- 删除：DB 中不存在（或被过滤排除）的对象，在导出提交中删除；删除只在导出提交中体现；
+- 可选附带：`README`/`MANIFEST`——不替代正文；`*.md.metadatainfo` 侧车按 R-DOC-6 随行。
 
 ## 4. 提交与推送
 
