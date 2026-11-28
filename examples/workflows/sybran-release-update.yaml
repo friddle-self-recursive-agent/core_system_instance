@@ -29,6 +29,7 @@ spec:
     autoCriteria: "GhReleaseEvent 为系统自产事实事件且派发动作=通知 sybran-test-agent 更新（无删除/权限/生产配置变更）时自动批准"
     maxRiskLevel: low
   phases:
+    - Idle                    # 受理起点相位（StartRun 首步=声明序列前进——起点必须在册）
     - {name: dispatch-update,  phase: Reporting,   title: "1. 派发 sybran-test-agent 更新（release 到货）", unit: service, service: sybran-test-agent, op: update-on-release, provider: openai-default, modelTier: low}
   transitions:
     - {from: Idle,             on: advance,          to: Reporting}   # 受理首步 Idle→Reporting 即落派发节点（挂起+session 拉起）
