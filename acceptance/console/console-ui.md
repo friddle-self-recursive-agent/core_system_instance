@@ -1235,3 +1235,7 @@ gate 浏览器实测：①`#/obj/Task/self-recursive-core/align-docs-reality-202
 ### 28.2 弹窗裸奔修复（2026-11-28 用户截图实证：审批确认弹窗三连堆零样式）
 
 根因=modal.js 三挂载点（confirmModal/htmlModal/toast wrap）挂 `document.body`——而弹窗样式作用域=`.cc-app` 容器（base.css 全量收进 .cc-app 不污染宿主），body 挂载零样式命中：无遮罩可连点→三连堆裸奔。修=modalHost() 挂 `.cc-app` 根（缺根 body 兜底）。workservice@f75df31（133 pass）、plugin pin@a4e9705。活体（CT116 gate 实测）：审批中心「批准（= Apply）」确认弹窗=标准 DeepSeek modal（居中白面板+遮罩+z60+主操作近黑批准钮），position:fixed 遮罩齐。
+
+### 28.3 会话深链左清单默认收起（2026-11-28 用户裁决：「都具体session了。默认会话左边界面就不展示list session了」）
+
+`#/session/:id` 具体会话=上下文是这场对话不是浏览——左清单默认收起（`defaultSideOpen` 纯函数：深链收起、`#/chat/:agent` 入口展开）；顶栏「会话列表」钮随时开合（aria-pressed+acc 激活态）；`chat.css .chat-side[hidden]` 压 display:flex。workservice@212f2ea（134 pass）、plugin pin@a129cbe。活体（CT116 gate 实测）：session-9bc0f53f 深链=左清单 hidden+转录居中右栏三段卡在位；开合钮展开可见；#/chat 入口默认展开。
