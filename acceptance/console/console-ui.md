@@ -1239,3 +1239,7 @@ gate 浏览器实测：①`#/obj/Task/self-recursive-core/align-docs-reality-202
 ### 28.3 会话深链左清单默认收起（2026-11-28 用户裁决：「都具体session了。默认会话左边界面就不展示list session了」）
 
 `#/session/:id` 具体会话=上下文是这场对话不是浏览——左清单默认收起（`defaultSideOpen` 纯函数：深链收起、`#/chat/:agent` 入口展开）；顶栏「会话列表」钮随时开合（aria-pressed+acc 激活态）；`chat.css .chat-side[hidden]` 压 display:flex。workservice@212f2ea（134 pass）、plugin pin@a129cbe。活体（CT116 gate 实测）：session-9bc0f53f 深链=左清单 hidden+转录居中右栏三段卡在位；开合钮展开可见；#/chat 入口默认展开。
+
+### 28.4 session-9bc0f53f「处理失败」真因修复（2026-11-28 用户令：看日志为什么失败，修复让这个能正常跑下去）
+
+排查链：会话账 zstd 解包（`~/.dsh/sessions/--home-friddle--/<id>/session.v4.jsonl.zstd`）——**turn 1=17:35 被我部署重启销毁（turn/end aborted/disposed，模型面零故障）；turn 2=后端 completed 且答案完整（reasoning 961+text 423），UI 却画「处理失败」**。真因=`turnTailOf` 对 turn/end reason **嵌套对象**（`{kind:'completed'}`|`{kind:'aborted',reason:{kind:'disposed'}}`）naive `String()` 成 `"[object Object]"`——不在完成词表→恒「处理失败」；aborted 族也全错画失败。修=`normalizeTurnReason`（取 kind 族词形）+turnTailOf 认 aborted/disposed 族=已停止（真 error 才失败）。workservice@7418e58（136 pass）、plugin pin@88ab8cc。活体（CT116 gate 实测）：turn1=已停止（中断合成 8 行归位）、turn2=已完成用时 4 秒、新发 turn3=已完成用时 5 秒端到端——会话正常跑下去。
