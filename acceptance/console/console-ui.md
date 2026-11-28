@@ -1231,3 +1231,7 @@ gate 浏览器实测（#/wf/gh-issue-trigger）：①默认页流=hero 三钮（
 ### 28.1 活体验收（2026-11-28，CT116 submodule@fc0c6be dist sha=f939e0ea534e6a57 双端一致+cored 换装）
 
 gate 浏览器实测：①`#/obj/Task/self-recursive-core/align-docs-reality-20261127`——「align-docs-reality-20261127 Task scope r11 / 创建 2026-11-27 15:36 · 最近提交 task-scheduler / 重要度 90 #workflow #doc-alignment #acceptance #session-page / 归属 ServiceDesc/self-recursive-core」；②`#/designdoc/core_design/rule/rule_ux.md`——「rule-ux DesignDoc docType: Rule scope: core_system HEAD 09b278c1 / 重要度 98 #ux #console #rule / 归属 ServiceDesc/core_system」（侧车投影）；③编辑器 Workflow 对象——创建/最近提交 task:self-recursive-core/gh-issue-trigger-impl。npm 133 pass+Go 三包过。探针坑：designdoc 深链路径含 `/` 必须经 encodeURIComponent 单段进路由（`#/designdoc/<repo>/<repo 内路径>` 双段=404 屏）。
+
+### 28.2 弹窗裸奔修复（2026-11-28 用户截图实证：审批确认弹窗三连堆零样式）
+
+根因=modal.js 三挂载点（confirmModal/htmlModal/toast wrap）挂 `document.body`——而弹窗样式作用域=`.cc-app` 容器（base.css 全量收进 .cc-app 不污染宿主），body 挂载零样式命中：无遮罩可连点→三连堆裸奔。修=modalHost() 挂 `.cc-app` 根（缺根 body 兜底）。workservice@f75df31（133 pass）、plugin pin@a4e9705。活体（CT116 gate 实测）：审批中心「批准（= Apply）」确认弹窗=标准 DeepSeek modal（居中白面板+遮罩+z60+主操作近黑批准钮），position:fixed 遮罩齐。
