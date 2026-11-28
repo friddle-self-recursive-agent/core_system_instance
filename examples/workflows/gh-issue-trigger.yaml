@@ -6,7 +6,7 @@ metadata:
   labels:
     core/origin: custom
 spec:
-  enabled: false                    # 声明层模具——实例化（apply 到 docsRoot）后按需启用
+  enabled: true                     # 实例已落地（2026-11-28 全链实跑——enabled:false=模具态 v0.58b 门拦 run 不落，rv9/rv10 回灌曾回退此位致触发无 run 实证）
   undeletable: false
   connector: connector-ops/connectops-gh
   services:
