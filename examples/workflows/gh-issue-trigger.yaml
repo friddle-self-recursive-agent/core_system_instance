@@ -97,7 +97,7 @@ spec:
     - {name: doc-apply,        executor: inner, phase: Planning,         title: "S1. Doc Apply（结论/BugDoc 落稿）",   unit: agent,      op: apply-doc,   provider: openai-default, modelTier: standard, globalRuleRefs: [rule/rule_doc], entryEvents: [sub:plan-item]}
     - {name: developer-system, phase: Executing,        title: "S2. 修复/文档更新（真 session 执行，build 走 gh）", unit: service, connector: connectops-developer, op: develop, provider: openai-default, modelTier: high, globalRuleRefs: [rule/rule_eng, rule/rule_ux, rule/rule_pub], service: developer-system, contextPassing: {fields: [planItem, judge]}}
     - {name: verify,           phase: Verifying,        title: "S3. 验收（CI+规则审核）",              unit: connectops, connector: connectops-code-audit, op: audit, params: {target: "/home/friddle/Project/self-recursive-agent/core_system_workservice"}, provider: openai-default, modelTier: low}
-    - {name: gh-release,       phase: Deploying,        title: "S4. docs git push + github release 发版（复合发布）", unit: connectops, connector: connectops-docs, op: release-publish, params: {repo: core_system_workservice}, provider: openai-default, modelTier: low}
+    - {name: gh-release,       phase: Deploying,        title: "S4. docs git push + github release 发版（复合发布，日 tag 一天至多一个）", unit: connectops, connector: connectops-docs, op: release-publish, params: {repo: core_system_workservice}, provider: openai-default, modelTier: low}
     - {name: self-update,      phase: Deploying,        title: "S4.5 自更新（下载最新产物+重启服务）",  unit: agent, op: self-update-restart, provider: openai-default, modelTier: low}
   transitions:
     # 父链
@@ -114,7 +114,14 @@ spec:
     - {from: Planning,         on: advance,          to: Executing}
     - {from: Planning,         on: "entry:sub:plan-item", to: Planning}   # 子 run 受理锚：计划条目驱动
     - {from: Executing,        on: advance,          to: Verifying}
-    - {from: Verifying,        on: advance,          to: Deploying}
+    # —— 发版分叉（2026-11-28 用户裁决「每次fix不一定就要打tag release。默认整体大规模功能
+    # 修复完成。默认1天做多1个。judge判断后……跳过这一步 可以在workflow做分叉。workflow支持
+    # 这种分叉」）：advance=默认跳过发版直落回评（每 fix 不发版是缺省）；release=判断边
+    # （judge 判定大规模批完成才点火——judge 会话 [decision:release] 标记或 connectops-jev
+    # 判定 result.decision 回传，引擎查表沿判断边走）；Deploying 内 gh-release=日 tag 策略
+    # （connectops-docs release-publish：tag 缺席派生 v<UTC 日期>，当日已发=skipped——一天至多一个）。
+    - {from: Verifying,        on: advance,          to: Reporting}   # 默认：跳过发版（每 fix 不打 tag）
+    - {from: Verifying,        on: release,          to: Deploying}   # 判断边：大规模批完成才发版
     - {from: Verifying,        on: retry-develop,    to: Executing}
     - {from: Deploying,        on: advance,          to: Reporting}
   onEscalate: {action: pause, notify: bind-role}
