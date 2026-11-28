@@ -1205,3 +1205,17 @@ gate 浏览器实测：①对象工作台 Task align-docs-reality——内容卡
 `#/approvals` 的 run 审批卡（批准继续/驳回终止）此前**无判决容器**——判决片只挂在稿批准卡路径，用户在 run 节点看不到小 LLM（ops_core_inner_agent）整理的 DocumentDiff。三层修：①后端幂等域=run（`diffDocNameForRun`=docdiff-<kind>-<name>-run<N>；旧一对象一名让后续挂起全 skip 陈旧判决）②run 卡补 `data-apverdict` 容器+注水调用 ③锚错位纠偏——前端卡头 `r.workflow=core-workflow`（编排器）≠后端权威 `run.Involved=Workflow/global/gh-issue-trigger`（实际挂起对象），`verdictAnchorOf(r)` 从 involved 三段解析；`apVerdictKeyOf(r)` per-run 唯一容器键（同对象多 run 不撞首卡）。历史档回退旧名命中在册判决。
 
 活体：8 张 run 卡 7 张显示完整 LLM diff 正文（验收探针注释/resourceVersion 删除/关键配置保留/截断诚实注记），缺席档走诚实词形不冒充。落账 workservice@696cc46/@f9b06d7/@9354992/@8f1fd93（130 pass+CT116 go test）、plugin pin@86ba7f8；验收=approval-verdict-render-20261128.md。判据：审批卡判决正文在册即渲染、缺席即显词形、per-run 名不碰撞。
+
+## 27. 对话修改主通路 + 详情配置弹窗（2026-11-28 用户裁决二次收紧——R-UX-10 第 4 条）
+
+> 需求原话要点：「这些修改默认是通过llm修改。然后apply文档的。applyscheme的。肯定不是随便人填写。全局扫描下。所有设计文档的修改。对话session都是走文档更改。然后默认有详情页面配置。默认不展示。只有点击弹窗。一定要手改才改。正常情况下没人自己填。都是llm对话帮我改，修改文档的session其实就是默认三段式的对话模式。只是可以确定上下文和LLM优先带上这个文档具体信息和ref。记忆系统缓存也是基于这个。」
+
+1. **修改主通路=对话**：对象页与 workflow 页头部「对话修改」按钮——预填 composer（携带对象/workflow ref+权威源提示）跳会话屏，人审后发送；LLM 改文档/改 scheme→Apply（不自动发）。修改文档的 session=默认三段式对话模式，只是上下文确定、LLM 优先带上该文档信息与 ref（记忆系统缓存同基）。
+2. **详情配置默认不展示**：workflow studio（A–F 节表单+YAML 手改+保存 Apply）整体退役出默认页流——DOM 挂隐藏位，「配置详情」按钮点击移入 htmlModal（node/holder 移动式弹窗：事件绑定随节点保留、关闭归位零重绑）。手改（表单/YAML）都在弹窗内=最后手段。
+3. **对象页表单收弹窗**：Agent Provider 绑定默认=只读一行（当前值+「修改绑定」钮），表单编辑收弹窗；Provider 新建表单收弹窗（手填=降级通路词形显式标注）。
+4. **全局扫描其余表单面**（保持判据）：session-stages 三段控制=details 折叠✅、sessionctx 分叉=按钮对话框✅、workflow-config 节点编辑=既有弹窗✅、events/docs 过滤框=查看辅助非编辑面✅、composer/home 输入=对话本身✅、editor textarea=手改最后手段本体✅。
+5. **判据（机械）**：#/wf/:name 默认页流零 studio 表单（`data-wf-studio` 在 display:none holder 内 offsetParent=null）；「配置详情」弹窗含 studio+YAML；「对话修改」预填 composer 且不自动发；对象页头部有对话修改+scheme 双钮。
+
+### 27.1 活体验收（2026-11-28，CT116 submodule@fde56bb dist sha256=c9a8ab7e721214ee 双端一致）
+
+gate 浏览器实测（#/wf/gh-issue-trigger）：①默认页流=hero 三钮（对话修改/配置详情/对象工作台）+定义 kv（YAML 声明钮）+相位链图，studio 表单零直出（holder 隐藏）；②「配置详情」弹窗=studio 整体移入（含 YAML textarea）；③「对话修改」→ #/chat/core-headless composer 预填「请修改工作流 gh-issue-trigger（YAML 声明为权威源）。修改意图：」；④对象页同构（对话修改+scheme 双钮）。npm 131 pass。落账 workservice@fde56bb、plugin pin@4a69907、core_design rule@03218cf。部署坑：CT116 子模块 checkout 被在制未跟踪 approvaldiff_test.go 阻塞——mv .bak 让位（不删）。
