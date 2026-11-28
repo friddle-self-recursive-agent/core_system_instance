@@ -1,0 +1,40 @@
+# Workflow sybran-release-update —— 用户自有第三方工作流（2026-11-28 用户裁定「添加一个workflow。
+# 触发是有Release最新版本[Report的Event]然后触发给sybran-test-agent触发更新。这跟不是内置的。
+# 是我添加的」）。
+#
+# 非内置声明面（2026-11-27 通用架构裁决：内置+第三方统一走「文档描述→scheme→代码」——本文件
+# 即第三方文档描述词形，零 builtin 注册、零 reconcile 锚；apply 落库即生效）。
+# 链路：gh-issue-trigger 的 gh-release 节点 release-publish 真发 → ops 桥自产 GhReleaseEvent
+# （scheme eventTypes@404，dedup gh-release:<repo>:<tag>，tag 未声明跳过不发=无版可报不编造）
+# → 本 workflow 触发 → dispatch-update（unit=service 真执行：挂起+session 拉起）→ 派发
+# sybran-test-agent 执行更新。
+# 边界注记：sybran 运行面不进 core_agent（2026-11-27 纠偏）——sybran-test-agent 专属 profile /
+# ServiceDesc 未建，派发会话经 service-session.sh 以 core-headless 执行、prompt 声明目标身份
+# （service=sybran-test-agent + involved=Repository/<repo> 随载荷）；后续 profile/agentRefs
+# 接上即真路由（零引擎改动）。
+apiVersion: core/v1
+kind: Workflow
+metadata:
+  name: sybran-release-update
+  scope: global
+spec:
+  triggers:
+    events:
+      types: [GhReleaseEvent]
+      minLevel: info
+  entryPoints:
+    - {node: dispatch-update, phase: Reporting, enabled: true, events: [GhReleaseEvent], description: "入口：GhReleaseEvent（gh-release 节点真发后自产）→ 派发 sybran-test-agent 执行更新（受理首步落点=Reporting——StartRun 受理即 advance 一步，节点声明在落点相位才被执行面命中）"}
+  approval:
+    mode: agent                     # 用户自有 workflow 自审批缺省（规则23 同口径）；派发动作低风险
+    autoCriteria: "GhReleaseEvent 为系统自产事实事件且派发动作=通知 sybran-test-agent 更新（无删除/权限/生产配置变更）时自动批准"
+    maxRiskLevel: low
+  phases:
+    - {name: dispatch-update,  phase: Reporting,   title: "1. 派发 sybran-test-agent 更新（release 到货）", unit: service, service: sybran-test-agent, op: update-on-release, provider: openai-default, modelTier: low}
+  transitions:
+    - {from: Idle,             on: advance,          to: Reporting}   # 受理首步 Idle→Reporting 即落派发节点（挂起+session 拉起）
+  onEscalate: {action: pause, notify: bind-role}
+  onFailed:
+    backoff: 60s*2^n
+    maxAttempts: 3
+    rollbackPolicy: by-step
+    escalate: {to: root, notify: bind-role}
