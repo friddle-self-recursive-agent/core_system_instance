@@ -1,0 +1,30 @@
+---
+name: deploy-system
+docType: ServiceDesc
+scope: global
+labels: {domain: devtools}
+---
+# deploy-system 系统声明（2026-11-28 用户裁决「deploy-system实现部署和重启。都做到
+# deploy-system 的 agent」——部署/重启作业面在此声明，workflow 节点只声明 service+op）
+
+spec:
+  goalRef: goal.md
+  descRef: desc.md
+  workserviceRefs:
+    - {capabilities: deploy}
+  permissionRole: role/deploy-system-ops
+  ops:
+    - {op: deploy, params: {context: map, release: string}, idempotent: false, job: |-
+        部署作业（2026-11-28 用户裁决：部署和重启都是本系统 agent 做）：
+        1. 确认目标产物在位（最新 release 产物或开发目录 build 产物；缺席=如实报告不安装）。
+        2. 按部署拓扑安装：cored 换装=/home/friddle/bin 下 mv 备旧换新（Text busy 用 mv rename，勿 cp 覆盖在途）；web dist 落 plugin submodule 对应路径。
+        3. 重启服务：systemctl restart dsh-core-system（插件宿主）；如涉及 plugin TS 变更须顺序重启双服务。
+        4. 重启后健康核验：systemctl is-active + cored.addr mtime 刷新 + 端口监听在位（dsh-pid 锚定 ss）。
+        5. 输出部署结论（装了什么/重启了什么/健康证据），带 [decision:done]（失败=[decision:blocked]）。
+      }
+    - {op: restart, params: {context: map, services: "[]string"}, idempotent: false, job: |-
+        重启作业：按 services 清单逐个 systemctl restart，每个重启后 is-active 核验；汇总输出结论带 [decision:done]（任一失败=[decision:blocked] 并点名哪个服务）。
+      }
+  instances:
+    - name: prod
+      agentRefs: [agent/deploy-agent]

@@ -24,7 +24,8 @@ spec:
       developer-system: {tier: high,     model: "reasoning-tier"}
       verify:           {tier: low,      model: "flash-tier"}
       gh-release:       {tier: low,      model: "flash-tier"}
-      self-update:      {tier: low,      model: "flash-tier"}
+      deploy-system:    {tier: low,      model: "flash-tier"}
+      repo-push:        {tier: low,      model: "flash-tier"}
       merge-results:    {tier: standard, model: "standard-tier"}
       issue-feedback:   {tier: low,      model: "flash-tier"}
   globalRuleRefs: [rule/rule_eng, rule/rule_doc, rule/rule_ux, rule/rule_pub]
@@ -52,7 +53,7 @@ spec:
       interval: 1h
       cron: "0 * * * *"
   entryPoints:
-    - {node: gh-issue-fetch, phase: Idle, enabled: true, events: [GhIssueEvent], description: "入口 2：connectops-gh watch 桥自产 GhIssueEvent（新开/重开 Issue）即时进入——单条入口不声明 fanout，一事件一 run"}
+    - {node: gh-issue-fetch, phase: Idle, enabled: true, events: [GhIssueEvent], description: "入口：connectops-gh watch 桥自产 GhIssueEvent（新开/重开 Issue）即时进入——一事件一 run，run 内 batch-judge 合判全量批再扇出多链（2026-11-28 用户令「issuse是一批的。judge判断哪些要下发」）"}
   ingest:
     dedup: {window: 10m}
     group: {by: issue, max: 50}
@@ -85,45 +86,56 @@ spec:
     conditions:
       - {id: lint-rules, kind: code, title: "代码 Lint 与规则审核", command: "connectops-code-audit/audit", required: true}
       - {id: gh-ci-green, kind: test, title: "GitHub CI 全绿（gh 查 run 状态）", command: "connectops-gh/check-runs", required: true}
+  # 相位拓扑（2026-11-28 批量 fan-out 定型——父链+子链同一对象两段拓扑；相位词=节点落点锚）：
+  #   父链：Idle(拉批) → Analyzing(batch-judge 合判) → AwaitingApproval(自审批) → Planning(fanout 扇出多链)
+  #        → Reporting(merge 交叉汇总) → [release 判断边] → Releasing(repo-push 交叉汇总提交)
+  #   子链：Planning(doc-apply 落稿) → Executing(developer-system 会话拉代码/编辑/build/提交)
+  #        → Verifying(审计) → Feedback(逐 issue 回评——闭环反馈)；release 判断边支线
+  #        → Deploying(gh-release 日 tag) → Delivering(deploy-system 部署/重启) → Feedback
   phases:
-    # —— 父链：批量合判 → 扇出 → 合并 → 回评 ——
+    # —— 父链：批量合判 → 扇出 → 交叉汇总 → 提交 push ——
     - {name: gh-issue-fetch,   phase: Idle,             title: "1. 拉取待整理 Issue（issue-list 全量）", unit: connectops, connector: connectops-gh, op: issue-list, params: {repo: core_system_workservice, state: open}, provider: openai-default, modelTier: low,      entryEvents: [GhIssueEvent]}
-    - {name: batch-judge,      phase: Analyzing,        title: "2. 批量合判（一次分析全部 Issue→执行计划 plan[N 修复项]）", unit: agent, op: judge-issues-batch, provider: openai-default, modelTier: high, globalRuleRefs: [rule/rule_eng, rule/rule_doc], planKey: plan}
+    - {name: batch-judge,      phase: Analyzing,        title: "2. 批量合判（一次分析全部 Issue→执行计划 WorkflowPlan[fix/defer 项]）", unit: agent, executor: inner, op: judge-issues-batch, provider: openai-default, modelTier: high, globalRuleRefs: [rule/rule_eng, rule/rule_doc]}
     - {name: approval-gate,    phase: AwaitingApproval, title: "3. 自审批（mode=agent 判决+DocumentDiff 留痕，超险回退人工）", unit: gate, op: approval-check, provider: openai-default, modelTier: low}
-    - {name: fanout-fixes,     phase: Planning,         title: "4. 扇出子 run（每条修复项一 run，parentRun 锚；父 run join 挂起）", unit: workflow, op: gh-issue-trigger, fanout: {from: plan, key: items}, entryNode: doc-apply, join: all, provider: openai-default, modelTier: low}
-    - {name: merge-results,    executor: inner, phase: Reporting,        title: "5. 合并子 run 结果（diff/发版/验证证据/失败原因）", unit: agent, op: merge-results, provider: openai-default, modelTier: standard}
-    - {name: issue-feedback,   phase: Reporting,        title: "6. 逐 Issue 回评+关闭（真发 issue-comment，回评作者=系统凭据）", unit: connectops, connector: connectops-gh, op: issue-comment, params: {repo: core_system_workservice, body: "gh-issue-trigger run 已处理该 issue（fix/发布证据见 run 卡与 release）。"}, provider: openai-default, modelTier: low}
-    # —— 子链：单条修复项执行（子 run 从 doc-apply 受理，parentRun 锚回填父 run）——
-    - {name: doc-apply,        executor: inner, phase: Planning,         title: "S1. Doc Apply（结论/BugDoc 落稿）",   unit: agent,      op: apply-doc,   provider: openai-default, modelTier: standard, globalRuleRefs: [rule/rule_doc], entryEvents: [sub:plan-item]}
-    - {name: developer-system, phase: Executing,        title: "S2. 修复/文档更新（真 session 执行，build 走 gh）", unit: service, connector: connectops-developer, op: develop, provider: openai-default, modelTier: high, globalRuleRefs: [rule/rule_eng, rule/rule_ux, rule/rule_pub], service: developer-system, contextPassing: {fields: [planItem, judge]}}
+    - {name: fanout-fixes,     phase: Planning,         title: "4. 扇出子 run（每计划项一 run 多链并行，parentRun 锚；父 run join 等全部终态）", unit: workflow, op: gh-issue-trigger, fanout: {from: plan, key: items}, entryNode: doc-apply, join: all, provider: openai-default, modelTier: low}
+    - {name: merge-results,    executor: inner, phase: Reporting,        title: "5. 交叉汇总（子链终态现查→汇总稿；decision=release 才入发版支线）", unit: agent, op: merge-results, provider: openai-default, modelTier: standard}
+    - {name: repo-push,        phase: Releasing,        title: "6. 交叉汇总提交（agent/* 修复分支并入基线→push；release 判断边才达）", unit: connectops, connector: connectops-gh, op: repo-push, params: {repo: core_system_workservice, dir: "/home/friddle/Project/self-recursive-agent/core_system_workservice", branchPrefix: "agent/", baseBranch: main}, provider: openai-default, modelTier: low}
+    # —— 子链：单条计划项执行（子 run 从 doc-apply 受理，parentRun 锚回填父 run）——
+    - {name: doc-apply,        executor: inner, phase: Planning,         title: "S1. Doc Apply（计划项落稿：fix=修复要点/defer=为什么不做）",   unit: agent,      op: apply-doc,   provider: openai-default, modelTier: standard, globalRuleRefs: [rule/rule_doc], entryEvents: [sub:plan-item]}
+    - {name: developer-system, phase: Executing,        title: "S2. 修复执行（developer-system agent：拉代码/分支/编辑/build/提交——作业定义在 ServiceDesc）", unit: service, op: develop, provider: openai-default, modelTier: high, globalRuleRefs: [rule/rule_eng, rule/rule_ux, rule/rule_pub], service: developer-system, contextPassing: {fields: [planItem, judge, issue]}}
     - {name: verify,           phase: Verifying,        title: "S3. 验收（CI+规则审核）",              unit: connectops, connector: connectops-code-audit, op: audit, params: {target: "/home/friddle/Project/self-recursive-agent/core_system_workservice"}, provider: openai-default, modelTier: low}
     - {name: gh-release,       phase: Deploying,        title: "S4. docs git push + github release 发版（复合发布，日 tag 一天至多一个）", unit: connectops, connector: connectops-docs, op: release-publish, params: {repo: core_system_workservice}, provider: openai-default, modelTier: low}
-    - {name: self-update,      phase: Deploying,        title: "S4.5 自更新（下载最新产物+重启服务）",  unit: agent, op: self-update-restart, provider: openai-default, modelTier: low}
+    - {name: deploy-system,    phase: Delivering,       title: "S4.5 部署/重启（deploy-system agent：作业定义在 ServiceDesc）",  unit: service, service: deploy-system, op: deploy, provider: openai-default, modelTier: low}
+    - {name: issue-feedback,   phase: Feedback,         title: "S5. 逐 Issue 回评（真发 issue-comment——做了/为什么不做都有反馈，闭环）", unit: connectops, connector: connectops-gh, op: issue-comment, params: {repo: core_system_workservice, body: "gh-issue-trigger 自动修复链已处理该 issue（执行留痕见 run 卡与 DocumentDiff）。"}, provider: openai-default, modelTier: low}
   transitions:
     # 父链
     - {from: Idle,             on: advance,          to: Analyzing}
     - {from: Idle,             on: "entry:GhIssueEvent", to: Analyzing}
     - {from: Analyzing,        on: advance,          to: AwaitingApproval}
-    - {from: Analyzing,        on: worth_fixing,     to: AwaitingApproval}
-    - {from: Analyzing,        on: ignore,           to: Reporting}     # 噪声项合并直达回评归档
+    - {from: Analyzing,        on: worth_fixing,     to: AwaitingApproval}   # 判断边：batch-judge 有可下发项
+    - {from: Analyzing,        on: ignore,           to: Reporting}          # 判断边：整批噪声——直达交叉汇总归档
     - {from: AwaitingApproval, on: advance,          to: Planning}
     - {from: AwaitingApproval, on: ApprovalGranted,  to: Planning}
     - {from: AwaitingApproval, on: ApprovalRejected, to: Failed}
-    - {from: Planning,         on: fanout-complete,  to: Reporting}     # join：全部子 run 落终态后父 run 续行（部分失败不传染，merge 如实汇总）
+    - {from: Planning,         on: fanout-complete,  to: Reporting}          # join：全部子 run 落终态后父 run 续行（部分失败不传染，merge 如实汇总）
+    #   Reporting 无 advance 行=有意：merge 完成即收束（默认跳过发版——用户裁定「每次 fix 不一定
+    #   就要打 tag」）；仅 merge judge 判定大规模批完成（decision=release）才沿判断边入 Releasing。
+    - {from: Reporting,        on: release,          to: Releasing}
     # 子链（子 run 从 doc-apply 受理）
+    - {from: Idle,             on: "entry:sub:plan-item", to: Planning}      # 子 run 受理锚：entry 查表 from=首相位 Idle（表行 from 写 Planning 查不中——rv14 修）
     - {from: Planning,         on: advance,          to: Executing}
-    - {from: Planning,         on: "entry:sub:plan-item", to: Planning}   # 子 run 受理锚：计划条目驱动
+    - {from: Planning,         on: defer,            to: Feedback}           # 判断边：defer 项不修复直达回评（为什么不做——不做也有反馈）
     - {from: Executing,        on: advance,          to: Verifying}
-    # —— 发版分叉（2026-11-28 用户裁决「每次fix不一定就要打tag release。默认整体大规模功能
-    # 修复完成。默认1天做多1个。judge判断后……跳过这一步 可以在workflow做分叉。workflow支持
-    # 这种分叉」）：advance=默认跳过发版直落回评（每 fix 不发版是缺省）；release=判断边
-    # （judge 判定大规模批完成才点火——judge 会话 [decision:release] 标记或 connectops-jev
-    # 判定 result.decision 回传，引擎查表沿判断边走）；Deploying 内 gh-release=日 tag 策略
+    # —— 子链发版分叉（2026-11-28 用户裁决「默认整体大规模功能修复完成…judge判断后……跳过这一步
+    # 可以在workflow做分叉」）：advance=默认跳过发版直落回评（每 fix 不发版是缺省）；release=
+    # 判断边（verify 侧 decision 词或 jev 判定回传，引擎查表沿判断边走）；Deploying 日 tag 策略
     # （connectops-docs release-publish：tag 缺席派生 v<UTC 日期>，当日已发=skipped——一天至多一个）。
-    - {from: Verifying,        on: advance,          to: Reporting}   # 默认：跳过发版（每 fix 不打 tag）
-    - {from: Verifying,        on: release,          to: Deploying}   # 判断边：大规模批完成才发版
+    - {from: Verifying,        on: advance,          to: Feedback}           # 默认：跳过发版直落回评
+    - {from: Verifying,        on: release,          to: Deploying}          # 判断边：大规模批完成才发版
     - {from: Verifying,        on: retry-develop,    to: Executing}
-    - {from: Deploying,        on: advance,          to: Reporting}
+    - {from: Deploying,        on: advance,          to: Delivering}
+    - {from: Delivering,       on: advance,          to: Feedback}
+    #   Feedback 无 advance 行=有意：回评发完即收束（子链闭环终点——做了/为什么不做都已反馈）。
   onEscalate: {action: pause, notify: bind-role}
   onFailed:
     backoff: 30s*2^n

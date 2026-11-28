@@ -19,9 +19,21 @@ spec:
   # agent 可以用 session 来解决。突破下限制」：run 落 service 节点 → 为 instances[].agentRefs
   # 的 agent 开一个执行 session，contextPassing 上一轮详细上下文作为首轮注入——judge 结论 /
   # plan 与 diff / audit findings / 审批记录逐字段透传；run 挂起等 session 心跳终结 → 沿表续行）。
+  # 作业面（2026-11-28 用户裁决「都做到 developer/deploy-system 的 agent」：workflow 节点只
+  # 声明 service+op，作业内容=本声明 ops[].job——宿主会话 prompt 组装源，引用式零凭据）。
   ops:
-    - {op: develop, params: {context: map, repo: string, conventions: map}, idempotent: false}
-    - {op: acceptance, params: {context: map, conditions: "[]map"}, idempotent: false}   # 验收=developer-system 的 Agent 验收 session（逐条解释执行 verification.conditions）
+    - {op: develop, params: {context: map, repo: string, conventions: map}, idempotent: false, job: |-
+        开发作业（2026-11-28 用户裁决：拉代码/编辑/build/提交都是本系统 agent 在开发目录做）：
+        1. 开发目录=~/Project/self-recursive-agent/<involved 里的仓名>（缺席=git clone git@github.com:friddle-self-recursive-agent/<仓名>.git 到该目录）；先 git pull --ff-only 同步基线。
+        2. 每条 issue 独立隔离：git worktree add worktrees/issue-<N> -b agent/issue-<N>（N=briefing.planItem.key）；go.mod 有 ../ 相对 replace 的仓（如 core_system_workservice→../connectops-gh）须补符号链接：ln -sfn ../../connectops-gh worktrees/connectops-gh（worktree 内 ../ 解析到 worktrees/ 下）。
+        3. 在 worktree 内按 briefing（planItem/judge/issue 原文）实施修复：只改与本 issue 相关的最小面；遵守仓库既有风格与规则文档。
+        4. build 验证：/usr/local/go/bin/go build ./... && /usr/local/go/bin/go vet ./...（有 *_test.go 再跑 go test ./...），全绿才算完成；不绿就修到绿，修不动如实报告阻塞点。
+        5. git add -A && git commit（message 首行=fix: <issue 标题> #<N>）；**不 push**（push 由父链 repo-push 节点统一交叉汇总）。
+        6. 结束前输出执行结论（做了什么/验证证据/阻塞点），并带 [decision:done] 标记（阻塞=[decision:blocked]）。
+      }
+    - {op: acceptance, params: {context: map, conditions: "[]map"}, idempotent: false, job: |-
+        验收作业（逐条解释执行 verification.conditions）：在开发目录对每条 condition 逐一执行并记录证据（命令+输出摘要）；全部通过输出 [decision:done]，任一不通过 [decision:blocked] 并说明是哪条、差在哪。
+      }
   instances:
     - name: ci
       agentRefs: [agent/ci-repair-agent]
