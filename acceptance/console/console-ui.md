@@ -825,6 +825,7 @@ corectl loop
 
 - 会话、任务、workflow/run/节点三者同屏；任何标识符可点。
 - `在做什么 / 卡在哪 / 下一步` 三行置顶——人不需要读日志猜。
+- **最近动作结构化卡（2026-11-28 用户报障「最近动作没有结构化。暂时为空」落地）**：三源组装、缺席各显其词——①结果注记=status.lastAction 全文 pre-wrap（上限 4000，title 携全文；不再 200 硬截断）+lastError；②关联会话现势=快照心跳行 state/phase/lastAction/lastBeat（不在册=诚实词形「不在心跳在册」）+对话深链；③生命周期时间线=`GET /v1/events?involved=Task/<id>` 归档直查异步注水（行=级别点+类型+相位词 chip（dedupKey 词尾）+relAge；非快照 50 行窗——历史任务可查）。任务列表行 lastAction 100 截断防长文墙。验收=task-actions-card-20261128.md（workservice@be3cca4，119 pass）。
 
 #### C. 当前循环卡（报告首屏 / Workflows 页头）
 
