@@ -1178,3 +1178,7 @@ chat 批：通信病灶实测（steer 闲置/无停止/无活体反馈/整屏重
 5. **markdown 散文不受影响**：Rule/Goal/Proposal/Task/DesignDoc 等散文=渲染正文即文本形态，保持渲染默认+原文折叠。
 6. **修改主通路=对话修改**：docFix（`__CC.chatFaces.docFix`）与 draft+人审 Apply 为修改主线；表单/textarea 手编=次通路。editor AI 修文档面板已有，不新增表单编辑投资。
 7. **判据（机械）**：对象工作台 YAML 对象内容片首屏=`<textarea readonly>` 全文且零 `md-cards`/`scheme-chip`；编辑器直开 YAML 对象落在「原文」视图；`#/wf/:name` 可见 YAML 声明卡；npm test 全绿（含 yaml-text.test.mjs 四组）。
+
+### 25.1 活体验收（2026-11-28，CT116 已部署 submodule@f020e8f dist sha256=349dbfcb1d12d865 双端一致）
+
+gate 浏览器实测（headless chromium，`?token=` 门进入）：①对象工作台 Provider gh——内容片=「YAML 声明（纯文本全文）」只读 textarea 全文，页面零 `data-md-cards`/`scheme-chip` 残留；②scheme 片=「kind 定义（YAML 纯文本）」textarea（Provider kind 声明 YAML 可读）；③编辑器直开 Workflow 对象（gh-issue-trigger）——落「原文」视图（textarea 可见 6418 字，结构化卡 hidden）；④`#/wf/gh-issue-trigger` 定义 kv 卡下新增「YAML 声明」卡（rawYaml 全文）；⑤markdown 回归——Proposal 对象页 `data-md-render`+原文折叠保留、编辑器落「正文」渲染视图（textarea hidden）。npm 122 pass（+yaml-text.test.mjs 四组）。落账 workservice@f020e8f、plugin pin@2bc8989。
