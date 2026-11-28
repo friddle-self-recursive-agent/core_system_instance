@@ -1219,3 +1219,15 @@ gate 浏览器实测：①对象工作台 Task align-docs-reality——内容卡
 ### 27.1 活体验收（2026-11-28，CT116 submodule@fde56bb dist sha256=c9a8ab7e721214ee 双端一致）
 
 gate 浏览器实测（#/wf/gh-issue-trigger）：①默认页流=hero 三钮（对话修改/配置详情/对象工作台）+定义 kv（YAML 声明钮）+相位链图，studio 表单零直出（holder 隐藏）；②「配置详情」弹窗=studio 整体移入（含 YAML textarea）；③「对话修改」→ #/chat/core-headless composer 预填「请修改工作流 gh-issue-trigger（YAML 声明为权威源）。修改意图：」；④对象页同构（对话修改+scheme 双钮）。npm 131 pass。落账 workservice@fde56bb、plugin pin@4a69907、core_design rule@03218cf。部署坑：CT116 子模块 checkout 被在制未跟踪 approvaldiff_test.go 阻塞——mv .bak 让位（不删）。
+
+## 28. 文档元数据 header 公用组件（2026-11-28 用户裁决：「所有文档都是有metadatainfo。也要展示啊。做一个好点的header组件公用展示[就是tag创建时间。提交agent。提交人。相应ref 等等原数据要展示]」）
+
+1. **公用组件** `render/meta-header.js`：frontMetaOf（frontmatter 现解析：tags `{tag,tag_type}` 对/裸串/`domain:b` 三词形、importance、ownerRefs 对/串、docType/scope/title）+metaHeaderHtml（身份行=名+kind/docType 徽+scope+rv/HEAD、账行=创建时间+最近提交 fieldManager（提交人·agent 词形）、tags+重要度行（tag 可点聚合页）、归属行=ownerRefs 可点对象工作台；缺席字段整行不渲染零编造、全 esc）+paintMetaHeader（即 paint→doc-history 异步补创建/最近提交；git 文档无 author=HEAD sha 诚实）。
+2. **侧车数据全通（后端补两件）**：①`repository.ParseSidecarMeta`——`<文件>.metadatainfo` 行级只读投影（零 yaml 依赖，与 Bump/Merge 同族）；②`docrepo.ReadSidecar` 专口面——白名单面只收 .md，侧车仅 `<md>.metadatainfo` 放行（穿越/.git 拒绝同口径、零写路径）；`GET /v1/design-docs/{repo}/{path}` 带出 `meta:{tags,importance}`（缺席不带键）。**此前 design_docs 走 Read(.metadatainfo) 恒 403——meta 键永不落，本批修**。
+3. **四面接线**：对象工作台内容卡、编辑器 doc-meta 行下、设计文档屏正文上、chat 引用详情弹窗——同一组件同一 CSS（.meta-header 族，alpha 阶梯零裸色值）。
+4. **判据（机械）**：对象页（frontmatter 词形）显示 tags/重要度/创建/提交人/归属；git 设计文档（侧车词形）同构；npm test 含 frontMetaOf/metaHeaderHtml 两组+Go TestParseSidecarMeta。
+5. **判据实现位置**：workservice@0baf27c+fc0c6be（ParseSidecarMeta+ReadSidecar）、前端 66d3804。
+
+### 28.1 活体验收（2026-11-28，CT116 submodule@fc0c6be dist sha=f939e0ea534e6a57 双端一致+cored 换装）
+
+gate 浏览器实测：①`#/obj/Task/self-recursive-core/align-docs-reality-20261127`——「align-docs-reality-20261127 Task scope r11 / 创建 2026-11-27 15:36 · 最近提交 task-scheduler / 重要度 90 #workflow #doc-alignment #acceptance #session-page / 归属 ServiceDesc/self-recursive-core」；②`#/designdoc/core_design/rule/rule_ux.md`——「rule-ux DesignDoc docType: Rule scope: core_system HEAD 09b278c1 / 重要度 98 #ux #console #rule / 归属 ServiceDesc/core_system」（侧车投影）；③编辑器 Workflow 对象——创建/最近提交 task:self-recursive-core/gh-issue-trigger-impl。npm 133 pass+Go 三包过。探针坑：designdoc 深链路径含 `/` 必须经 encodeURIComponent 单段进路由（`#/designdoc/<repo>/<repo 内路径>` 双段=404 屏）。
