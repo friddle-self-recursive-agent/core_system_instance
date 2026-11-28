@@ -1163,3 +1163,17 @@ chat 批：通信病灶实测（steer 闲置/无停止/无活体反馈/整屏重
 2. **第二段·预更新面**：会话产出的文档更新一律以 **draft 预更新卡**呈现（diff 可见、可跳转文档编辑器）；**会话面无任何命令执行入口**——用户要求执行时话术引导落 draft 并说明真执行走 workflow agent 节点；apply 按钮走人审闸。
 3. **第三段·属性回整可见**：apply 后回整结果在文档详情/`#/tags` 面可见（ref/tag/importance/metainfo 变更逐条列出「自动回整」来源标记）；内容类变更永不自动。
 4. **诚实态**：类似 session 检索、developer_system 仓库自动定位、第三段回整器未实现环节在会话面显式标注缺口，不冒充（session.md §9 现状账同口径）。
+
+## 25. scheme 展示纯文本优先（2026-11-28 用户裁决）
+
+> 需求原话要点：「所有scheme。优先展示就是text-area[纯文本]的yaml文件内容。这样还看的清楚些。结构化看的信息密度太低。只有编辑的时候才结构话展示。还是另外大部分修改还是走对话修改。全局扫描下。所有展示按……」
+
+全局扫描结论（结构化展示面清单）：对象工作台内容片（YAML 对象=schemeChips 结构化默认+原文折叠）、scheme 片（kind 定义字段卡）、编辑器（YAML 对象默认字段卡渲染视图）、`#/wf/:name`（定义仅 kv 元数据，YAML 源藏在 studio 表单联动）。裁决定版：
+
+1. **看=纯文本**：所有 scheme/对象(YAML) 的默认视图=只读等宽 textarea 纯文本全文（`yamlTextView`，行数自适应 4..48 有界、全 esc）——结构化视图（字段卡/chips）在看态退役。
+2. **结构化只留编辑态**：编辑器 `#/doc/...` YAML 对象默认「原文」textarea（`defaultEditorView`：YAML=raw、markdown=render）；「正文」结构化字段卡=显式切换的可选形态。workflow studio 表单（编辑态）不动。
+3. **scheme 片=YAML 文本**：kind 定义行（name/requiredSections/spec）经 `dumpYaml`（js-yaml dump）纯文本展示；必填段完成度勾缺保留并修正（注水时带真正文，不再对空串判缺）。
+4. **workflow 定义面**：`#/wf/:name` 定义 kv 卡下新增「YAML 声明」纯文本卡（源=`wf.rawYaml` 现读真源；缺席=不建卡不装假）。
+5. **markdown 散文不受影响**：Rule/Goal/Proposal/Task/DesignDoc 等散文=渲染正文即文本形态，保持渲染默认+原文折叠。
+6. **修改主通路=对话修改**：docFix（`__CC.chatFaces.docFix`）与 draft+人审 Apply 为修改主线；表单/textarea 手编=次通路。editor AI 修文档面板已有，不新增表单编辑投资。
+7. **判据（机械）**：对象工作台 YAML 对象内容片首屏=`<textarea readonly>` 全文且零 `md-cards`/`scheme-chip`；编辑器直开 YAML 对象落在「原文」视图；`#/wf/:name` 可见 YAML 声明卡；npm test 全绿（含 yaml-text.test.mjs 四组）。
