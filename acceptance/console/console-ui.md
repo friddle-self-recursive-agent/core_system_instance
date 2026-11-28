@@ -1182,3 +1182,20 @@ chat 批：通信病灶实测（steer 闲置/无停止/无活体反馈/整屏重
 ### 25.1 活体验收（2026-11-28，CT116 已部署 submodule@f020e8f dist sha256=349dbfcb1d12d865 双端一致）
 
 gate 浏览器实测（headless chromium，`?token=` 门进入）：①对象工作台 Provider gh——内容片=「YAML 声明（纯文本全文）」只读 textarea 全文，页面零 `data-md-cards`/`scheme-chip` 残留；②scheme 片=「kind 定义（YAML 纯文本）」textarea（Provider kind 声明 YAML 可读）；③编辑器直开 Workflow 对象（gh-issue-trigger）——落「原文」视图（textarea 可见 6418 字，结构化卡 hidden）；④`#/wf/gh-issue-trigger` 定义 kv 卡下新增「YAML 声明」卡（rawYaml 全文）；⑤markdown 回归——Proposal 对象页 `data-md-render`+原文折叠保留、编辑器落「正文」渲染视图（textarea hidden）。npm 122 pass（+yaml-text.test.mjs 四组）。落账 workservice@f020e8f、plugin pin@2bc8989。
+
+## 26. 内容优先：相关任务/会话直达 + scheme 弹窗按需（2026-11-28 用户裁决——权威=core_design rule/rule_ux.md R-UX-10）
+
+> 需求原话要点：「bug-gh-issue-3-502-retry-20261127 agent展示对应的session是啥？这页面完整修改下。首先是相关session和相关workflow的任务。其中状态。能直接点击查看xsession。session能看到相应的任务。比如workflow这个节点的描述背景。所有文件优先描述内容。其中展示的是核心业务相关内容描述。具体scheme默认都是弹窗展示[人不会主动需要看scheme。只有需要修改的时候。默认修改的方式还是对话。]这也是原则。本质上所有类型所有概念。本质都是看有用信息。看周边信息。不是看一堆纯格式」
+
+1. **对象工作台重构（内容优先版）**：内容卡首屏（markdown 正文先行——frontmatter chips 退役不占首屏；YAML 对象=纯文本 textarea 保持 §25 口径）→「相关任务与会话」卡（relatedTasksOf 同名/字段提及+relatedRunsOf involved 提及；人话相位；看会话/任务详情/看运行可点直达；快照扁平行 F-05 兜底）→ 标签｜适用规则 → 操作（收敛仓库直达；编辑器/所属 scope 前置到卡头）。
+2. **scheme=弹窗按需**：对象页 scheme 固定面板退役（首屏 grep `data-panel-scheme` 零直出）→ 头部「scheme」按钮 htmlModal 宽体弹窗（kind 定义 YAML 纯文本+必填段勾缺）；`#/wf/:name` YAML 声明 fixed 卡同判→定义卡右「YAML 声明」按钮弹窗。
+3. **会话屏任务背景卡**：sessBacklinksHtml 升级——sessionTasksOf 反查 Task.agentSession，title/phase/summary/来源（spec.source/sourceRef）全呈现+任务详情可点（R-UX-9 双向链接；零编造空态保持）。
+4. **正文先行全局**：designdoc 屏、chat-refs 引用详情弹窗同判——markdown 正文渲染先于一切 frontmatter 词形（原文折叠保留）。
+5. **htmlModal 通用内容弹窗**（modal.js）：.chat-modal 族复用、Esc/mask/✕ 关闭、wide 宽体——scheme 弹窗的载体（style.md §3.3 同族）。
+6. **规则落账**：core_design rule/rule_ux.md 新增 R-UX-10（内容优先原则判据七条）+R-UX-4③ 退役注记（2026-11-28 两连裁迭代）。
+7. **bug-gh-issue-3-502-retry-20261127 的 session 答案（活体查询）**：该 BugDoc 触发的 developer-loop run 44 挂在 **AwaitingApproval**（等人），尚未进 Executing——**执行 session 还不存在**（批准后 ApprovalGranted→Executing 才拉起）；gh-issue-trigger run 43（converged）才是处理 issue#3 本体的运行。老页面看不到 session 是因为真的没有——但关联的 run 44 此前也无从看到，本批后对象页相关卡直接显示该挂起 run。
+8. **判据（机械）**：对象页首屏=内容卡+相关卡；scheme 固定面板零直出（grep 清零）；markdown 页正文先于 frontmatter；会话背景卡含 title/summary/来源；npm test 含 relatedTasksOf/relatedRunsOf/sessionTasksOf 纯函数断言。
+
+### 26.1 活体验收（2026-11-28，CT116 submodule@3745b44 dist sha256=75f4a50c2ccabdfa 双端一致）
+
+gate 浏览器实测：①对象工作台 Task align-docs-reality——内容卡首屏（正文+原文折叠+编辑器 chip）+相关任务卡（「已完成 对齐文档和现实设计。给出方案。」+lastAction+任务详情钮）+scheme 按钮；②scheme 弹窗「scheme · Task」内嵌 kind 定义 textarea；③scheme 固定面板零残留；④markdown/YAML 双形态保持 §25 口径。npm 131 pass（+content-first 六组含扁平行兜底）。落账 workservice@3745b44（rebase 并档 9354992 他线+129/131 pass）、plugin pin@f38f37d。
