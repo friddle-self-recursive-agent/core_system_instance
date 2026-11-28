@@ -62,6 +62,10 @@
 | `PUT /v1/sessions/{id}/context` | 会话注入上下文写面：写面门控同 `--allow-apply`（与 POST /v1/sessions/heartbeat 同口径）；覆盖存进程内存重启即失（诚实词形） |
 | `POST /v1/sessions/{id}/context/revert` | 会话注入上下文撤销面（恢复最近一次写前快照）：门控同 PUT；无快照=404 |
 | `GET /v1/code-audit/findings` | 代码审核只读投影面（**V-18** connectops-code-audit 快照读）：驱动未注册=503（诚实缺席不冒充）；零写面；只读 GET 恒开 |
+| `GET /v1/docs-export/config` | 文档导出独立配置读面（2026-11-27 用户裁决——配置项存 `docs_export_config`，初值由 scheme `docTypes[].exportDefault` 派生，导出器零硬编码类型过滤）：store 未实现 `ExportConfigStore`=scheme 派生默认配置（恒 200，不冒充持久化）；读失败走对象错误词形；配套 `PUT /v1/docs-export/config` 随 `--allow-apply` 门控（写面另记 §2.1 族）；只读 GET 恒开 |
+| `GET /v1/session-config` | 三段式 Session 控制面读面（2026-11-27 用户裁决承载面——concepts/session.md）：`{config, persistent, note?}`；store 未实现 `SessionConfigStore`/读失败=scheme 缺省 `DefaultSessionConfig` + `persistent:false`（诚实降级不冒充已保存）；配套 `PUT /v1/session-config` 随 `--allow-apply` 门控；只读 GET 恒开 |
+| `GET /v1/session-config/writebacks?n=<n>` | 第三段属性回整账最近 N 条（「自动回整」来源标记的数据源）：`{items:[SessionWriteback], persistent}`；store 缺席=空清单 + `persistent:false`；只读 GET 恒开 |
+| `GET /v1/workflows/service-spawns` | service 节点拉起投影面（workflow.md §1.3——run 落 `unit=service` 挂起 + 为 service agent 开执行 session 的逐条投影）：`{spawned, dropped, records}`；face 未接线=503（零翻转诚实缺席）；旧构建 405 兜底=代际判别器；投影出现≠session 已执行完毕；只读 GET 恒开 |
 
 - 对象键 = `(kind, scope, name)`：scope 四层（builtin/global/系统/系统+实例）物化为目录前缀（layout.md），storage 路径由 scheme.yaml 各 kind 的 storage 模板解析。
 - 错误→状态码：kind 未注册或对象不存在 → 404；scope 与模板不相容/命名违规 → 400；docs 未配置 → 503。
