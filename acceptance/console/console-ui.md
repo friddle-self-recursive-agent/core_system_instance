@@ -1199,3 +1199,9 @@ gate 浏览器实测（headless chromium，`?token=` 门进入）：①对象工
 ### 26.1 活体验收（2026-11-28，CT116 submodule@3745b44 dist sha256=75f4a50c2ccabdfa 双端一致）
 
 gate 浏览器实测：①对象工作台 Task align-docs-reality——内容卡首屏（正文+原文折叠+编辑器 chip）+相关任务卡（「已完成 对齐文档和现实设计。给出方案。」+lastAction+任务详情钮）+scheme 按钮；②scheme 弹窗「scheme · Task」内嵌 kind 定义 textarea；③scheme 固定面板零残留；④markdown/YAML 双形态保持 §25 口径。npm 131 pass（+content-first 六组含扁平行兜底）。落账 workservice@3745b44（rebase 并档 9354992 他线+129/131 pass）、plugin pin@f38f37d。
+
+## 27. 审批卡 Diff 判决渲染（2026-11-28 用户裁定「还是审批为空。上次说了。来个小 LLM 做 diff 了？」）
+
+`#/approvals` 的 run 审批卡（批准继续/驳回终止）此前**无判决容器**——判决片只挂在稿批准卡路径，用户在 run 节点看不到小 LLM（ops_core_inner_agent）整理的 DocumentDiff。三层修：①后端幂等域=run（`diffDocNameForRun`=docdiff-<kind>-<name>-run<N>；旧一对象一名让后续挂起全 skip 陈旧判决）②run 卡补 `data-apverdict` 容器+注水调用 ③锚错位纠偏——前端卡头 `r.workflow=core-workflow`（编排器）≠后端权威 `run.Involved=Workflow/global/gh-issue-trigger`（实际挂起对象），`verdictAnchorOf(r)` 从 involved 三段解析；`apVerdictKeyOf(r)` per-run 唯一容器键（同对象多 run 不撞首卡）。历史档回退旧名命中在册判决。
+
+活体：8 张 run 卡 7 张显示完整 LLM diff 正文（验收探针注释/resourceVersion 删除/关键配置保留/截断诚实注记），缺席档走诚实词形不冒充。落账 workservice@696cc46/@f9b06d7/@9354992/@8f1fd93（130 pass+CT116 go test）、plugin pin@86ba7f8；验收=approval-verdict-render-20261128.md。判据：审批卡判决正文在册即渲染、缺席即显词形、per-run 名不碰撞。
